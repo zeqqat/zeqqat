@@ -4,14 +4,14 @@ import "./globals.css";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["700", "800"],
+  weight: ["800"],
   variable: "--font-display",
   display: "swap",
 });
 
 const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   variable: "--font-mono",
   display: "swap",
 });
