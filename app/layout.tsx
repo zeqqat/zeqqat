@@ -17,6 +17,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://zeqqat.com"),
   title: {
     default: "Zeqqat — one endpoint for all your MCP servers",
     template: "%s — Zeqqat",

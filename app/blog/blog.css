@@ -1,0 +1,122 @@
+/* Blog styles. Tokens mirror the landing page so both read as one site. */
+.bl {
+  --bg: #f7f8fa; --panel: #ffffff; --fg: #0d141a; --dim: #5a6b78; --faint: #7c8c99;
+  --line: #e1e7ec; --line2: #cfd8e0; --cobalt: #2e6fe0; --mint: #1e9e82;
+  --code-bg: color-mix(in srgb, var(--fg) 6%, var(--bg));
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bl {
+    --bg: #0c1116; --panel: #111a21; --fg: #f2f5f7; --dim: #9aa9b5; --faint: #6b7c89;
+    --line: #1c262e; --line2: #28343e; --cobalt: #5c9bff; --mint: #4ecbae;
+  }
+}
+:root[data-theme="dark"] .bl {
+  --bg: #0c1116; --panel: #111a21; --fg: #f2f5f7; --dim: #9aa9b5; --faint: #6b7c89;
+  --line: #1c262e; --line2: #28343e; --cobalt: #5c9bff; --mint: #4ecbae;
+}
+html, body { margin: 0; padding: 0; background: var(--bg, #f7f8fa); }
+.bl *, .bl *::before, .bl *::after { box-sizing: border-box; min-width: 0; }
+.bl a { color: var(--cobalt); text-decoration: none; }
+.bl a:hover { text-decoration: underline; }
+.bl :focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
+
+.bl-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 26px; font-family: var(--font-mono), ui-monospace, monospace; font-size: 12.5px;
+  border-bottom: 1px solid var(--line);
+}
+@media (max-width: 480px) { .bl-top { padding: 16px; } }
+.bl-brand { display: flex; align-items: center; gap: 10px; color: var(--fg) !important; }
+.bl-brand:hover { text-decoration: none !important; }
+.bl-logo {
+  width: 28px; height: 28px; border-radius: 6px; background: var(--cobalt); color: var(--bg);
+  display: grid; place-items: center; font-family: var(--font-display), sans-serif;
+  font-weight: 800; font-size: 17px; line-height: 1;
+}
+.bl-name { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: 16px; }
+.bl-section { color: var(--dim); }
+.bl-top-link { color: var(--dim) !important; }
+.bl-top-link:hover { color: var(--fg) !important; text-decoration: none !important; }
+
+.bl-main { display: flex; justify-content: center; padding: 48px 26px 80px; }
+@media (max-width: 480px) { .bl-main { padding: 32px 16px 56px; } }
+.bl-col { width: 100%; max-width: 700px; }
+
+.bl-kicker {
+  font-family: var(--font-mono), ui-monospace, monospace; font-size: 11.5px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--faint); margin: 0 0 14px;
+}
+.bl-h1 {
+  font-family: var(--font-display), sans-serif; font-weight: 800; letter-spacing: -.025em;
+  font-size: clamp(30px, 6vw, 46px); line-height: 1.08; margin: 0;
+}
+.bl-lede { color: var(--dim); font-size: 18px; line-height: 1.6; margin: 18px 0 0; }
+.bl-meta {
+  font-family: var(--font-mono), ui-monospace, monospace; font-size: 12px; color: var(--faint);
+  margin: 22px 0 0; padding-bottom: 28px; border-bottom: 1px solid var(--line);
+}
+
+/* Index list */
+.bl-list { list-style: none; margin: 36px 0 0; padding: 0; display: grid; gap: 14px; }
+.bl-card {
+  display: block; padding: 22px 22px 20px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel); color: var(--fg) !important;
+}
+.bl-card:hover { border-color: var(--line2); text-decoration: none !important; }
+.bl-card h2 {
+  font-family: var(--font-display), sans-serif; font-weight: 800; font-size: 21px;
+  letter-spacing: -.015em; line-height: 1.25; margin: 0;
+}
+.bl-card p { color: var(--dim); font-size: 15px; line-height: 1.6; margin: 10px 0 0; }
+.bl-card time { display: block; font-family: var(--font-mono), monospace; font-size: 11.5px; color: var(--faint); margin-top: 14px; }
+
+/* Article prose */
+.bl-prose { font-size: 17px; line-height: 1.75; margin-top: 32px; }
+.bl-prose > :first-child { margin-top: 0; }
+.bl-prose p, .bl-prose ul, .bl-prose ol { margin: 0 0 1.15em; }
+.bl-prose h2 {
+  font-family: var(--font-display), sans-serif; font-weight: 800; letter-spacing: -.015em;
+  font-size: 26px; line-height: 1.2; margin: 2.1em 0 .6em; scroll-margin-top: 20px;
+}
+.bl-prose h3 { font-size: 18.5px; line-height: 1.35; margin: 1.7em 0 .45em; scroll-margin-top: 20px; }
+.bl-prose ul, .bl-prose ol { padding-left: 1.3em; }
+.bl-prose li { margin: .35em 0; }
+.bl-prose li::marker { color: var(--faint); }
+.bl-prose strong { font-weight: 650; }
+.bl-prose code {
+  font-family: var(--font-mono), ui-monospace, monospace; font-size: .86em;
+  background: var(--code-bg); padding: .12em .38em; border-radius: 4px;
+}
+.bl-prose pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow-x: auto; }
+.bl-prose pre code { background: none; padding: 0; }
+.bl-prose blockquote { margin: 0 0 1.15em; padding-left: 16px; border-left: 3px solid var(--line2); color: var(--dim); }
+.bl-prose hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+.bl-prose input[type="checkbox"] { margin: 0 8px 0 0; accent-color: var(--cobalt); }
+.bl-prose li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.3em; }
+
+.bl-table { overflow-x: auto; margin: 0 0 1.4em; border: 1px solid var(--line); border-radius: 8px; }
+.bl-prose table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.5; }
+.bl-prose th, .bl-prose td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.bl-prose tr:last-child td { border-bottom: 0; }
+.bl-prose th { background: var(--code-bg); font-weight: 650; white-space: nowrap; }
+.bl-prose td:first-child { font-weight: 600; white-space: nowrap; }
+
+.bl-more { margin-top: 56px; padding-top: 28px; border-top: 1px solid var(--line); }
+.bl-more h2 {
+  font-family: var(--font-mono), monospace; font-size: 11.5px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--faint); font-weight: 600; margin: 0 0 14px;
+}
+.bl-more ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 16px; }
+
+.bl-foot {
+  border-top: 1px solid var(--line); padding: 18px 26px; display: flex; justify-content: space-between;
+  gap: 10px 18px; flex-wrap: wrap; font-family: var(--font-mono), monospace; font-size: 11.5px; color: var(--faint);
+}
+@media (max-width: 480px) { .bl-foot { padding: 16px; } }
