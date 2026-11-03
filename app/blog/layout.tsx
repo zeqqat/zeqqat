@@ -25,7 +25,6 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       </main>
       <footer className="bl-foot">
         <span>© {new Date().getFullYear()} Zeqqat</span>
-        <span>An MCP gateway for self-hosters. Launching soon.</span>
       </footer>
     </div>
   );
