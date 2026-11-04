@@ -3,17 +3,15 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
 
-// Footer and CTA targets in one place. Pages that do not exist yet are listed
-// on purpose so the footer is complete for crawlers; build them before this
-// page goes anywhere public.
+// Footer and CTA targets in one place. Every link here must resolve: add a
+// page before linking to it.
 const LINKS = {
   signin: "/signin",
   signup: "/signup",
   github: "https://github.com/zeqqat/zeqqat",
-  docs: "/docs",
+  docs: "/docs/agents",
   selfHost: "/docs/self-host",
-  status: "/status",
-  about: "/about",
+  blog: "/blog",
   terms: "/terms",
   privacy: "/privacy",
   // Empty until a real invite exists. An expired invite renders a Discord
@@ -109,7 +107,7 @@ export default function LandingPage() {
             <ul>
               <li><a href={LINKS.docs}>Docs</a></li>
               <li><a href={LINKS.selfHost}>Self-hosting</a></li>
-              <li><a href={LINKS.status}>Status</a></li>
+              <li><a href={LINKS.blog}>Blog</a></li>
             </ul>
           </nav>
           <nav aria-label="Community">
@@ -119,12 +117,6 @@ export default function LandingPage() {
               {LINKS.discord ? (
                 <li><a href={LINKS.discord} rel="noreferrer noopener">Discord</a></li>
               ) : null}
-            </ul>
-          </nav>
-          <nav aria-label="Company">
-            <h2>Company</h2>
-            <ul>
-              <li><a href={LINKS.about}>About</a></li>
             </ul>
           </nav>
           <nav aria-label="Legal">
