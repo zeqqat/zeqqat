@@ -44,6 +44,23 @@ describe("minting handles while scrubbing", () => {
     expect(minter.count).toBe(0);
   });
 
+  it("leaves variable references alone: they name a secret, they aren't one", () => {
+    const minter = new HandleMinter();
+    const out = scrubSecrets(
+      {
+        compose: "DATABASE_URL: postgresql://zeqqat:${POSTGRES_PASSWORD}@postgres:5432/zeqqat",
+        env: "BETTER_AUTH_SECRET=${auth_secret}\nDB_PASSWORD=$DB_PASS",
+        password: "${POSTGRES_PASSWORD}",
+      },
+      0,
+      minter.redact,
+    );
+    expect(out.compose).toContain("${POSTGRES_PASSWORD}@postgres");
+    expect(out.env).toBe("BETTER_AUTH_SECRET=${auth_secret}\nDB_PASSWORD=$DB_PASS");
+    expect(out.password).toBe("${POSTGRES_PASSWORD}");
+    expect(minter.count).toBe(0);
+  });
+
   it("still redacts plainly without a minter", () => {
     expect(scrubSecrets({ password: "hunter2hunter2" }).password).toBe("[redacted by zeqqat]");
   });

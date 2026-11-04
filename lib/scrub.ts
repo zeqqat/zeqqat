@@ -25,6 +25,12 @@ function alreadyRedacted(value: string): boolean {
   return value.includes(REDACTED) || value.includes("{{zq_secret_");
 }
 
+// A variable reference such as ${POSTGRES_PASSWORD} or $DB_PASS names a
+// secret without being one: compose files and templates are full of them.
+function isPlaceholder(value: string): boolean {
+  return /^\$\{[A-Za-z_][A-Za-z0-9_]*(:-[^}]*)?\}$|^\$[A-Za-z_][A-Za-z0-9_]*$/.test(value.trim().replace(/^(['"])(.*)\1$/, "$2"));
+}
+
 // ---------------------------------------------------------------------------
 // 1. By name
 // ---------------------------------------------------------------------------
@@ -143,7 +149,7 @@ function scrubString(input: string, redact: Redact): string {
   let out = input;
   for (const pattern of KNOWN_SECRET_VALUES) out = out.replace(pattern, (m) => redact(m));
   out = out.replace(URL_CREDENTIALS, (m, scheme, user, password) =>
-    alreadyRedacted(password) ? m : `${scheme}${user}:${redact(password)}@`,
+    alreadyRedacted(password) || isPlaceholder(password) ? m : `${scheme}${user}:${redact(password)}@`,
   );
 
   if (out.includes("=")) {
@@ -153,7 +159,7 @@ function scrubString(input: string, redact: Redact): string {
         const match = ENV_LINE.exec(line);
         if (!match) return line;
         const [, indent, key, equals, value] = match;
-        if (!value.trim() || alreadyRedacted(value)) return line;
+        if (!value.trim() || alreadyRedacted(value) || isPlaceholder(value)) return line;
         if (!isSecretName(key) && !looksRandom(value)) return line;
         return `${indent}${key}${equals}${redact(value)}`;
       })
@@ -179,7 +185,7 @@ export function scrubSecrets<T>(value: T, depth = 0, redact: Redact = redactAll)
       const hide =
         isSecretName(key) && item !== null && item !== "" &&
         (typeof item === "string" || typeof item === "number") &&
-        !(typeof item === "string" && alreadyRedacted(item));
+        !(typeof item === "string" && (alreadyRedacted(item) || isPlaceholder(item)));
       out[key] = hide ? redact(String(item)) : scrubSecrets(item, depth + 1, redact);
     }
     return out as T;
