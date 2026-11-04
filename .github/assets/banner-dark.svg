@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
+  <rect width="1200" height="300" rx="24" fill="#0c1116"/>
+  <g transform="translate(330 90)">
+    <rect width="120" height="120" rx="26" fill="#5c9bff"/>
+    <path d="M36 34h48v11L52 75h32v11H36V75l32-30H36z" fill="#0c1116"/>
+  </g>
+  <text x="480" y="168" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif" font-size="92" font-weight="800" letter-spacing="-3" fill="#f2f5f7">zeqqat</text>
+  <text x="482" y="212" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" fill="#7b8c99">MCP gateway for Dokploy</text>
+</svg>

@@ -1,39 +1,52 @@
-<p align="center">
-  <img src="public/zeqqat.svg" width="64" height="64" alt="Zeqqat logo">
-</p>
+<div align="center">
+  <a href="https://zeqqat.com" target="_blank">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
+      <img alt="Zeqqat" src=".github/assets/banner-light.svg" width="100%">
+    </picture>
+  </a>
 
-<h1 align="center">Zeqqat</h1>
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
+    <a href="https://github.com/zeqqat/zeqqat/releases"><img src="https://img.shields.io/github/v/release/zeqqat/zeqqat?include_prereleases" alt="Release"></a>
+    <a href="https://github.com/zeqqat/zeqqat/pkgs/container/zeqqat"><img src="https://img.shields.io/badge/ghcr.io-zeqqat%2Fzeqqat-2e6fe0" alt="Docker image"></a>
+    <a href="https://github.com/zeqqat/zeqqat/stargazers"><img src="https://img.shields.io/github/stars/zeqqat/zeqqat?style=flat" alt="Stars"></a>
+  </p>
 
-<p align="center">
-  Give AI access to your Dokploy. Minus the risk.
-</p>
+  <p><b>Give AI access to your Dokploy. Minus the risk.</b></p>
 
-<p align="center">
-  <a href="https://zeqqat.com">Website</a> ·
-  <a href="https://zeqqat.com/docs/self-host">Self-host guide</a> ·
-  <a href="https://zeqqat.com/blog">Blog</a>
-</p>
+  <p>
+    <a href="https://zeqqat.com">Website</a> ·
+    <a href="https://zeqqat.com/docs/self-host">Self-host guide</a> ·
+    <a href="https://zeqqat.com/docs/agents">Agent docs</a> ·
+    <a href="https://zeqqat.com/blog">Blog</a>
+  </p>
 
----
+  <p><sub>Works with Claude, Claude Code, ChatGPT, Cursor, Gemini and any MCP client.</sub></p>
+</div>
 
-Zeqqat is an open source MCP gateway for [Dokploy](https://dokploy.com). Your agent (Claude, ChatGPT, Cursor, Claude Code or any MCP client) connects to one Zeqqat URL instead of holding your Dokploy API key. Zeqqat decides what it may do, makes the call for it, and records everything.
+<br>
 
-## Why
+Zeqqat is an open source MCP gateway for [Dokploy](https://dokploy.com). Your agent connects to one Zeqqat URL instead of holding your Dokploy API key. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
 
-Handing an agent your Dokploy API key gives it everything: every server, every env var, and the power to delete. Zeqqat sits in between.
+## ✨ Features
 
-- **Your keys stay out of the model.** API keys are encrypted at rest and never returned to an agent. Responses are scrubbed of secret-shaped values (env vars, tokens, private keys) before the model sees them.
-- **Decide what each agent can do.** Allow reading, creating, editing or deleting per connection, or write a policy that allows specific tools only. Anything not allowed is refused.
-- **See every call.** Each request is logged with who asked, which agent, the reason it gave, what it called and what came back.
-- **Bring your team.** Organizations, workspaces and roles, so teammates get their own access instead of a shared key.
-- **The whole Dokploy API.** All 554 Dokploy endpoints, found by search, so your agent's context isn't flooded with tool definitions.
+- **Keys stay out of the model**: API keys are encrypted at rest and never returned to an agent.
+- **Scrubbed responses**: env vars, tokens and private keys are stripped from every response before the model sees it.
+- **Permissions per connection**: allow reading, creating, editing or deleting, one connection at a time.
+- **Policies**: allow exactly the tools you list, and share policies with others.
+- **Activity log**: every request shows who asked, which agent, the reason it gave, what it called and what came back.
+- **Teams**: organizations, workspaces and roles, so teammates get their own access instead of a shared key.
+- **The whole Dokploy API**: all 554 endpoints, found by search, so your agent's context isn't flooded with tool definitions.
+- **Standard OAuth sign-in**: agents connect with OAuth 2.1, and each token only works on the connection it was issued for.
+- **Self-hosted**: one container and Postgres, with migrations applied on startup.
 
-## Self-host on Dokploy
+## 🚀 Getting Started
 
-Zeqqat is one container and a Postgres database.
+### On Dokploy
 
-1. In Dokploy, create a **Docker Compose** service from this repository (or paste [`docker-compose.yml`](docker-compose.yml)).
-2. Set the environment variables (see below).
+1. Create a **Docker Compose** service from this repository, or paste [`docker-compose.yml`](docker-compose.yml).
+2. Set the environment variables listed under Configuration below.
 3. Add your domain to the `zeqqat` service on port **3000** and deploy.
 4. Open your domain, sign in, and connect your Dokploy.
 
@@ -50,7 +63,11 @@ docker compose up -d
 
 To reach it locally on `http://localhost:3000`, uncomment the `ports` lines in `docker-compose.yml`.
 
-### Configuration
+### Connect an agent
+
+After you connect your Dokploy, Zeqqat gives you a connection URL like `https://zeqqat.example.com/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy` and `zeqqat_docs`.
+
+## ⚙️ Configuration
 
 | Variable | Required | What it is |
 | --- | --- | --- |
@@ -59,16 +76,22 @@ To reach it locally on `http://localhost:3000`, uncomment the `ports` lines in `
 | `BETTER_AUTH_SECRET` | yes | Session secret: `openssl rand -base64 32` |
 | `ZEQQAT_ENCRYPTION_KEY` | yes | Encrypts stored API keys: `openssl rand -base64 32`. Keep it safe, a new key makes stored keys unreadable |
 | `ENABLED_AUTH_PROVIDERS` | yes | `github`, `google`, or both, comma separated |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for GitHub sign-in | From a GitHub OAuth app with callback `<your URL>/api/auth/callback/github` |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | for Google sign-in | From Google Cloud, with redirect URI `<your URL>/api/auth/callback/google` |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for GitHub sign-in | A GitHub OAuth app with callback `<your URL>/api/auth/callback/github` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | for Google sign-in | A Google OAuth client with redirect URI `<your URL>/api/auth/callback/google` |
 
-Every option is documented in [`.env.example`](.env.example). Database migrations run automatically on startup.
+Every option is documented in [`.env.example`](.env.example).
 
-## Connect an agent
+## ☁️ Cloud vs Self-hosted
 
-After you connect your Dokploy, Zeqqat gives you a connection URL like `https://zeqqat.example.com/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent gets a few stable tools (`zeqqat_search`, `zeqqat_describe`, `zeqqat_run` and friends) and reaches Dokploy through them.
+| | Zeqqat Cloud | Self-hosted |
+| --- | --- | --- |
+| Cost | Free while in beta | Free and open source |
+| Setup | Sign up at [zeqqat.com](https://zeqqat.com) | One Docker Compose service on your Dokploy |
+| Where your keys live | Encrypted on zeqqat.com | Encrypted on your own server |
+| Features | Everything | Everything |
+| Updates | Automatic | Pull a new image tag |
 
-## Development
+## 🛠️ Development
 
 You need Node 22, pnpm 9 and Postgres.
 
@@ -78,14 +101,24 @@ cp .env.example .env
 pnpm dev
 ```
 
-`pnpm check` runs typecheck, lint and tests. [`AGENTS.md`](AGENTS.md) explains the architecture, and [`CONTRIBUTING.md`](CONTRIBUTING.md) explains how to send changes.
+`pnpm check` runs typecheck, lint and tests. [`AGENTS.md`](AGENTS.md) explains the architecture. Built with Next.js, Postgres, Drizzle and Better Auth.
 
-Built with Next.js, Postgres, Drizzle and Better Auth.
+### Contributors 🤝
 
-## Security
+<a href="https://github.com/zeqqat/zeqqat/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=zeqqat/zeqqat" alt="Contributors">
+</a>
+
+## 🤝 Contributing
+
+Read the [Contributing Guide](CONTRIBUTING.md) before opening a pull request.
+
+## 🔒 Security
 
 Please report vulnerabilities privately. See [`SECURITY.md`](SECURITY.md).
 
-## License
+## 📄 License
 
 [Apache License 2.0](LICENSE)
+
+---
