@@ -1,7 +1,8 @@
 name: Release
 
 # Pushing a tag like v0.1.0 builds the image and publishes it to
-# ghcr.io/zeqqat/zeqqat as 0.1.0, 0.1 and latest.
+# ghcr.io/zeqqat/zeqqat as 0.1.0, 0.1 and latest. A pre-release tag like
+# v0.2.0-rc.1 publishes only its own version, never latest.
 on:
   push:
     tags: ["v*.*.*"]
@@ -30,7 +31,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
       - uses: docker/build-push-action@v6
         with:
           context: .
