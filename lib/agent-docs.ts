@@ -1,0 +1,147 @@
+import { sql } from "drizzle-orm";
+import { db } from "../db";
+import { publicUrl } from "./env";
+
+// The docs zeqqat_docs searches: short sections written for agents.
+// The tool descriptions carry everything a normal task needs; these are
+// for the less common questions (why was a call denied, what is a
+// connection, how does the user add an integration). Each section is
+// ranked with Postgres full-text search, so no extension and no index
+// table are needed at this size. The same sections are the public pages at
+// /docs/agents/<page>, so every passage carries a link a person can open.
+
+export type DocSection = { id: string; page: string; title: string; text: string };
+
+// Public docs pages, in order. Each groups the sections with that `page`.
+export const DOC_PAGES: { id: string; title: string }[] = [
+  { id: "overview", title: "How Zeqqat works" },
+  { id: "tools", title: "Using the tools" },
+  { id: "permissions", title: "Permissions and policies" },
+  { id: "integrations", title: "Integrations and instances" },
+  { id: "connections", title: "Connections" },
+  { id: "errors", title: "Errors" },
+];
+
+export const AGENT_DOCS: DocSection[] = [
+  {
+    id: "overview",
+    page: "overview",
+    title: "How Zeqqat works",
+    text:
+      "Zeqqat is an MCP gateway. One connection URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
+      "The agent sees six built-in tools: zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_docs answers questions about Zeqqat. " +
+      "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
+      "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the connection. A call without a reason is refused.",
+  },
+  {
+    id: "context",
+    page: "overview",
+    title: "The context object",
+    text:
+      "Every tool result starts with a context object: account (the account that owns this connection), workspace, connection name, the integrations this connection reaches with their instances, and a notice. " +
+      "account has a username and a type: personal (one person, the only owner) or organization (owned by a group with owners). It is the owner of the connection, not necessarily the person calling. " +
+      "Each integration is named @author/slug, which tells you whose tool set it is, and carries toolCount, how many tools it has. zeqqat_whoami also lists its categories, the kinds of tools it has (for example application, docker, project); search a category to see its tools. " +
+      "Instance names are chosen by the user, for example prod or staging. " +
+      "An integration that is not listed is not connected: tell the user, they can add it in the Zeqqat dashboard.",
+  },
+  {
+    id: "run",
+    page: "tools",
+    title: "Running a tool",
+    text:
+      "Call zeqqat_run with name (the operationId from search, for example application.deploy), instance (an instance name from the context) and inputs. " +
+      "The instance decides which integration's tool runs, so the operationId is enough. The full canonical name @author/integration.http.action also works. " +
+      "If a required input is missing, the call fails and lists what is missing. Use zeqqat_describe to see the input schema first.",
+  },
+  {
+    id: "permissions",
+    page: "permissions",
+    title: "Why a call was denied",
+    text:
+      "Each instance on a connection either has a policy attached or allows tools by kind (read, create, edit, delete). " +
+      "With a policy, only the tools on its allow list can run; everything else is denied, including tools a later spec adds. Without one, the connection allows whole kinds. " +
+      "On top of either, the caller's role limits by kind: admin can do everything, member cannot delete, viewer can only read. Public connections are always read only. " +
+      "Each instance's policySummary in the context says what is allowed; zeqqat_policy returns the full allow list; zeqqat_search marks each tool with allowedOn, the instances it can run on. " +
+      "A denied call was not sent. Tell the user; a workspace admin can change it in Connections. Policies are edited in Policies by the account's owner: the one owner of a personal account, or an owner of an organization.",
+  },
+  {
+    id: "policies",
+    page: "permissions",
+    title: "What a policy is",
+    text:
+      "A policy is an explicit list of tools (operationIds) an agent may run. It is owned by an account and written for one integration, so its name reads @username/integration.policy.name, for example @gaita/dokploy.policy.read_plus_deploy. " +
+      "It is attached to an instance inside a connection, one policy per instance. It works on any instance whose integration has the same spec, whoever imported it. " +
+      "Policies can be public: anyone can copy one into their own account. A copy is theirs and never changes when the original does; they get an update note instead. " +
+      "A policy records the spec release it was written for; when the spec changes, the dashboard warns the owner to review it.",
+  },
+  {
+    id: "instances",
+    page: "integrations",
+    title: "Integrations and instances",
+    text:
+      "An integration is a tool set imported from an API spec, owned by an account, for example @zeqqat/dokploy. An instance is one server of that integration with its own credentials, named by the user. " +
+      "Each instance uses exactly one tool set, chosen by a person when the instance is added, so an agent never picks whose tools run against a server. " +
+      "If an instance name is not found, check the instance names in the context; the user adds instances in the dashboard under Integrations.",
+  },
+  {
+    id: "connections",
+    page: "connections",
+    title: "Connections and sunsets",
+    text:
+      "A connection is one MCP URL, zeqqat.com/<username>/mcp/<name>/<id>, belonging to one workspace. It decides which instances an agent can reach and what it may do on each. " +
+      "A connection can be replaced. During the warning period every result carries a notice with the new URL and the cutoff date; tell the user to switch. After the cutoff the connection lists no tools. " +
+      "When a workspace moves from a personal account to an organization, its connections get new URLs. The old URL keeps working and every result carries a notice with the new one; tell the user to update the connector.",
+  },
+  {
+    id: "errors",
+    page: "errors",
+    title: "Common errors",
+    text:
+      "No instance called X: the instance name is wrong; use one from the context. " +
+      "No tool called X: search again, or the tool is not part of this instance's integration. " +
+      "Ambiguous tool name: two integrations share the operationId; pass the instance or the canonical name. " +
+      "HTTP errors from the instance are passed through with the status code; secrets in responses are removed before you see them.",
+  },
+];
+
+export type DocPassage = { title: string; page: string; section: string; text: string; url: string };
+
+export function docUrl(page: string, section?: string): string {
+  return `${publicUrl()}/docs/agents/${page}${section ? `#${section}` : ""}`;
+}
+
+function toPassage(s: DocSection): DocPassage {
+  return { title: s.title, page: s.page, section: s.id, text: s.text, url: docUrl(s.page, s.id) };
+}
+
+export function sectionsOf(page: string): DocSection[] {
+  return AGENT_DOCS.filter((s) => s.page === page);
+}
+
+export function docsIndex(): { title: string; section: string }[] {
+  return AGENT_DOCS.map((s) => ({ title: s.title, section: s.id }));
+}
+
+// The best few sections for a question, ranked by Postgres full-text
+// search over title and text. The sections travel as one jsonb parameter.
+// websearch_to_tsquery ANDs every word, which a natural question rarely
+// satisfies, so its terms are ORed and ts_rank decides the order.
+export async function searchDocs(question: string, limit = 3): Promise<DocPassage[]> {
+  const docs = AGENT_DOCS.map((s) => `${s.title}. ${s.text}`);
+  const result = await db.execute<{ idx: string }>(sql`
+    select d.idx
+    from jsonb_array_elements_text(${JSON.stringify(docs)}::jsonb) with ordinality as d(body, idx)
+    cross join lateral (
+      select replace(websearch_to_tsquery('english', ${question})::text, ' & ', ' | ')::tsquery as query
+    ) t
+    where to_tsvector('english', d.body) @@ t.query
+    order by ts_rank(to_tsvector('english', d.body), t.query) desc, d.idx
+    limit ${limit}
+  `);
+  return result.rows.map((r) => toPassage(AGENT_DOCS[Number(r.idx) - 1])).filter(Boolean);
+}
+
+export function docSection(id: string): DocPassage | null {
+  const s = AGENT_DOCS.find((d) => d.id === id);
+  return s ? toPassage(s) : null;
+}

@@ -2,5 +2,3 @@ node_modules
 .next
 .git
 *.tsbuildinfo
-AGENTS.md
-CLAUDE.md

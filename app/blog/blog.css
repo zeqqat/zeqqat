@@ -3,6 +3,8 @@
   --bg: #f7f8fa; --panel: #ffffff; --fg: #0d141a; --dim: #5a6b78; --faint: #7c8c99;
   --line: #e1e7ec; --line2: #cfd8e0; --cobalt: #2e6fe0; --mint: #1e9e82;
   --code-bg: color-mix(in srgb, var(--fg) 6%, var(--bg));
+  --font-display: var(--font-display-src), sans-serif;
+  --font-mono: var(--font-mono-src), monospace;
   min-height: 100vh;
   background: var(--bg);
   color: var(--fg);

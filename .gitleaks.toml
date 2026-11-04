@@ -1,0 +1,12 @@
+# Secret scanning config. The test files below hold fake, secret-shaped
+# values on purpose: they check that lib/scrub.ts catches real ones.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake secrets used as test fixtures"
+paths = [
+  '''tests/unit/scrub\.test\.ts''',
+  '''tests/unit/activity\.test\.ts''',
+  '''tests/e2e/activity-seed\.ts''',
+]

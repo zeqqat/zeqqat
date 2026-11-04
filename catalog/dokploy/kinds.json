@@ -1,0 +1,815 @@
+{
+ "integration": "dokploy",
+ "specSha256": "931195dde4999f9b4dd9cf61cd93086eabeb8eab666bc1e63a00f47dded5bb1d",
+ "definitions": {
+  "read": "No change to Dokploy or anything it manages, and no message sent anywhere.",
+  "create": "Adds a new object without changing or removing existing ones.",
+  "edit": "Changes something that exists (settings, running state, credentials, associations) or sends a message out.",
+  "delete": "Removes an object or record, or destroys data Dokploy cannot recover."
+ },
+ "kinds": {
+  "admin.setupMonitoring": "edit",
+  "ai.analyzeLogs": {
+   "kind": "read",
+   "reason": "Sends logs to the configured AI provider and returns analysis; changes nothing in Dokploy. Uses the provider's paid API."
+  },
+  "ai.create": "create",
+  "ai.delete": "delete",
+  "ai.deploy": {
+   "kind": "create",
+   "reason": "Creates a new compose service from an AI suggestion and deploys it."
+  },
+  "ai.get": "read",
+  "ai.getAll": "read",
+  "ai.getCustomProviders": "read",
+  "ai.getEnabledProviders": "read",
+  "ai.getModels": "read",
+  "ai.one": "read",
+  "ai.saveCustomProviders": "edit",
+  "ai.suggest": {
+   "kind": "read",
+   "reason": "Returns AI suggestions; changes nothing in Dokploy. Uses the provider's paid API."
+  },
+  "ai.testConnection": {
+   "kind": "read",
+   "reason": "Connection test against the AI provider."
+  },
+  "ai.update": "edit",
+  "application.cancelDeployment": "edit",
+  "application.cleanQueues": {
+   "kind": "delete",
+   "reason": "Drops queued deployments."
+  },
+  "application.clearDeployments": {
+   "kind": "delete",
+   "reason": "Deletes the application's deployment history and logs."
+  },
+  "application.create": "create",
+  "application.delete": "delete",
+  "application.deploy": "edit",
+  "application.disconnectGitProvider": "edit",
+  "application.dropDeployment": {
+   "kind": "edit",
+   "reason": "Uploads a build archive and deploys it. Multipart body, not JSON: expect an import warning."
+  },
+  "application.killBuild": "edit",
+  "application.markRunning": "edit",
+  "application.move": "edit",
+  "application.one": "read",
+  "application.readAppMonitoring": "read",
+  "application.readLogs": "read",
+  "application.readTraefikConfig": "read",
+  "application.redeploy": "edit",
+  "application.refreshToken": "edit",
+  "application.reload": "edit",
+  "application.saveBitbucketProvider": "edit",
+  "application.saveBuildType": "edit",
+  "application.saveDockerProvider": "edit",
+  "application.saveEnvironment": "edit",
+  "application.saveGitProvider": "edit",
+  "application.saveGiteaProvider": "edit",
+  "application.saveGithubProvider": "edit",
+  "application.saveGitlabProvider": "edit",
+  "application.search": "read",
+  "application.start": "edit",
+  "application.stop": "edit",
+  "application.update": "edit",
+  "application.updateTraefikConfig": "edit",
+  "auditLog.all": "read",
+  "backup.create": "create",
+  "backup.listBackupFiles": "read",
+  "backup.manualBackupCompose": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.manualBackupLibsql": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.manualBackupMariadb": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.manualBackupMongo": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.manualBackupMySql": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.manualBackupPostgres": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.manualBackupWebServer": {
+   "kind": "create",
+   "reason": "Runs a backup now; writes a new backup file."
+  },
+  "backup.one": "read",
+  "backup.remove": "delete",
+  "backup.update": "edit",
+  "bitbucket.bitbucketProviders": "read",
+  "bitbucket.create": "create",
+  "bitbucket.getBitbucketBranches": "read",
+  "bitbucket.getBitbucketRepositories": "read",
+  "bitbucket.one": "read",
+  "bitbucket.testConnection": {
+   "kind": "read",
+   "reason": "Connection test."
+  },
+  "bitbucket.update": "edit",
+  "certificates.all": "read",
+  "certificates.create": "create",
+  "certificates.one": "read",
+  "certificates.remove": "delete",
+  "certificates.update": "edit",
+  "cluster.addManager": {
+   "kind": "read",
+   "reason": "GET that returns the swarm join command; joining happens on the other node."
+  },
+  "cluster.addWorker": {
+   "kind": "read",
+   "reason": "GET that returns the swarm join command; joining happens on the other node."
+  },
+  "cluster.getNodes": "read",
+  "cluster.removeWorker": "delete",
+  "compose.cancelDeployment": "edit",
+  "compose.cleanQueues": {
+   "kind": "delete",
+   "reason": "Drops queued deployments."
+  },
+  "compose.clearDeployments": {
+   "kind": "delete",
+   "reason": "Deletes the compose service's deployment history and logs."
+  },
+  "compose.create": "create",
+  "compose.delete": "delete",
+  "compose.deploy": "edit",
+  "compose.deployTemplate": {
+   "kind": "create",
+   "reason": "Creates a new compose service from a template and deploys it."
+  },
+  "compose.disconnectGitProvider": "edit",
+  "compose.fetchSourceType": {
+   "kind": "edit",
+   "reason": "Clones the source repository onto the server."
+  },
+  "compose.getConvertedCompose": "read",
+  "compose.getDefaultCommand": "read",
+  "compose.getTags": "read",
+  "compose.import": "edit",
+  "compose.isolatedDeployment": "edit",
+  "compose.killBuild": "edit",
+  "compose.loadMountsByService": "read",
+  "compose.loadServices": "read",
+  "compose.move": "edit",
+  "compose.one": "read",
+  "compose.previewTemplate": {
+   "kind": "read",
+   "reason": "Renders a template without saving it."
+  },
+  "compose.processTemplate": "edit",
+  "compose.randomizeCompose": "edit",
+  "compose.readLogs": "read",
+  "compose.redeploy": "edit",
+  "compose.refreshToken": "edit",
+  "compose.saveEnvironment": "edit",
+  "compose.search": "read",
+  "compose.start": "edit",
+  "compose.stop": "edit",
+  "compose.templates": "read",
+  "compose.update": "edit",
+  "customRole.all": "read",
+  "customRole.create": "create",
+  "customRole.getStatements": "read",
+  "customRole.membersByRole": "read",
+  "customRole.remove": "delete",
+  "customRole.update": "edit",
+  "deployment.all": "read",
+  "deployment.allByCompose": "read",
+  "deployment.allByServer": "read",
+  "deployment.allByType": "read",
+  "deployment.allCentralized": "read",
+  "deployment.killProcess": "edit",
+  "deployment.queueList": "read",
+  "deployment.readLogs": "read",
+  "deployment.removeDeployment": "delete",
+  "destination.all": "read",
+  "destination.create": "create",
+  "destination.one": "read",
+  "destination.remove": "delete",
+  "destination.testConnection": {
+   "kind": "read",
+   "reason": "Connection test against an S3 destination."
+  },
+  "destination.update": "edit",
+  "docker.getConfig": "read",
+  "docker.getContainers": "read",
+  "docker.getContainersByAppLabel": "read",
+  "docker.getContainersByAppNameMatch": "read",
+  "docker.getServiceContainersByAppName": "read",
+  "docker.getStackContainersByAppName": "read",
+  "docker.killContainer": "edit",
+  "docker.removeContainer": "delete",
+  "docker.restartContainer": "edit",
+  "docker.startContainer": "edit",
+  "docker.stopContainer": "edit",
+  "docker.uploadFileToContainer": {
+   "kind": "edit",
+   "reason": "Writes a file into a running container. Multipart body, not JSON: expect an import warning."
+  },
+  "domain.byApplicationId": "read",
+  "domain.byComposeId": "read",
+  "domain.canGenerateTraefikMeDomains": "read",
+  "domain.create": "create",
+  "domain.delete": "delete",
+  "domain.generateDomain": {
+   "kind": "read",
+   "reason": "Returns a generated traefik.me hostname; does not save it."
+  },
+  "domain.one": "read",
+  "domain.update": "edit",
+  "domain.validateDomain": {
+   "kind": "read",
+   "reason": "DNS check."
+  },
+  "environment.byProjectId": "read",
+  "environment.create": "create",
+  "environment.duplicate": "create",
+  "environment.one": "read",
+  "environment.remove": "delete",
+  "environment.search": "read",
+  "environment.update": "edit",
+  "forwardAuth.deployOnServer": "edit",
+  "forwardAuth.disable": "edit",
+  "forwardAuth.enable": "edit",
+  "forwardAuth.getAuthDomain": "read",
+  "forwardAuth.listProviders": "read",
+  "forwardAuth.removeAuthDomain": {
+   "kind": "edit",
+   "reason": "Unsets the auth domain setting; removes no object."
+  },
+  "forwardAuth.removeOnServer": {
+   "kind": "delete",
+   "reason": "Removes the forward-auth service from the server."
+  },
+  "forwardAuth.serverStatus": "read",
+  "forwardAuth.setAuthDomain": "edit",
+  "forwardAuth.status": "read",
+  "gitProvider.allForPermissions": "read",
+  "gitProvider.getAll": "read",
+  "gitProvider.remove": "delete",
+  "gitProvider.toggleShare": "edit",
+  "gitea.create": "create",
+  "gitea.getGiteaBranches": "read",
+  "gitea.getGiteaRepositories": "read",
+  "gitea.getGiteaUrl": "read",
+  "gitea.giteaProviders": "read",
+  "gitea.one": "read",
+  "gitea.testConnection": {
+   "kind": "read",
+   "reason": "Connection test."
+  },
+  "gitea.update": "edit",
+  "github.getGithubBranches": "read",
+  "github.getGithubRepositories": "read",
+  "github.githubProviders": "read",
+  "github.one": "read",
+  "github.testConnection": {
+   "kind": "read",
+   "reason": "Connection test."
+  },
+  "github.update": "edit",
+  "gitlab.create": "create",
+  "gitlab.getGitlabBranches": "read",
+  "gitlab.getGitlabRepositories": "read",
+  "gitlab.gitlabProviders": "read",
+  "gitlab.one": "read",
+  "gitlab.testConnection": {
+   "kind": "read",
+   "reason": "Connection test."
+  },
+  "gitlab.update": "edit",
+  "libsql.changeStatus": "edit",
+  "libsql.create": "create",
+  "libsql.deploy": "edit",
+  "libsql.move": "edit",
+  "libsql.one": "read",
+  "libsql.readLogs": "read",
+  "libsql.rebuild": {
+   "kind": "delete",
+   "reason": "Recreates the database container and wipes its data."
+  },
+  "libsql.reload": "edit",
+  "libsql.remove": "delete",
+  "libsql.saveEnvironment": "edit",
+  "libsql.saveExternalPorts": "edit",
+  "libsql.start": "edit",
+  "libsql.stop": "edit",
+  "libsql.update": "edit",
+  "licenseKey.activate": "edit",
+  "licenseKey.deactivate": "edit",
+  "licenseKey.getEnterpriseSettings": "read",
+  "licenseKey.haveValidLicenseKey": "read",
+  "licenseKey.updateEnterpriseSettings": "edit",
+  "licenseKey.validate": {
+   "kind": "read",
+   "reason": "Checks the license key."
+  },
+  "mariadb.changePassword": "edit",
+  "mariadb.changeStatus": "edit",
+  "mariadb.create": "create",
+  "mariadb.deploy": "edit",
+  "mariadb.move": "edit",
+  "mariadb.one": "read",
+  "mariadb.readLogs": "read",
+  "mariadb.rebuild": {
+   "kind": "delete",
+   "reason": "Recreates the database container and wipes its data."
+  },
+  "mariadb.reload": "edit",
+  "mariadb.remove": "delete",
+  "mariadb.saveEnvironment": "edit",
+  "mariadb.saveExternalPort": "edit",
+  "mariadb.search": "read",
+  "mariadb.start": "edit",
+  "mariadb.stop": "edit",
+  "mariadb.update": "edit",
+  "mongo.changePassword": "edit",
+  "mongo.changeStatus": "edit",
+  "mongo.create": "create",
+  "mongo.deploy": "edit",
+  "mongo.move": "edit",
+  "mongo.one": "read",
+  "mongo.readLogs": "read",
+  "mongo.rebuild": {
+   "kind": "delete",
+   "reason": "Recreates the database container and wipes its data."
+  },
+  "mongo.reload": "edit",
+  "mongo.remove": "delete",
+  "mongo.saveEnvironment": "edit",
+  "mongo.saveExternalPort": "edit",
+  "mongo.search": "read",
+  "mongo.start": "edit",
+  "mongo.stop": "edit",
+  "mongo.update": "edit",
+  "mounts.allNamedByApplicationId": "read",
+  "mounts.create": "create",
+  "mounts.listByServiceId": "read",
+  "mounts.one": "read",
+  "mounts.remove": "delete",
+  "mounts.update": "edit",
+  "mysql.changePassword": "edit",
+  "mysql.changeStatus": "edit",
+  "mysql.create": "create",
+  "mysql.deploy": "edit",
+  "mysql.move": "edit",
+  "mysql.one": "read",
+  "mysql.readLogs": "read",
+  "mysql.rebuild": {
+   "kind": "delete",
+   "reason": "Recreates the database container and wipes its data."
+  },
+  "mysql.reload": "edit",
+  "mysql.remove": "delete",
+  "mysql.saveEnvironment": "edit",
+  "mysql.saveExternalPort": "edit",
+  "mysql.search": "read",
+  "mysql.start": "edit",
+  "mysql.stop": "edit",
+  "mysql.update": "edit",
+  "network.all": "read",
+  "network.create": "create",
+  "network.import": {
+   "kind": "create",
+   "reason": "Adds Dokploy records for existing Docker networks."
+  },
+  "network.inspect": "read",
+  "network.networksToSync": "read",
+  "network.one": "read",
+  "network.recreate": {
+   "kind": "edit",
+   "reason": "Removes and recreates the Docker network; attached containers lose it briefly."
+  },
+  "network.remove": "delete",
+  "notification.all": "read",
+  "notification.createCustom": "create",
+  "notification.createDiscord": "create",
+  "notification.createEmail": "create",
+  "notification.createGotify": "create",
+  "notification.createLark": "create",
+  "notification.createMattermost": "create",
+  "notification.createNtfy": "create",
+  "notification.createPushover": "create",
+  "notification.createResend": "create",
+  "notification.createSlack": "create",
+  "notification.createTeams": "create",
+  "notification.createTelegram": "create",
+  "notification.getEmailProviders": "read",
+  "notification.one": "read",
+  "notification.receiveNotification": {
+   "kind": "edit",
+   "reason": "Inbound monitoring webhook that triggers notifications; meant for Dokploy's monitoring agent, not for agents."
+  },
+  "notification.remove": "delete",
+  "notification.testCustomConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testDiscordConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testEmailConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testGotifyConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testLarkConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testMattermostConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testNtfyConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testPushoverConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testResendConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testSlackConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testTeamsConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.testTelegramConnection": {
+   "kind": "edit",
+   "reason": "Sends a real test message to the given channel or addresses."
+  },
+  "notification.updateCustom": "edit",
+  "notification.updateDiscord": "edit",
+  "notification.updateEmail": "edit",
+  "notification.updateGotify": "edit",
+  "notification.updateLark": "edit",
+  "notification.updateMattermost": "edit",
+  "notification.updateNtfy": "edit",
+  "notification.updatePushover": "edit",
+  "notification.updateResend": "edit",
+  "notification.updateSlack": "edit",
+  "notification.updateTeams": "edit",
+  "notification.updateTelegram": "edit",
+  "organization.active": "read",
+  "organization.all": "read",
+  "organization.allInvitations": "read",
+  "organization.create": "create",
+  "organization.delete": "delete",
+  "organization.inviteMember": {
+   "kind": "create",
+   "reason": "Creates an invitation."
+  },
+  "organization.one": "read",
+  "organization.removeInvitation": "delete",
+  "organization.setDefault": "edit",
+  "organization.update": "edit",
+  "organization.updateMemberRole": {
+   "kind": "edit",
+   "reason": "Changes a member's role."
+  },
+  "patch.byEntityId": "read",
+  "patch.cleanPatchRepos": "delete",
+  "patch.create": "create",
+  "patch.delete": "delete",
+  "patch.ensureRepo": {
+   "kind": "edit",
+   "reason": "Clones the repository for patching."
+  },
+  "patch.markFileForDeletion": {
+   "kind": "edit",
+   "reason": "Marks a file to be deleted by a patch at the next deploy; nothing is deleted now."
+  },
+  "patch.one": "read",
+  "patch.readRepoDirectories": "read",
+  "patch.readRepoFile": "read",
+  "patch.saveFileAsPatch": {
+   "kind": "create",
+   "reason": "Saves a file change as a new patch."
+  },
+  "patch.toggleEnabled": "edit",
+  "patch.update": "edit",
+  "port.create": "create",
+  "port.delete": "delete",
+  "port.one": "read",
+  "port.update": "edit",
+  "postgres.changePassword": "edit",
+  "postgres.changeStatus": "edit",
+  "postgres.create": "create",
+  "postgres.deploy": "edit",
+  "postgres.move": "edit",
+  "postgres.one": "read",
+  "postgres.readLogs": "read",
+  "postgres.rebuild": {
+   "kind": "delete",
+   "reason": "Recreates the database container and wipes its data."
+  },
+  "postgres.reload": "edit",
+  "postgres.remove": "delete",
+  "postgres.saveEnvironment": "edit",
+  "postgres.saveExternalPort": "edit",
+  "postgres.search": "read",
+  "postgres.start": "edit",
+  "postgres.stop": "edit",
+  "postgres.update": "edit",
+  "previewDeployment.all": "read",
+  "previewDeployment.delete": "delete",
+  "previewDeployment.one": "read",
+  "previewDeployment.redeploy": "edit",
+  "project.all": "read",
+  "project.allForPermissions": "read",
+  "project.create": "create",
+  "project.duplicate": "create",
+  "project.homeStats": "read",
+  "project.one": "read",
+  "project.remove": "delete",
+  "project.search": "read",
+  "project.update": "edit",
+  "redirects.create": "create",
+  "redirects.delete": "delete",
+  "redirects.one": "read",
+  "redirects.update": "edit",
+  "redis.changePassword": "edit",
+  "redis.changeStatus": "edit",
+  "redis.create": "create",
+  "redis.deploy": "edit",
+  "redis.move": "edit",
+  "redis.one": "read",
+  "redis.readLogs": "read",
+  "redis.rebuild": {
+   "kind": "delete",
+   "reason": "Recreates the database container and wipes its data."
+  },
+  "redis.reload": "edit",
+  "redis.remove": "delete",
+  "redis.saveEnvironment": "edit",
+  "redis.saveExternalPort": "edit",
+  "redis.search": "read",
+  "redis.start": "edit",
+  "redis.stop": "edit",
+  "redis.update": "edit",
+  "registry.all": "read",
+  "registry.create": "create",
+  "registry.one": "read",
+  "registry.remove": "delete",
+  "registry.testRegistry": {
+   "kind": "read",
+   "reason": "Login test against a registry."
+  },
+  "registry.testRegistryById": {
+   "kind": "read",
+   "reason": "Login test against a saved registry."
+  },
+  "registry.update": "edit",
+  "rollback.delete": "delete",
+  "rollback.rollback": {
+   "kind": "edit",
+   "reason": "Redeploys an earlier image."
+  },
+  "schedule.create": "create",
+  "schedule.delete": "delete",
+  "schedule.list": "read",
+  "schedule.one": "read",
+  "schedule.runManually": {
+   "kind": "edit",
+   "reason": "Runs the schedule's command now. Blocks until it finishes; returns HTTP 500 with stderr on failure."
+  },
+  "schedule.update": "edit",
+  "scim.deleteProvider": "delete",
+  "scim.generateToken": {
+   "kind": "edit",
+   "reason": "Replaces the SCIM token. The token in the result will be scrubbed."
+  },
+  "scim.listProviders": "read",
+  "security.create": "create",
+  "security.delete": "delete",
+  "security.one": "read",
+  "security.update": "edit",
+  "server.all": "read",
+  "server.allForPermissions": "read",
+  "server.buildServers": "read",
+  "server.count": "read",
+  "server.create": "create",
+  "server.getDefaultCommand": "read",
+  "server.getServerMetrics": "read",
+  "server.getServerTime": "read",
+  "server.one": "read",
+  "server.publicIp": "read",
+  "server.remove": "delete",
+  "server.security": "read",
+  "server.setup": {
+   "kind": "edit",
+   "reason": "Installs Docker, Traefik and Dokploy's agent on the server over SSH."
+  },
+  "server.setupMonitoring": "edit",
+  "server.update": "edit",
+  "server.updateBuildsConcurrency": "edit",
+  "server.validate": "read",
+  "server.withSSHKey": "read",
+  "settings.assignDomainServer": "edit",
+  "settings.checkGPUStatus": "read",
+  "settings.checkInfrastructureHealth": "read",
+  "settings.cleanAll": "delete",
+  "settings.cleanAllDeploymentQueue": "delete",
+  "settings.cleanDockerBuilder": "delete",
+  "settings.cleanDockerPrune": "delete",
+  "settings.cleanMonitoring": "delete",
+  "settings.cleanRedis": "delete",
+  "settings.cleanSSHPrivateKey": "delete",
+  "settings.cleanStoppedContainers": "delete",
+  "settings.cleanUnusedImages": "delete",
+  "settings.cleanUnusedVolumes": "delete",
+  "settings.getDockerDiskUsage": "read",
+  "settings.getDokployCloudIps": "read",
+  "settings.getDokployVersion": "read",
+  "settings.getIp": "read",
+  "settings.getLogCleanupStatus": "read",
+  "settings.getOpenApiDocument": "read",
+  "settings.getReleaseTag": "read",
+  "settings.getTraefikPorts": "read",
+  "settings.getUpdateData": {
+   "kind": "read",
+   "reason": "Checks whether a Dokploy update is available."
+  },
+  "settings.getWebServerSettings": "read",
+  "settings.haveActivateRequests": "read",
+  "settings.haveTraefikDashboardPortEnabled": "read",
+  "settings.health": "read",
+  "settings.isCloud": "read",
+  "settings.isUserSubscribed": "read",
+  "settings.readDirectories": "read",
+  "settings.readMiddlewareTraefikConfig": "read",
+  "settings.readTraefikConfig": "read",
+  "settings.readTraefikEnv": "read",
+  "settings.readTraefikFile": "read",
+  "settings.readWebServerTraefikConfig": "read",
+  "settings.reloadRedis": "edit",
+  "settings.reloadServer": {
+   "kind": "edit",
+   "reason": "Restarts Dokploy itself."
+  },
+  "settings.reloadTraefik": "edit",
+  "settings.saveSSHPrivateKey": {
+   "kind": "edit",
+   "reason": "Replaces Dokploy's SSH private key."
+  },
+  "settings.setupGPU": "edit",
+  "settings.toggleDashboard": "edit",
+  "settings.toggleRequests": "edit",
+  "settings.updateBuildsConcurrency": "edit",
+  "settings.updateDockerCleanup": "edit",
+  "settings.updateEnforceSSO": "edit",
+  "settings.updateLogCleanup": "edit",
+  "settings.updateMiddlewareTraefikConfig": "edit",
+  "settings.updateRemoteServersOnly": "edit",
+  "settings.updateServer": {
+   "kind": "edit",
+   "reason": "Upgrades Dokploy itself and restarts it."
+  },
+  "settings.updateServerIp": "edit",
+  "settings.updateTraefikConfig": "edit",
+  "settings.updateTraefikFile": "edit",
+  "settings.updateTraefikPorts": "edit",
+  "settings.updateWebServerTraefikConfig": "edit",
+  "settings.writeTraefikEnv": "edit",
+  "sshKey.all": "read",
+  "sshKey.allForApps": "read",
+  "sshKey.create": "create",
+  "sshKey.generate": {
+   "kind": "read",
+   "reason": "Returns a new key pair without saving it. The private key in the result will be scrubbed."
+  },
+  "sshKey.one": "read",
+  "sshKey.remove": "delete",
+  "sshKey.update": "edit",
+  "sso.addTrustedOrigin": {
+   "kind": "create",
+   "reason": "Adds a trusted origin."
+  },
+  "sso.deleteProvider": "delete",
+  "sso.enforceSSO": "read",
+  "sso.getTrustedOrigins": "read",
+  "sso.listProviders": "read",
+  "sso.one": "read",
+  "sso.register": "create",
+  "sso.removeTrustedOrigin": "delete",
+  "sso.showSignInWithSSO": "read",
+  "sso.update": "edit",
+  "sso.updateTrustedOrigin": "edit",
+  "stripe.canCreateMoreServers": "read",
+  "stripe.createCheckoutSession": {
+   "kind": "create",
+   "reason": "Dokploy Cloud billing: creates a checkout link. Nothing is charged until someone pays."
+  },
+  "stripe.createCustomerPortalSession": {
+   "kind": "create",
+   "reason": "Dokploy Cloud billing: creates a portal link."
+  },
+  "stripe.getCurrentPlan": "read",
+  "stripe.getInvoices": "read",
+  "stripe.getProducts": "read",
+  "stripe.updateInvoiceNotifications": "edit",
+  "stripe.upgradeSubscription": {
+   "kind": "edit",
+   "reason": "Dokploy Cloud billing: changes the paid plan. Spends money."
+  },
+  "swarm.getContainerStats": "read",
+  "swarm.getNodeApps": "read",
+  "swarm.getNodeInfo": "read",
+  "swarm.getNodes": "read",
+  "tag.all": "read",
+  "tag.assignToProject": {
+   "kind": "edit",
+   "reason": "Assigns a tag to a project."
+  },
+  "tag.bulkAssign": {
+   "kind": "edit",
+   "reason": "Assigns tags to a project."
+  },
+  "tag.create": "create",
+  "tag.one": "read",
+  "tag.remove": "delete",
+  "tag.removeFromProject": {
+   "kind": "edit",
+   "reason": "Unassigns a tag from a project; the tag stays."
+  },
+  "tag.update": "edit",
+  "user.all": "read",
+  "user.assignPermissions": {
+   "kind": "edit",
+   "reason": "Changes a user's access."
+  },
+  "user.checkUserOrganizations": "read",
+  "user.createApiKey": {
+   "kind": "create",
+   "reason": "Creates a Dokploy API key. The key in the result will be scrubbed."
+  },
+  "user.createUserWithCredentials": {
+   "kind": "create",
+   "reason": "Creates a user with a password."
+  },
+  "user.deleteApiKey": "delete",
+  "user.generateToken": {
+   "kind": "edit",
+   "reason": "Replaces the metrics token."
+  },
+  "user.get": "read",
+  "user.getBackups": "read",
+  "user.getBookmarkedTemplates": "read",
+  "user.getContainerMetrics": "read",
+  "user.getInvitations": "read",
+  "user.getMetricsToken": "read",
+  "user.getPermissions": "read",
+  "user.getServerMetrics": "read",
+  "user.getUserByToken": "read",
+  "user.haveRootAccess": "read",
+  "user.one": "read",
+  "user.remove": "delete",
+  "user.sendInvitation": {
+   "kind": "edit",
+   "reason": "Sends an invitation message."
+  },
+  "user.session": "read",
+  "user.toggleTemplateBookmark": "edit",
+  "user.update": "edit",
+  "volumeBackups.create": "create",
+  "volumeBackups.delete": "delete",
+  "volumeBackups.list": "read",
+  "volumeBackups.one": "read",
+  "volumeBackups.runManually": {
+   "kind": "create",
+   "reason": "Runs a volume backup now; writes a new backup file. Can stop the container if the backup is set to turnOff."
+  },
+  "volumeBackups.update": "edit",
+  "whitelabeling.get": "read",
+  "whitelabeling.getPublic": "read",
+  "whitelabeling.reset": {
+   "kind": "edit",
+   "reason": "Resets branding to Dokploy's defaults; the old settings are lost."
+  },
+  "whitelabeling.update": "edit"
+ }
+}
