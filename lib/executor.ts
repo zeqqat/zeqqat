@@ -9,6 +9,7 @@ import { accessFor, toolAllowed, type InstanceAccess } from "./policies";
 import { decryptCredential } from "./crypto";
 import { newId } from "./id";
 import { REDACTED, scrubSecrets } from "./scrub";
+import { HandleMinter, resolveHandles } from "./secret-handles";
 
 // Who edits policies, by the owning account's type: a personal account
 // has exactly one owner; an organization has owners.
@@ -280,8 +281,18 @@ export async function runEndpoint(
     return toolError("This target is blocked for safety.");
   }
 
+  // Secret handles in the inputs are filled in here and nowhere else. The
+  // log, the Activity page and the outbound record keep the inputs as the
+  // agent sent them, handles and all (lib/secret-handles.ts).
+  const resolved = await resolveHandles(ctx.connectionId, inst.id, params.inputs);
+  if (!resolved.ok) {
+    await logCall(ctx, { ...base, outcome: "blocked", durationMs: Date.now() - start, errorMessage: `Not sent: ${resolved.error}` });
+    return toolError(`Not sent: ${resolved.error}`);
+  }
+
   const scheme = endpoint.credentialScheme as { type: string; in?: string; name?: string };
-  const { url, body } = buildRequest(inst.baseUrl, endpoint, params.inputs);
+  const { url, body } = buildRequest(inst.baseUrl, endpoint, resolved.inputs);
+  const shown = buildRequest(inst.baseUrl, endpoint, params.inputs);
   const headers = new Headers({ "content-type": "application/json" });
   applyCredential(headers, scheme, decryptCredential(inst.credential));
 
@@ -291,7 +302,7 @@ export async function runEndpoint(
     ...base,
     outcome: "running",
     durationMs: 0,
-    outboundRequest: describeOutbound(endpoint.method, url, body, credentialHeaderName(scheme)),
+    outboundRequest: describeOutbound(endpoint.method, shown.url, shown.body, credentialHeaderName(scheme)),
   });
 
   const controller = new AbortController();
@@ -310,9 +321,14 @@ export async function runEndpoint(
     // returned here is what ends up in a model's context, and it's also
     // exactly what gets logged below, so the stored responseBody always
     // matches what the agent actually saw.
-    const scrubbedText = scrubSecrets(text);
+    // Each secret becomes a handle the agent can pass back without seeing
+    // it. Errors get handles too: a failed call can still carry a value.
+    const minter = new HandleMinter();
+    const scrubbedText = scrubSecrets(text, 0, minter.redact);
     const parsed = safeJson(text);
-    const scrubbedParsed = parsed !== undefined ? scrubSecrets(parsed) : undefined;
+    const scrubbedParsed = parsed !== undefined ? scrubSecrets(parsed, 0, minter.redact) : undefined;
+    await minter.persist(ctx.connectionId, inst.id);
+    const handleNote = minter.count > 0 ? `${HANDLE_NOTE}\n` : "";
 
     await finishCall(callId, {
       outcome: res.ok ? "ok" : "error",
@@ -324,14 +340,14 @@ export async function runEndpoint(
     if (!res.ok) {
       // Prefer the parsed body: field-name redaction only works on objects, so
       // raw JSON text can still carry {"password":"..."} through.
-      const shown = scrubbedParsed !== undefined ? JSON.stringify(scrubbedParsed) : scrubbedText;
-      return toolError(`${inst.alias} returned HTTP ${res.status}: ${shown.slice(0, 500)}`);
+      const errBody = scrubbedParsed !== undefined ? JSON.stringify(scrubbedParsed) : scrubbedText;
+      return toolError(`${handleNote}${inst.alias} returned HTTP ${res.status}: ${errBody.slice(0, 500)}`);
     }
 
     if (scrubbedParsed !== undefined) {
-      return toolOk(scrubbedParsed, JSON.stringify(scrubbedParsed).slice(0, 8000));
+      return toolOk(scrubbedParsed, handleNote + JSON.stringify(scrubbedParsed).slice(0, 8000));
     }
-    return toolOk(scrubbedText.slice(0, 8000), scrubbedText.slice(0, 8000));
+    return toolOk(scrubbedText.slice(0, 8000), handleNote + scrubbedText.slice(0, 8000));
   } catch (err) {
     const durationMs = Date.now() - start;
     const message = scrubSecrets(err instanceof Error ? err.message : String(err));
@@ -341,6 +357,9 @@ export async function runEndpoint(
     clearTimeout(timeout);
   }
 }
+
+const HANDLE_NOTE =
+  "Secrets in this result are replaced by handles like {{zq_secret_...}}. To use one, put the handle in a later zeqqat_run input on this instance, in an env block or a password, token or key field (alone or inside a string), and Zeqqat fills in the value. Handles expire in 30 minutes. Never ask the user for the value.";
 
 function safeJson(text: string): unknown {
   try {

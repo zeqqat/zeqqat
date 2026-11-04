@@ -3,7 +3,7 @@ import { buildContext, type ZeqqatContext } from "./mcp-context";
 import { rateLimit } from "./rate-limit";
 import { normalizeReason, REASON_DESCRIPTION, REASON_MISSING, REASON_REQUIRED, resolveRequest } from "./requests";
 import { builtinAction } from "./tool-names";
-import { TOOL_NAMES, toolDescribe, toolDocs, toolPolicy, toolRun, toolSearch, toolWhoami } from "./mcp-tools";
+import { TOOL_NAMES, toolDescribe, toolDocs, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
 import type { ToolResult } from "./executor";
 import { APP_VERSION } from "./version";
 
@@ -132,7 +132,11 @@ export const TOOLS = [
       properties: {
         name: { type: "string", description: "operationId from zeqqat_search, e.g. application.deploy" },
         instance: { type: "string", description: "Instance name from the context, e.g. prod" },
-        inputs: { type: "object", description: "The tool's inputs, matching its input schema" },
+        inputs: {
+          type: "object",
+          description:
+            "The tool's inputs, matching its input schema. Secret values go in as handles ({{zq_secret_...}} from a result or zeqqat_secret), never typed out",
+        },
         reason: REASON,
       },
       required: ["name", "instance", "reason"],
@@ -157,6 +161,26 @@ export const TOOLS = [
       properties: { instance: { type: "string", description: "Optional instance name from the context" }, reason: REASON_OPTIONAL },
     },
     outputSchema: outputSchema({ type: "object", properties: { policies: { type: "array" } }, required: ["policies"] }),
+  },
+  {
+    name: TOOL_NAMES.secret,
+    description:
+      "Create a random secret (a database password, a signing key) without ever seeing it. Returns a handle like {{zq_secret_...}} to put in zeqqat_run inputs, where Zeqqat fills in the value. Use it whenever a task needs a new password or key." +
+      CONTEXT_HINT,
+    inputSchema: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["password", "base64", "hex"],
+          description: "password: letters and digits, length in characters (default). base64 or hex: length in random bytes",
+        },
+        length: { type: "integer", minimum: 16, maximum: 128, description: "Default 32" },
+        reason: REASON,
+      },
+      required: ["reason"],
+    },
+    outputSchema: outputSchema({ type: "object", properties: { handle: { type: "string" } }, required: ["handle"] }),
   },
   {
     name: TOOL_NAMES.docs,
@@ -231,7 +255,7 @@ function instructionsText(context: ZeqqatContext, callerRole: McpContext["caller
   const who = callerRole === "public" ? " Public connection: read only." : "";
   const text =
     `${context.notice ? `${context.notice} ` : ""}Zeqqat MCP gateway. Connection "${context.connection ?? ""}" in workspace "${context.workspace}", owned by the ${context.account.type} account @${context.account.username}. Reaches: ${reach}.${who} ` +
-    `Flow: zeqqat_search, then zeqqat_describe, then zeqqat_run with an operationId and an instance name. Search, describe and run need a one-line reason saying what the user asked for, worded the same on every call for one request. Every result starts with this context. ` +
+    `Flow: zeqqat_search, then zeqqat_describe, then zeqqat_run with an operationId and an instance name. Search, describe and run need a one-line reason saying what the user asked for, worded the same on every call for one request. Every result starts with this context. Secrets never reach you: results show handles like {{zq_secret_...}}, which you pass back in zeqqat_run inputs, and zeqqat_secret creates new ones. ` +
     `Context: ${JSON.stringify({ context })}`;
   return text;
 }
@@ -293,6 +317,9 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
       break;
     case TOOL_NAMES.policy:
       result = await toolPolicy(ctx, args);
+      break;
+    case TOOL_NAMES.secret:
+      result = await toolSecret(ctx, args);
       break;
     default:
       // Unknown tool: the caller invoked something that doesn't exist —

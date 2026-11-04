@@ -13,6 +13,18 @@
 
 export const REDACTED = "[redacted by zeqqat]";
 
+// What a found secret is replaced with. The default is REDACTED; the
+// executor passes one that swaps each secret for a handle the agent can
+// use without seeing the value (lib/secret-handles.ts).
+export type Redact = (secret: string) => string;
+const redactAll: Redact = () => REDACTED;
+
+// A value that already went through redaction, so it isn't redacted twice.
+// A handle inside a URL (postgresql://app:{{zq_secret_..}}@db) stays as is.
+function alreadyRedacted(value: string): boolean {
+  return value.includes(REDACTED) || value.includes("{{zq_secret_");
+}
+
 // ---------------------------------------------------------------------------
 // 1. By name
 // ---------------------------------------------------------------------------
@@ -127,10 +139,12 @@ function looksRandom(value: string): boolean {
 // KEY=VALUE, as it appears in an env block or a .env file dump.
 const ENV_LINE = /^(\s*(?:export\s+)?)([A-Za-z_][A-Za-z0-9_]*)(\s*=\s*)(.*)$/;
 
-function scrubString(input: string): string {
+function scrubString(input: string, redact: Redact): string {
   let out = input;
-  for (const pattern of KNOWN_SECRET_VALUES) out = out.replace(pattern, REDACTED);
-  out = out.replace(URL_CREDENTIALS, (_m, scheme, user) => `${scheme}${user}:${REDACTED}@`);
+  for (const pattern of KNOWN_SECRET_VALUES) out = out.replace(pattern, (m) => redact(m));
+  out = out.replace(URL_CREDENTIALS, (m, scheme, user, password) =>
+    alreadyRedacted(password) ? m : `${scheme}${user}:${redact(password)}@`,
+  );
 
   if (out.includes("=")) {
     out = out
@@ -139,9 +153,9 @@ function scrubString(input: string): string {
         const match = ENV_LINE.exec(line);
         if (!match) return line;
         const [, indent, key, equals, value] = match;
-        if (!value.trim() || value.includes(REDACTED)) return line;
+        if (!value.trim() || alreadyRedacted(value)) return line;
         if (!isSecretName(key) && !looksRandom(value)) return line;
-        return `${indent}${key}${equals}${REDACTED}`;
+        return `${indent}${key}${equals}${redact(value)}`;
       })
       .join("\n");
   }
@@ -149,23 +163,24 @@ function scrubString(input: string): string {
   return out;
 }
 
-export function scrubSecrets<T>(value: T, depth = 0): T {
+export function scrubSecrets<T>(value: T, depth = 0, redact: Redact = redactAll): T {
   if (depth > 12) return value;
 
-  if (typeof value === "string") return scrubString(value) as T;
+  if (typeof value === "string") return scrubString(value, redact) as T;
 
   if (Array.isArray(value)) {
-    return value.map((item) => scrubSecrets(item, depth + 1)) as T;
+    return value.map((item) => scrubSecrets(item, depth + 1, redact)) as T;
   }
 
   if (value && typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value)) {
       // Booleans are flags (isPasswordSet: true), never the secret itself.
-      const redact =
+      const hide =
         isSecretName(key) && item !== null && item !== "" &&
-        (typeof item === "string" || typeof item === "number");
-      out[key] = redact ? REDACTED : scrubSecrets(item, depth + 1);
+        (typeof item === "string" || typeof item === "number") &&
+        !(typeof item === "string" && alreadyRedacted(item));
+      out[key] = hide ? redact(String(item)) : scrubSecrets(item, depth + 1, redact);
     }
     return out as T;
   }

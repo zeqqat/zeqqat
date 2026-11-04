@@ -10,6 +10,7 @@ import { newId } from "./id";
 import { runEndpoint, toolError, toolOk, type ToolResult } from "./executor";
 import { accessSummary, toolAllowed } from "./policies";
 import { builtinToolName } from "./tool-names";
+import { mintGenerated, type GenerateKind } from "./secret-handles";
 
 // The built-in tools, the only ones in tools/list. Built via
 // builtinToolName so they always pass Claude's client-side name check
@@ -23,6 +24,7 @@ export const TOOL_NAMES = {
   whoami: builtinToolName("whoami"),
   docs: builtinToolName("docs"),
   policy: builtinToolName("policy"),
+  secret: builtinToolName("secret"),
 } as const;
 
 type Ctx = McpContext;
@@ -302,4 +304,35 @@ export async function toolPolicy(ctx: Ctx, args: { instance?: string }): Promise
     )
     .join("\n");
   return logged(ctx, TOOL_NAMES.policy, requestArgs, toolOk({ policies }, text || "This connection reaches no instances yet."));
+}
+
+// A fresh random secret the agent can use without seeing: a database
+// password, a signing key. Returns only a handle (lib/secret-handles.ts);
+// the value is filled in when the handle goes into a zeqqat_run input, and
+// lives on only where it was written.
+const SECRET_KINDS: GenerateKind[] = ["password", "base64", "hex"];
+
+export async function toolSecret(ctx: Ctx, args: { kind?: string; length?: number }): Promise<ToolResult> {
+  const kind = (args.kind ?? "password") as GenerateKind;
+  const length = args.length ?? 32;
+  const requestArgs = { kind, length };
+  if (ctx.callerRole === "public" || ctx.callerRole === "viewer") {
+    return logged(ctx, TOOL_NAMES.secret, requestArgs, toolError("This connection is read only, so it can't create secrets."));
+  }
+  if (!SECRET_KINDS.includes(kind)) {
+    return logged(ctx, TOOL_NAMES.secret, requestArgs, toolError(`kind must be one of: ${SECRET_KINDS.join(", ")}.`));
+  }
+  if (!Number.isInteger(length) || length < 16 || length > 128) {
+    return logged(ctx, TOOL_NAMES.secret, requestArgs, toolError("length must be a whole number from 16 to 128."));
+  }
+  const { handle, expiresAt } = await mintGenerated(ctx.connectionId, kind, length);
+  return logged(
+    ctx,
+    TOOL_NAMES.secret,
+    requestArgs,
+    toolOk(
+      { handle, kind, length, expiresAt },
+      `Created ${handle} (${kind}, ${length}${kind === "password" ? " characters" : " bytes"}). Put it in zeqqat_run inputs wherever the value belongs, in an env block or a password, token or key field, alone or inside a string. Use the same handle everywhere the same value is needed. It binds to the first instance it is used on and expires at ${expiresAt}.`,
+    ),
+  );
 }

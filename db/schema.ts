@@ -582,6 +582,31 @@ export const rateLimitBucket = pgTable("rate_limit_bucket", {
   primaryKey({ columns: [t.key, t.windowStart] }),
 ]);
 
+// ---------- Secret handles ----------
+
+// A secret an agent can use without seeing it (lib/secret-handles.ts).
+// When a response carries a secret, the agent gets {{zq_secret_...}} in
+// its place; passing that handle in a later zeqqat_run input has Zeqqat
+// fill the value in server-side. zeqqat_secret mints one from a fresh
+// random value. Bound to the connection it was issued on and, once used
+// or when it came from a response, to one instance. Rows expire after
+// HANDLE_TTL_MS and are deleted; the value lives on only where it was
+// written (an app's env, a database).
+export const secretHandle = pgTable("secret_handle", {
+  id: text("id").primaryKey(), // zq_secret_<16 chars>
+  connectionId: uuid("connection_id")
+    .notNull()
+    .references(() => connection.id, { onDelete: "cascade" }),
+  instanceId: uuid("instance_id").references(() => instance.id, { onDelete: "cascade" }),
+  value: jsonb("value").notNull().$type<{ ciphertext: string; iv: string; tag: string }>(),
+  // "response" (taken from an upstream result) or "generated" (zeqqat_secret).
+  source: text("source").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (t) => [
+  index("secret_handle_expires_idx").on(t.expiresAt),
+]);
+
 // ---------- The log ----------
 
 // One request: one thing a person asked their agent to do, grouping every

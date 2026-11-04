@@ -78,6 +78,13 @@
       "when": 1793554838890,
       "tag": "0010_activity_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793794707832,
+      "tag": "0011_secret_handles",
+      "breakpoints": true
     }
   ]
 }

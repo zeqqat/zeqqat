@@ -4,7 +4,7 @@ One MCP endpoint for every tool you've connected. An agent (Claude, or any
 MCP-speaking client) signs in once via OAuth, then reaches every
 integration (Dokploy today, more over time) through a few stable built-in
 tools (`zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`,
-`zeqqat_policy`, `zeqqat_docs`) instead of learning a new tool surface per
+`zeqqat_policy`, `zeqqat_secret`, `zeqqat_docs`) instead of learning a new tool surface per
 integration.
 
 ## Stack
@@ -290,6 +290,29 @@ Two things a naive CIMD implementation gets wrong:
 - Native clients (Claude Code) use loopback redirect URIs with no fixed
   port (RFC 8252 §7.3) — `validateRedirectUri` matches loopback host+path
   with the port ignored, in addition to exact match.
+
+## Secret handles
+
+Agents never see secrets, and still have to move them (a new database's
+password into an app's `DATABASE_URL`). `lib/secret-handles.ts` does it:
+
+- A secret found while scrubbing a response becomes `{{zq_secret_<16>}}`
+  instead of `[redacted by zeqqat]` (`HandleMinter`, passed to
+  `scrubSecrets` by the executor). Same value, same handle.
+- `zeqqat_secret` mints a handle for a fresh random value (`password`,
+  `base64` or `hex`). Read-only callers can't.
+- A handle in a `zeqqat_run` input, alone or inside a string, is filled in
+  by `resolveHandles` right before the request goes out. The call log,
+  Activity and the outbound record keep the handle, never the value.
+- Rules: the handle's connection only; one instance (its source, or the
+  first one a generated handle is used on); only in env blocks or
+  secret-named fields (`secretField`), never in URLs, descriptions or
+  notification targets; 30 minute TTL (`HANDLE_TTL_MS`), after which the
+  `secret_handle` row is deleted. Values are stored AES-256-GCM encrypted.
+- `tests/unit/secret-handles.test.ts` covers the pure parts;
+  `pnpm exec tsx tests/e2e/secret-handles-flow.ts` runs the whole loop
+  (mint, create a database, wire its URL into an app) against a real
+  Postgres and a stand-in Dokploy.
 
 ## Security posture
 

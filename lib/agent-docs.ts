@@ -19,6 +19,7 @@ export const DOC_PAGES: { id: string; title: string }[] = [
   { id: "permissions", title: "Permissions and policies" },
   { id: "integrations", title: "Integrations and instances" },
   { id: "connections", title: "Connections" },
+  { id: "secrets", title: "Working with secrets" },
   { id: "errors", title: "Errors" },
 ];
 
@@ -29,7 +30,7 @@ export const AGENT_DOCS: DocSection[] = [
     title: "How Zeqqat works",
     text:
       "Zeqqat is an MCP gateway. One connection URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
-      "The agent sees six built-in tools: zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_docs answers questions about Zeqqat. " +
+      "The agent sees seven built-in tools: zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat. " +
       "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
       "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the connection. A call without a reason is refused.",
   },
@@ -101,6 +102,31 @@ export const AGENT_DOCS: DocSection[] = [
       "No tool called X: search again, or the tool is not part of this instance's integration. " +
       "Ambiguous tool name: two integrations share the operationId; pass the instance or the canonical name. " +
       "HTTP errors from the instance are passed through with the status code; secrets in responses are removed before you see them.",
+  },
+  {
+    id: "secret-handles",
+    page: "secrets",
+    title: "Secret handles",
+    text:
+      "You never see secrets through Zeqqat. When a result contains one (a database password, an API token, an env var such as DATABASE_URL), it arrives as a handle like {{zq_secret_ab12cd34ef56gh78}} instead of the value. " +
+      "To use the secret, put the handle in a later zeqqat_run input, alone or inside a string, and Zeqqat fills in the real value just before the request goes out. For example, to copy a database URL into an app: env set to DATABASE_URL=postgresql://app:{{zq_secret_...}}@db:5432/app. " +
+      "Never ask the user to paste a secret into the chat; use a handle. Handles expire after 30 minutes; read the value again for a fresh one.",
+  },
+  {
+    id: "new-secrets",
+    page: "secrets",
+    title: "Creating new secrets",
+    text:
+      "When a task needs a new password or key (a database password, a session secret, an encryption key), call zeqqat_secret. It returns a handle for a fresh random value. kind password gives letters and digits (length in characters, default 32); kind base64 or hex gives random bytes (base64 with length 32 is a typical signing key). " +
+      "Use the same handle everywhere the same value is needed, for example as databasePassword in postgres.create and inside DATABASE_URL in the app's env. The value is stored only where you write it; Zeqqat deletes its copy when the handle expires.",
+  },
+  {
+    id: "secret-rules",
+    page: "secrets",
+    title: "Where handles work",
+    text:
+      "A handle only resolves in fields meant for secrets: an env block (env, previewEnv, buildArgs, buildSecrets) or a field whose name says it holds a secret (password, token, key, secret). Anywhere else, such as a webhook URL, a notification target or a description, the call is refused. " +
+      "A handle works only on the connection it came from, and on one instance: the one its value came from, or for a zeqqat_secret handle, the first instance it is used on. An unknown or expired handle is refused with nothing sent.",
   },
 ];
 
