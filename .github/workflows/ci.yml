@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: ["**"]
 
 # A newer commit on the same branch makes the older run pointless.
 concurrency:
