@@ -51,6 +51,21 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
+  image:
+    name: image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@v3
+      # Builds the same image the release publishes, without publishing it,
+      # so a broken Dockerfile shows up before a release tag does.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   no-claude-md:
     name: no-claude-md
     runs-on: ubuntu-latest
