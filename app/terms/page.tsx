@@ -44,6 +44,24 @@ export default function Terms() {
         </section>
 
         <section className="zq-block">
+          <h2 className="zq-block-t">If something goes wrong</h2>
+          <ul className="zq-steps">
+            <li>
+              If you have a concern, please talk to us first. Most problems are solved quickly that way, and we will
+              always try to make things right.
+            </li>
+            <li>
+              If a dispute can&rsquo;t be settled informally, we both agree to try arbitration first, before going to
+              court.
+            </li>
+            <li>
+              Any dispute that still needs a court is handled in a jurisdiction of our choosing, and these terms are
+              read under its laws.
+            </li>
+          </ul>
+        </section>
+
+        <section className="zq-block">
           <h2 className="zq-block-t">Leaving</h2>
           <ul className="zq-steps">
             <li>You can stop using zeqqat.com at any time, or move to your own self-hosted install.</li>
