@@ -43,7 +43,10 @@ html, body { margin: 0; padding: 0; background: var(--bg, #f7f8fa); }
   font-weight: 800; font-size: 17px; line-height: 1;
 }
 .bl-name { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: 16px; }
-.bl-section { color: var(--dim); }
+.bl-home { display: flex; align-items: center; gap: 10px; color: var(--fg) !important; }
+.bl-home:hover { text-decoration: none !important; }
+.bl-section { color: var(--dim) !important; }
+.bl-section:hover { color: var(--fg) !important; text-decoration: none !important; }
 .bl-top-link { color: var(--dim) !important; }
 .bl-top-link:hover { color: var(--fg) !important; text-decoration: none !important; }
 

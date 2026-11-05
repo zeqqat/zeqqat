@@ -13,11 +13,13 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className={`bl ${body.variable}`}>
       <header className="bl-top">
-        <Link href="/blog" className="bl-brand" aria-label="Zeqqat blog home">
-          <span className="bl-logo" aria-hidden="true">Z</span>
-          <span className="bl-name">Zeqqat</span>
-          <span className="bl-section">/ blog</span>
-        </Link>
+        <div className="bl-brand">
+          <Link href="/" className="bl-home" aria-label="Zeqqat home">
+            <span className="bl-logo" aria-hidden="true">Z</span>
+            <span className="bl-name">Zeqqat</span>
+          </Link>
+          <Link href="/blog" className="bl-section">/ blog</Link>
+        </div>
         <Link href="/blog" className="bl-top-link">All posts</Link>
       </header>
       <main className="bl-main">
