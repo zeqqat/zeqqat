@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
-import { ProductDemo } from "../components/ProductDemo";
 
 // Footer and CTA targets in one place. Every link here must resolve: add a
 // page before linking to it.
@@ -83,10 +82,6 @@ export default function LandingPage() {
             </p>
           </div>
         </main>
-      </div>
-
-      <div className="zq-demo-wrap">
-        <ProductDemo />
       </div>
 
       <footer className="zq-sitefoot">
