@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
-import { HeroRotator } from "../components/HeroRotator";
 import { ProductDemo } from "../components/ProductDemo";
 
 // Footer and CTA targets in one place. Every link here must resolve: add a
@@ -47,10 +46,10 @@ export default function LandingPage() {
 
       <div className="zq-mid">
         <main className="zq-in">
-          <h1 className="zq-mark">
+          <h1 className="zq-mark zq-mark-wide">
             Give AI access to your
             <br />
-            <HeroRotator />
+            APIs and MCPs.
             <br />
             Minus the risk<span className="dot">.</span>
           </h1>

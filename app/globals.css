@@ -570,37 +570,17 @@ body {
   vertical-align: -0.02em;
 }
 
-/* ---------- landing: rotating target in the headline ---------- */
-/* Reuses the agent slot (see .zq-slot) at headline size. The line is on its
-   own between <br>s, so its width easing only re-centres that one line. */
+/* ---------- landing: wide headline ---------- */
 /* "Give AI access to your" must stay on one line, so the headline may run a
    little wider than the column and scales down on phones. */
-.zq-mark:has(.zq-hero-rot) {
+.zq-mark-wide {
   font-size: clamp(28px, 7.4vw, 64px);
   margin: 0 -60px;
 }
 @media (max-width: 800px) {
-  .zq-mark:has(.zq-hero-rot) {
+  .zq-mark-wide {
     margin: 0 -10px;
   }
-}
-.zq-hero-rot .zq-slot,
-.zq-hero-rot .zq-slot-item {
-  height: 1.12em;
-}
-.zq-hero-rot .zq-slot-item {
-  gap: 0.2em;
-}
-.zq-hero-rot .zq-slot-item b {
-  font-weight: inherit;
-}
-.zq-hero-rot .zq-slot-item .zq-mono-logo {
-  width: 0.78em;
-  height: 0.78em;
-}
-.zq-hero-rot .zq-slot-x {
-  margin-left: -0.2em;
-  color: var(--fg);
 }
 
 /* ---------- landing: product demo ---------- */
