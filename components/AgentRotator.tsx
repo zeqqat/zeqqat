@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
  * with the text colour, so it stays visible in both themes. Coloured marks
  * render as plain images. Logo files live in `public/logos/`.
  */
-type Agent = { name: string; logo?: string; mono: boolean };
+export type Agent = { name: string; logo?: string; mono: boolean };
 
 const AGENT_SLOTS: Agent[][] = [
   [
@@ -71,7 +71,16 @@ function AgentLabel({ agent, suffix }: { agent: Agent; suffix?: string }) {
  * names, so a short name never leaves a gap before the next comma. Old and new
  * names share one grid cell while they flip, so they stay lined up.
  */
-function AgentSlot({ agents, suffix }: { agents: Agent[]; suffix?: string }) {
+export function AgentSlot({
+  agents,
+  suffix,
+  waitMs,
+}: {
+  agents: Agent[];
+  suffix?: string;
+  /** Fixed wait between names. Unset means a random 3 to 8 seconds. */
+  waitMs?: number;
+}) {
   const [idx, setIdx] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [width, setWidth] = useState<number | undefined>(undefined);
@@ -79,13 +88,13 @@ function AgentSlot({ agents, suffix }: { agents: Agent[]; suffix?: string }) {
 
   useEffect(() => {
     if (agents.length < 2) return;
-    const wait = 3000 + Math.random() * 5000;
+    const wait = waitMs ?? 3000 + Math.random() * 5000;
     const t = setTimeout(() => {
       setPrev(idx);
       setIdx((idx + 1) % agents.length);
     }, wait);
     return () => clearTimeout(t);
-  }, [idx, agents.length]);
+  }, [idx, agents.length, waitMs]);
 
   useEffect(() => {
     if (inRef.current) setWidth(inRef.current.offsetWidth);

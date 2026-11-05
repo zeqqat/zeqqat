@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
+import { HeroRotator } from "../components/HeroRotator";
+import { ProductDemo } from "../components/ProductDemo";
 
 // Footer and CTA targets in one place. Every link here must resolve: add a
 // page before linking to it.
@@ -46,16 +48,9 @@ export default function LandingPage() {
       <div className="zq-mid">
         <main className="zq-in">
           <h1 className="zq-mark">
-            Give AI access to your{" "}
-            <span className="zq-hero-brand">
-              <span
-                className="zq-mono-logo"
-                style={{ maskImage: "url(/logos/dokploy.svg)", WebkitMaskImage: "url(/logos/dokploy.svg)" }}
-                aria-hidden="true"
-              />
-              Dokploy
-            </span>
-            .
+            Give AI access to your
+            <br />
+            <HeroRotator />
             <br />
             Minus the risk<span className="dot">.</span>
           </h1>
@@ -78,17 +73,21 @@ export default function LandingPage() {
               />
             </a>
             <a className="zq-hero-btn" href={LINKS.signup}>
-              Self-host now <span aria-hidden="true">&rarr;</span>
+              Get started free <span aria-hidden="true">&rarr;</span>
             </a>
             <p className="zq-hero-note">
-              Sign in, connect your agent and your Dokploy, then ask your agent to install Zeqqat
-              on your server.
+              Connect your agent once, add your APIs and MCPs, and pick what each agent may do.
+              Dokploy is live today, more apps are on the way.
             </p>
             <p className="zq-hero-alt">
-              Prefer to set it up yourself? Follow <a href={LINKS.selfHost}>the guide</a>
+              Prefer your own server? <a href={LINKS.selfHost}>Self-host it</a>
             </p>
           </div>
         </main>
+      </div>
+
+      <div className="zq-demo-wrap">
+        <ProductDemo />
       </div>
 
       <footer className="zq-sitefoot">
@@ -100,7 +99,7 @@ export default function LandingPage() {
               </span>
               <span className="zq-name">zeqqat</span>
             </span>
-            <p>The open source MCP gateway for Dokploy.</p>
+            <p>The open source gateway between AI and your APIs and MCPs.</p>
           </div>
           <nav aria-label="Product">
             <h2>Product</h2>

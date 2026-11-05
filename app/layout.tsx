@@ -20,7 +20,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Zeqqat: give AI access to your Dokploy, minus the risk",
+    default: "Zeqqat: give AI access to your APIs and MCPs, minus the risk",
     template: "%s | Zeqqat",
   },
   description:
