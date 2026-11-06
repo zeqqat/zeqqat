@@ -24,7 +24,11 @@ export type KindMap = Record<string, Kind | { kind: Kind; reason?: string }>;
 // it or explicitly allows delete.
 export const UNCLASSIFIED_KIND: Kind = "delete";
 
-export type CredentialScheme = { type: "apiKey"; in: "header"; name: string } | { type: "bearer" } | { type: "none" };
+export type CredentialScheme =
+  | { type: "apiKey"; in: "header" | "query"; name: string }
+  | { type: "bearer" }
+  | { type: "basic" }
+  | { type: "none" };
 
 export type ImportedEndpoint = {
   name: string;
@@ -37,6 +41,8 @@ export type ImportedEndpoint = {
   inputSchema: Record<string, unknown>;
   outputSchema: Record<string, unknown> | null;
   pathParams: string[];
+  queryParams: string[];
+  bodyEncoding: "json" | "form";
   credentialScheme: CredentialScheme;
   kind: Kind;
   importWarnings: string[];
@@ -70,6 +76,7 @@ export type ConvertResult = {
 const METHODS = ["get", "post", "put", "patch", "delete"] as const;
 const SKIPPED_METHODS = ["head", "options", "trace"] as const;
 const JSON_MEDIA = /^application\/(?:[\w.+-]*\+)?json(?:\s*;.*)?$/i;
+const FORM_MEDIA = /^application\/x-www-form-urlencoded(?:\s*;.*)?$/i;
 
 type Obj = Record<string, unknown>;
 
@@ -111,10 +118,18 @@ function resolveCredential(doc: Obj, op: Obj): { scheme: CredentialScheme; warni
   const usable = opNames.length > 0 && opNames.every((n) => n in schemes) ? opNames : names(doc.security);
   for (const n of usable) {
     const s = asObj(schemes[n]);
-    if (s.type === "apiKey" && s.in === "header" && typeof s.name === "string") {
-      return { scheme: { type: "apiKey", in: "header", name: s.name } };
+    if (s.type === "apiKey" && (s.in === "header" || s.in === "query") && typeof s.name === "string") {
+      return { scheme: { type: "apiKey", in: s.in, name: s.name } };
     }
     if (s.type === "http" && typeof s.scheme === "string" && s.scheme.toLowerCase() === "bearer") {
+      return { scheme: { type: "bearer" } };
+    }
+    if (s.type === "http" && typeof s.scheme === "string" && s.scheme.toLowerCase() === "basic") {
+      return { scheme: { type: "basic" } };
+    }
+    // OAuth 2 and OpenID Connect APIs also take a token as a Bearer header;
+    // the user pastes a token they made (a personal access token).
+    if (s.type === "oauth2" || s.type === "openIdConnect") {
       return { scheme: { type: "bearer" } };
     }
   }
@@ -190,6 +205,7 @@ export function convertOpenApi(doc: unknown, opts: ConvertOptions): ConvertResul
       const properties: Obj = {};
       const required = new Set<string>();
       const pathParams: string[] = [];
+      const queryParams: string[] = [];
       const params = [
         ...(Array.isArray(item.parameters) ? item.parameters : []),
         ...(Array.isArray(op.parameters) ? op.parameters : []),
@@ -205,23 +221,19 @@ export function convertOpenApi(doc: unknown, opts: ConvertOptions): ConvertResul
           epWarnings.push(`Parameter "${pname}" in ${where} is not sent by the executor.`);
           continue;
         }
-        if (where === "query" && method !== "GET" && method !== "DELETE") {
-          epWarnings.push(`Query parameter "${pname}" on ${method} is sent in the JSON body by the executor.`);
-        }
         const schema = { ...asObj(p.schema) };
         if (typeof p.description === "string" && schema.description === undefined) schema.description = p.description;
         properties[pname] = schema;
         if (p.required === true || where === "path") required.add(pname);
         if (where === "path") pathParams.push(pname);
-      }
-      if (pathParams.length > 0) {
-        epWarnings.push(`Path parameters (${pathParams.join(", ")}) are not substituted into the path by the executor yet.`);
+        if (where === "query") queryParams.push(pname);
       }
 
       const body = asObj(op.requestBody);
       const content = asObj(body.content);
       const mediaTypes = Object.keys(content);
-      const jsonType = mediaTypes.find((t) => JSON_MEDIA.test(t));
+      const jsonType = mediaTypes.find((t) => JSON_MEDIA.test(t)) ?? mediaTypes.find((t) => FORM_MEDIA.test(t));
+      const bodyEncoding: "json" | "form" = jsonType && FORM_MEDIA.test(jsonType) ? "form" : "json";
       if (jsonType) {
         if (method === "GET" || method === "DELETE") {
           epWarnings.push(`Request body on ${method} is sent as query string by the executor.`);
@@ -238,7 +250,7 @@ export function convertOpenApi(doc: unknown, opts: ConvertOptions): ConvertResul
         const req = Array.isArray(schema.required) ? schema.required : [];
         for (const r of req) if (typeof r === "string") required.add(r);
       } else if (mediaTypes.length > 0) {
-        epWarnings.push(`Request body type ${mediaTypes.join(", ")} is not supported: the executor only sends JSON.`);
+        epWarnings.push(`Request body type ${mediaTypes.join(", ")} is not supported: the executor sends JSON or form data.`);
       }
       const inputSchema: Obj = { type: "object", properties };
       if (required.size > 0) inputSchema.required = [...required];
@@ -259,6 +271,7 @@ export function convertOpenApi(doc: unknown, opts: ConvertOptions): ConvertResul
       if (cred.warning) epWarnings.push(cred.warning);
 
       for (const issue of derefIssues) {
+        if (issue.kind === "truncated") continue; // expected on big specs, not a problem with the spec
         epWarnings.push(issue.kind === "circular" ? `Circular reference ${issue.ref} omitted.` : `Unresolvable reference ${issue.ref} omitted.`);
       }
 
@@ -281,6 +294,8 @@ export function convertOpenApi(doc: unknown, opts: ConvertOptions): ConvertResul
         inputSchema,
         outputSchema,
         pathParams,
+        queryParams,
+        bodyEncoding,
         credentialScheme: cred.scheme,
         kind,
         importWarnings: [...new Set(epWarnings)],

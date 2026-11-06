@@ -158,6 +158,7 @@ export function describeOutbound(
 
 function credentialHeaderName(scheme: { type: string; in?: string; name?: string }): string {
   if (scheme.type === "apiKey" && scheme.in === "header" && scheme.name) return scheme.name;
+  if (scheme.type === "apiKey" && scheme.in === "query" && scheme.name) return `query:${scheme.name}`;
   return "Authorization";
 }
 
@@ -171,33 +172,91 @@ async function checkAccess(ctx: Ctx, instanceId: string, tool: { name: string; k
   return { access, allowed: toolAllowed(access, tool) };
 }
 
-function buildRequest(baseUrl: string, endpoint: { method: string; path: string; pathParams: string[] }, inputs: Record<string, unknown>) {
-  const url = new URL(endpoint.path, baseUrl);
+type RequestShape = {
+  method: string;
+  path: string;
+  pathParams: string[];
+  queryParams?: string[];
+  bodyEncoding?: string;
+};
+
+// Form encoding the way Stripe and similar APIs read it: nested objects as
+// a[b]=c, arrays as a[0]=x.
+function formEncode(value: unknown, prefix: string, out: URLSearchParams) {
+  if (value === undefined || value === null) return;
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => formEncode(v, `${prefix}[${i}]`, out));
+  } else if (typeof value === "object") {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) formEncode(v, prefix ? `${prefix}[${k}]` : k, out);
+  } else {
+    out.append(prefix, String(value));
+  }
+}
+
+// Path params fill the {placeholders}; on GET/DELETE everything else goes
+// in the query string; otherwise the spec's query params go in the query
+// string and the rest is the body, as JSON or form data.
+export function buildRequest(baseUrl: string, endpoint: RequestShape, inputs: Record<string, unknown>) {
   const remaining = { ...inputs };
-  for (const p of endpoint.pathParams) delete remaining[p];
+  let path = endpoint.path;
+  for (const p of endpoint.pathParams) {
+    const v = remaining[p];
+    if (v !== undefined) path = path.split(`{${p}}`).join(encodeURIComponent(String(v)));
+    delete remaining[p];
+  }
+  const url = new URL(path, baseUrl);
+  const setQuery = (k: string, v: unknown) => {
+    if (v === undefined) return;
+    url.searchParams.set(k, typeof v === "object" && v !== null ? JSON.stringify(v) : String(v));
+  };
 
   let body: string | undefined;
+  let contentType: string | undefined;
   if (endpoint.method === "GET" || endpoint.method === "DELETE") {
-    for (const [k, v] of Object.entries(remaining)) {
-      if (v !== undefined) url.searchParams.set(k, String(v));
-    }
+    for (const [k, v] of Object.entries(remaining)) setQuery(k, v);
   } else {
-    body = JSON.stringify(remaining);
+    for (const q of endpoint.queryParams ?? []) {
+      setQuery(q, remaining[q]);
+      delete remaining[q];
+    }
+    if (endpoint.bodyEncoding === "form") {
+      const form = new URLSearchParams();
+      formEncode(remaining, "", form);
+      body = form.toString();
+      contentType = "application/x-www-form-urlencoded";
+    } else {
+      body = JSON.stringify(remaining);
+      contentType = "application/json";
+    }
   }
-  return { url, body };
+  return { url, body, contentType };
 }
 
 function applyCredential(
   headers: Headers,
+  url: URL,
   scheme: { type: string; in?: string; name?: string },
   secret: string,
 ) {
+  if (!secret) return;
   if (scheme.type === "apiKey" && scheme.in === "header" && scheme.name) {
     headers.set(scheme.name, secret);
+  } else if (scheme.type === "apiKey" && scheme.in === "query" && scheme.name) {
+    url.searchParams.set(scheme.name, secret);
   } else if (scheme.type === "bearer") {
     headers.set("Authorization", `Bearer ${secret}`);
-  } else {
+  } else if (scheme.type === "basic") {
+    // Pasted as "user:password", or a bare key (sent as the user name).
+    const pair = secret.includes(":") ? secret : `${secret}:`;
+    headers.set("Authorization", `Basic ${Buffer.from(pair).toString("base64")}`);
+  } else if (/\s/.test(secret)) {
+    // The spec names no scheme and the key already says how it's sent
+    // ("token abc", "Bearer abc").
     headers.set("Authorization", secret);
+  } else {
+    // No scheme in the spec (GitHub's has none): Bearer is what nearly
+    // every API takes.
+    headers.set("Authorization", `Bearer ${secret}`);
   }
 }
 
@@ -291,10 +350,12 @@ export async function runEndpoint(
   }
 
   const scheme = endpoint.credentialScheme as { type: string; in?: string; name?: string };
-  const { url, body } = buildRequest(inst.baseUrl, endpoint, resolved.inputs);
+  const { url, body, contentType } = buildRequest(inst.baseUrl, endpoint, resolved.inputs);
   const shown = buildRequest(inst.baseUrl, endpoint, params.inputs);
-  const headers = new Headers({ "content-type": "application/json" });
-  applyCredential(headers, scheme, decryptCredential(inst.credential));
+  // Some APIs (GitHub) refuse requests without a User-Agent.
+  const headers = new Headers({ "user-agent": "Zeqqat" });
+  if (contentType) headers.set("content-type", contentType);
+  applyCredential(headers, url, scheme, decryptCredential(inst.credential));
 
   // Logged as running before the request goes out, so a slow call shows
   // in Activity while it is in flight; finishCall records the outcome.

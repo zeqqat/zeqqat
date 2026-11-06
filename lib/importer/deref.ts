@@ -11,7 +11,19 @@
 // description naming the target, per the spec. Siblings next to a `$ref`
 // (allowed in 3.1) are merged over the resolved target.
 
-export type DerefIssue = { kind: "circular" | "unresolved"; ref: string };
+//
+// Big specs (Stripe's links almost every object to every other through
+// expandable fields) blow up when every ref is inlined, even without a
+// cycle. So inlining has a budget: refs nested deeper than MAX_DEPTH, or
+// met after MAX_NODES values have been written, stay as a short stub
+// naming the schema. The agent still sees the shape near the top.
+
+export type DerefIssue = { kind: "circular" | "unresolved" | "truncated"; ref: string };
+
+const MAX_DEPTH = 8;
+const MAX_NODES = 20_000;
+
+type Budget = { nodes: number };
 
 export function resolvePointer(root: unknown, ref: string): unknown {
   if (ref === "#") return root;
@@ -27,11 +39,12 @@ export function resolvePointer(root: unknown, ref: string): unknown {
 }
 
 export function deref(root: unknown, value: unknown, issues: DerefIssue[] = []): unknown {
-  return walk(root, value, [], issues);
+  return walk(root, value, [], issues, { nodes: 0 });
 }
 
-function walk(root: unknown, value: unknown, stack: string[], issues: DerefIssue[]): unknown {
-  if (Array.isArray(value)) return value.map((v) => walk(root, v, stack, issues));
+function walk(root: unknown, value: unknown, stack: string[], issues: DerefIssue[], budget: Budget): unknown {
+  budget.nodes++;
+  if (Array.isArray(value)) return value.map((v) => walk(root, v, stack, issues, budget));
   if (value === null || typeof value !== "object") return value;
 
   const obj = value as Record<string, unknown>;
@@ -44,13 +57,18 @@ function walk(root: unknown, value: unknown, stack: string[], issues: DerefIssue
       issues.push({ kind: "circular", ref });
       return { description: `Circular reference to ${ref} omitted.` };
     }
+    if (stack.length >= MAX_DEPTH || budget.nodes > MAX_NODES) {
+      issues.push({ kind: "truncated", ref });
+      const name = ref.split("/").pop();
+      return { type: "object", description: `${name} (nested schema not expanded)` };
+    }
     const target = resolvePointer(root, ref);
     if (target === undefined) {
       issues.push({ kind: "unresolved", ref });
       return { description: `Unresolvable reference ${ref} omitted.` };
     }
-    const resolved = walk(root, target, [...stack, ref], issues);
-    const rest = walk(root, siblings, stack, issues) as Record<string, unknown>;
+    const resolved = walk(root, target, [...stack, ref], issues, budget);
+    const rest = walk(root, siblings, stack, issues, budget) as Record<string, unknown>;
     if (Object.keys(rest).length === 0) return resolved;
     return resolved && typeof resolved === "object" && !Array.isArray(resolved)
       ? { ...(resolved as Record<string, unknown>), ...rest }
@@ -58,6 +76,6 @@ function walk(root: unknown, value: unknown, stack: string[], issues: DerefIssue
   }
 
   const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(obj)) out[k] = walk(root, v, stack, issues);
+  for (const [k, v] of Object.entries(obj)) out[k] = walk(root, v, stack, issues, budget);
   return out;
 }

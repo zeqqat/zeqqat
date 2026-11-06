@@ -12,6 +12,7 @@ import { requireOwner } from "../guard";
 import { newId } from "../id";
 import { deleteInstances } from "../instance-ops";
 import { syncOfficialCatalog } from "../official-catalog";
+import { testAppConnection } from "../spec-import";
 
 export type ConnectState = { error?: string; values?: { alias: string; baseUrl: string } };
 
@@ -88,6 +89,62 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
   redirect(`${next}?connected=${encodeURIComponent(alias)}`);
 }
 
+// An instance of any other integration: an app imported from its spec,
+// visible to this workspace's org. Saved once its address answers; the key
+// is checked by the first real call.
+export async function connectAppAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
+  const { user, ws } = await requireOwner();
+
+  const integrationId = formData.get("integration_id")?.toString() ?? "";
+  const alias = (formData.get("alias")?.toString() ?? "").trim().toLowerCase();
+  const baseUrlRaw = (formData.get("base_url")?.toString() ?? "").trim();
+  const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
+  const values = { alias, baseUrl: baseUrlRaw };
+
+  const integ = await db.query.integration.findFirst({ where: eq(integration.id, integrationId) });
+  if (!integ || (!integ.official && integ.organizationId !== ws.organizationId)) {
+    return { error: "That app isn't in this account's catalog.", values };
+  }
+  if (!alias || !baseUrlRaw) return { error: "Fill in the name and the URL.", values };
+  if (!ALIAS.test(alias)) {
+    return { error: "Use lowercase letters, numbers and dashes for the name, for example production.", values };
+  }
+
+  const result = await testAppConnection(baseUrlRaw);
+  if (result.status !== "ok") return { error: result.message, values };
+
+  const instanceId = newId();
+  try {
+    await db.transaction(async (tx) => {
+      await tx.insert(instance).values({
+        id: instanceId,
+        workspaceId: ws.workspaceId,
+        integrationId: integ.id,
+        alias,
+        baseUrl: result.baseUrl!,
+        credential: encryptCredential(apiKey),
+        lastValidatedAt: new Date(),
+        lastStatus: "ok",
+        createdByUserId: user.id,
+      });
+      await tx.insert(instanceGrant).values({ id: newId(), workspaceId: ws.workspaceId, instanceId, oauthClientId: null });
+      await addInstanceToPrimaryConnection(ws.workspaceId, instanceId, tx);
+    });
+    await primaryConnection(ws, user.id);
+  } catch (err) {
+    if (pgCode(err) === "23505") return { error: `You already have an instance called "${alias}". Pick another name.`, values };
+    throw err;
+  }
+
+  revalidatePath("/app", "layout");
+  redirect(`/app/integrations?connected=${encodeURIComponent(alias)}`);
+}
+
+async function isDokploy(integrationId: string) {
+  const integ = await db.query.integration.findFirst({ where: eq(integration.id, integrationId) });
+  return integ?.slug === "dokploy" && integ.official;
+}
+
 async function ownedInstance(workspaceId: string, instanceId: string) {
   return db.query.instance.findFirst({
     where: and(eq(instance.id, instanceId), eq(instance.workspaceId, workspaceId)),
@@ -102,8 +159,12 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
   if (!inst) redirect("/app/integrations");
   if (!apiKey) return { error: "Paste the new API key." };
 
-  const result = await testDokployConnection(inst.baseUrl, apiKey);
-  if (result.status !== "ok") return { error: CONNECTION_MESSAGES[result.status] };
+  const result = (await isDokploy(inst.integrationId))
+    ? await testDokployConnection(inst.baseUrl, apiKey)
+    : { ...(await testAppConnection(inst.baseUrl)), version: undefined };
+  if (result.status !== "ok") {
+    return { error: "message" in result && result.message ? result.message : CONNECTION_MESSAGES[result.status as keyof typeof CONNECTION_MESSAGES] };
+  }
 
   await db
     .update(instance)
@@ -129,9 +190,14 @@ export async function retestInstanceAction(formData: FormData) {
   let status: string;
   let version = inst.lastVersion;
   try {
-    const result = await testDokployConnection(inst.baseUrl, decryptCredential(inst.credential));
-    status = result.status;
-    if (result.version) version = result.version;
+    if (await isDokploy(inst.integrationId)) {
+      const result = await testDokployConnection(inst.baseUrl, decryptCredential(inst.credential));
+      status = result.status;
+      if (result.version) version = result.version;
+    } else {
+      const result = await testAppConnection(inst.baseUrl);
+      status = result.status === "ok" ? "ok" : "unreachable";
+    }
   } catch {
     status = "unreachable";
   }

@@ -3,7 +3,7 @@ import { buildContext, type ZeqqatContext } from "./mcp-context";
 import { rateLimit } from "./rate-limit";
 import { normalizeReason, REASON_DESCRIPTION, REASON_MISSING, REASON_REQUIRED, resolveRequest } from "./requests";
 import { builtinAction } from "./tool-names";
-import { TOOL_NAMES, toolDescribe, toolDocs, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
+import { TOOL_NAMES, toolDescribe, toolDocs, toolImport, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
 import type { ToolResult } from "./executor";
 import { APP_VERSION } from "./version";
 
@@ -183,6 +183,23 @@ export const TOOLS = [
     outputSchema: outputSchema({ type: "object", properties: { handle: { type: "string" } }, required: ["handle"] }),
   },
   {
+    name: TOOL_NAMES.import,
+    description:
+      "Add an app (an API) to this account from a link to its OpenAPI spec, JSON or YAML, plus optionally its docs. Zeqqat turns every endpoint into a tool under @<account>/<app>. Running it again with the same link updates the app. Workspace admins only." +
+      CONTEXT_HINT,
+    inputSchema: {
+      type: "object",
+      properties: {
+        spec_url: { type: "string", description: "Link to the raw OpenAPI 3 spec file, e.g. https://example.com/openapi.json" },
+        docs_url: { type: "string", description: "Optional link to the app's API docs" },
+        name: { type: "string", description: "Optional display name; defaults to the spec's title" },
+        reason: REASON,
+      },
+      required: ["spec_url", "reason"],
+    },
+    outputSchema: outputSchema({ type: "object", properties: { integration: { type: "string" } }, required: ["integration"] }),
+  },
+  {
     name: TOOL_NAMES.docs,
     description:
       "Answers questions about how Zeqqat works: why a call was denied, permissions, integrations, instances, connections, errors. Pass a question; returns short passages." +
@@ -320,6 +337,9 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
       break;
     case TOOL_NAMES.secret:
       result = await toolSecret(ctx, args);
+      break;
+    case TOOL_NAMES.import:
+      result = await toolImport(ctx, args);
       break;
     default:
       // Unknown tool: the caller invoked something that doesn't exist —

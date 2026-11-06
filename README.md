@@ -13,7 +13,7 @@
     <a href="https://github.com/zeqqat/zeqqat/stargazers"><img src="https://img.shields.io/github/stars/zeqqat/zeqqat?style=flat" alt="Stars"></a>
   </p>
 
-  <p><b>Give AI access to your Dokploy. Minus the risk.</b></p>
+  <p><b>Give AI access to your APIs and MCPs. Minus the risk.</b></p>
 
   <p>
     <a href="https://zeqqat.com">Website</a> ·
@@ -27,7 +27,7 @@
 
 <br>
 
-Zeqqat is an open source MCP gateway for [Dokploy](https://dokploy.com). Your agent connects to one Zeqqat URL instead of holding your Dokploy API key. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
+Zeqqat is an open source MCP gateway between AI agents and your APIs. Your agent connects to one Zeqqat URL instead of holding your API keys. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
 
 ## ✨ Features
 
@@ -38,6 +38,7 @@ Zeqqat is an open source MCP gateway for [Dokploy](https://dokploy.com). Your ag
 - **Activity log**: every request shows who asked, which agent, the reason it gave, what it called and what came back.
 - **Teams**: organizations, workspaces and roles, so teammates get their own access instead of a shared key.
 - **The whole Dokploy API**: all 554 endpoints, found by search, so your agent's context isn't flooded with tool definitions.
+- **Any API from its OpenAPI spec**: paste a link to an app's spec (Stripe, GitHub, your own) and every endpoint becomes a tool under your account, with read, create, edit and delete guessed for each. From the dashboard, from your agent with `zeqqat_import`, or with `POST /api/integrations/import`.
 - **Standard OAuth sign-in**: agents connect with OAuth 2.1, and each token only works on the connection it was issued for.
 - **Self-hosted**: one container and Postgres, with migrations applied on startup.
 
@@ -65,7 +66,7 @@ To reach it locally on `http://localhost:3000`, uncomment the `ports` lines in `
 
 ### Connect an agent
 
-After you connect your Dokploy, Zeqqat gives you a connection URL like `https://zeqqat.example.com/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy` and `zeqqat_docs`.
+After you connect your Dokploy, Zeqqat gives you a connection URL like `https://zeqqat.example.com/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
 
 ## ⚙️ Configuration
 

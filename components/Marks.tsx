@@ -14,8 +14,23 @@ export function DokployMark({ size = 16 }: { size?: number }) {
 
 // Mark for an integration by its slug. Integrations without a drawn logo
 // get the first letter of their name, like unknown agents.
-export function IntegrationMark({ slug, name, size = 16 }: { slug: string; name: string; size?: number }) {
+export function IntegrationMark({
+  slug,
+  name,
+  size = 16,
+  logo,
+}: {
+  slug: string;
+  name: string;
+  size?: number;
+  // An imported app's logo (from its spec or its docs site's favicon).
+  logo?: string | null;
+}) {
   if (slug === "dokploy") return <DokployMark size={size} />;
+  if (logo) {
+    // eslint-disable-next-line @next/next/no-img-element -- remote favicon, tiny
+    return <img src={logo} alt="" aria-hidden="true" width={size} height={size} style={{ borderRadius: 3, objectFit: "contain" }} />;
+  }
   return (
     <span aria-hidden="true" style={{ fontSize: Math.round(size * 0.8), fontWeight: 600, lineHeight: 1 }}>
       {(name.charAt(0) || "?").toUpperCase()}

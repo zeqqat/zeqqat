@@ -1,12 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { CallLogList } from "../../../../components/CallLogList";
-import { AgentMark, DokployMark } from "../../../../components/Marks";
+import { AgentMark, IntegrationMark } from "../../../../components/Marks";
 import { PermMatrix, type MatrixRow } from "../../../../components/PermMatrix";
 import { ReplaceKeyForm } from "../../../../components/ReplaceKeyForm";
 import { StatusBadge } from "../../../../components/StatusBadge";
 import { db } from "../../../../db";
-import { instance, user } from "../../../../db/schema";
+import { instance, integration, user } from "../../../../db/schema";
 import { removeInstanceAction, retestInstanceAction } from "../../../../lib/actions/instances";
 import { getCallsForInstance, toCallView } from "../../../../lib/calls";
 import { requireWorkspace } from "../../../../lib/guard";
@@ -34,8 +34,12 @@ export default async function InstanceDetailPage({
       lastValidatedAt: instance.lastValidatedAt,
       createdAt: instance.createdAt,
       createdBy: user.email,
+      appSlug: integration.slug,
+      appName: integration.name,
+      appLogo: integration.logoUrl,
     })
     .from(instance)
+    .innerJoin(integration, eq(integration.id, instance.integrationId))
     .leftJoin(user, eq(user.id, instance.createdByUserId))
     .where(and(eq(instance.id, id), eq(instance.workspaceId, ws.workspaceId)))
     .limit(1);
@@ -67,11 +71,11 @@ export default async function InstanceDetailPage({
   return (
     <div>
       <p className="zq-kicker">
-        <a href="/app/integrations">Integrations</a> / Dokploy / {inst.alias}
+        <a href="/app/integrations">Integrations</a> / {inst.appName} / {inst.alias}
       </p>
       <div className="zq-head-row">
         <h1 className="zq-h" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <DokployMark size={24} />
+          <IntegrationMark slug={inst.appSlug} name={inst.appName} logo={inst.appLogo} size={24} />
           {inst.alias}
         </h1>
         <StatusBadge status={inst.lastStatus} />
@@ -87,10 +91,10 @@ export default async function InstanceDetailPage({
       )}
 
       <dl className="zq-kv" style={{ marginTop: 16 }}>
-        <dt>Dokploy URL</dt>
+        <dt>{inst.appName} URL</dt>
         <dd>{inst.baseUrl}</dd>
         <dt>Version</dt>
-        <dd>{inst.lastVersion ? `Dokploy ${inst.lastVersion}` : "Not known yet"}</dd>
+        <dd>{inst.lastVersion ? `${inst.appName} ${inst.lastVersion}` : "Not known yet"}</dd>
         <dt>API key</dt>
         <dd style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
           <span>Saved and encrypted. It can&rsquo;t be shown again.</span>
@@ -142,7 +146,7 @@ export default async function InstanceDetailPage({
             <h2 className="zq-block-t">Remove this instance</h2>
             <p className="zq-note" style={{ marginTop: 8 }}>
               Deletes the API key from Zeqqat and removes every agent&rsquo;s access to {inst.alias}. Past activity stays
-              in the log. To be thorough, also revoke the key in Dokploy.
+              in the log. To be thorough, also revoke the key in {inst.appName}.
             </p>
             <form action={removeInstanceAction} className="zq-row-actions" style={{ marginTop: 14 }}>
               <input type="hidden" name="instance_id" value={inst.id} />

@@ -1,6 +1,6 @@
 {
   "name": "zeqqat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
@@ -27,6 +27,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "uuidv7": "^1.0.2",
+    "yaml": "^2.9.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {

@@ -1,9 +1,11 @@
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, or } from "drizzle-orm";
+import { ConnectAppForm } from "../../../components/ConnectAppForm";
 import { ConnectDokployForm } from "../../../components/ConnectDokployForm";
+import { ImportAppForm } from "../../../components/ImportAppForm";
 import { IntegrationMark } from "../../../components/Marks";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { db } from "../../../db";
-import { instance, integration, oauthGrant } from "../../../db/schema";
+import { instance, integration, oauthGrant, organization } from "../../../db/schema";
 import { requireWorkspace } from "../../../lib/guard";
 
 // An integration is a kind of system (Dokploy). Each server someone adds
@@ -18,12 +20,25 @@ export default async function IntegrationsPage({
   const params = await searchParams;
   const isOwner = ws.role === "owner";
   const adding = params.add === "1";
+  const importing = params.add === "app";
+  const connectId = typeof params.connect === "string" ? params.connect : null;
 
   const [offered, rows, liveAgents] = await Promise.all([
     db
-      .select({ id: integration.id, slug: integration.slug, name: integration.name })
+      .select({
+        id: integration.id,
+        slug: integration.slug,
+        name: integration.name,
+        official: integration.official,
+        logoUrl: integration.logoUrl,
+        specUrl: integration.specUrl,
+        docsUrl: integration.docsUrl,
+        defaultBaseUrl: integration.defaultBaseUrl,
+        orgSlug: organization.slug,
+      })
       .from(integration)
-      .where(eq(integration.official, true))
+      .innerJoin(organization, eq(organization.id, integration.organizationId))
+      .where(or(eq(integration.official, true), eq(integration.organizationId, ws.organizationId)))
       .orderBy(asc(integration.name)),
     db
       .select({
@@ -35,9 +50,16 @@ export default async function IntegrationsPage({
         integrationId: integration.id,
         integrationSlug: integration.slug,
         integrationName: integration.name,
+        integrationLogo: integration.logoUrl,
+        integrationOfficial: integration.official,
+        integrationSpecUrl: integration.specUrl,
+        integrationDocsUrl: integration.docsUrl,
+        integrationBaseUrl: integration.defaultBaseUrl,
+        integrationOrgSlug: organization.slug,
       })
       .from(instance)
       .innerJoin(integration, eq(integration.id, instance.integrationId))
+      .innerJoin(organization, eq(organization.id, integration.organizationId))
       .where(eq(instance.workspaceId, ws.workspaceId))
       .orderBy(desc(instance.createdAt)),
     db
@@ -51,10 +73,21 @@ export default async function IntegrationsPage({
   const groups = [...offered];
   for (const r of rows) {
     if (!groups.some((g) => g.id === r.integrationId)) {
-      groups.push({ id: r.integrationId, slug: r.integrationSlug, name: r.integrationName });
+      groups.push({
+        id: r.integrationId,
+        slug: r.integrationSlug,
+        name: r.integrationName,
+        official: r.integrationOfficial,
+        logoUrl: r.integrationLogo,
+        specUrl: r.integrationSpecUrl,
+        docsUrl: r.integrationDocsUrl,
+        defaultBaseUrl: r.integrationBaseUrl,
+        orgSlug: r.integrationOrgSlug,
+      });
     }
   }
   const dokployCount = rows.filter((r) => r.integrationSlug === "dokploy").length;
+  const connecting = connectId ? groups.find((g) => g.id === connectId && !(g.official && g.slug === "dokploy")) : undefined;
 
   return (
     <div>
@@ -69,10 +102,15 @@ export default async function IntegrationsPage({
             Connections decide which agents reach which instance, and how far.
           </p>
         </div>
-        {isOwner && !adding && (
-          <a className="zq-action zq-action-primary" href="/app/integrations?add=1">
-            {dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}
-          </a>
+        {isOwner && !adding && !importing && !connecting && (
+          <div className="zq-row-actions">
+            <a className="zq-action" href="/app/integrations?add=1">
+              {dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}
+            </a>
+            <a className="zq-action zq-action-primary" href="/app/integrations?add=app">
+              Add an app
+            </a>
+          </div>
         )}
       </div>
 
@@ -83,6 +121,18 @@ export default async function IntegrationsPage({
           </span>
           <span>
             Connected <b>{String(params.connected)}</b>. Its key is saved and encrypted.
+          </span>
+        </div>
+      )}
+      {params.imported && (
+        <div className="zq-ok-box" role="status" style={{ marginTop: 20 }}>
+          <span className="ic" aria-hidden="true">
+            ✓
+          </span>
+          <span>
+            {params.updated ? "Updated" : "Added"} <b>@{ws.organizationSlug}/{String(params.imported)}</b> with{" "}
+            {String(params.tools ?? 0)} tools. Each tool&apos;s kind (read, create, edit, delete) is guessed from its method
+            and name; anything that looks destructive counts as delete. Add an instance below to use it.
           </span>
         </div>
       )}
@@ -102,6 +152,23 @@ export default async function IntegrationsPage({
         </section>
       )}
 
+      {importing && isOwner && (
+        <section className="zq-block">
+          <h2 className="zq-block-t">Add an app</h2>
+          <ImportAppForm account={ws.organizationSlug} />
+        </section>
+      )}
+
+      {connecting && isOwner && (
+        <section className="zq-block">
+          <h2 className="zq-block-t" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <IntegrationMark slug={connecting.slug} name={connecting.name} logo={connecting.logoUrl} size={20} />
+            Connect {connecting.name}
+          </h2>
+          <ConnectAppForm integrationId={connecting.id} appName={connecting.name} defaultBaseUrl={connecting.defaultBaseUrl} />
+        </section>
+      )}
+
       {groups.length === 0 && (
         <div className="zq-block">
           <p className="zq-empty">No integrations are set up on this Zeqqat yet.</p>
@@ -113,12 +180,32 @@ export default async function IntegrationsPage({
         return (
           <section className="zq-block" key={g.id}>
             <h2 className="zq-block-t" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <IntegrationMark slug={g.slug} name={g.name} size={20} />
+              <IntegrationMark slug={g.slug} name={g.name} logo={g.logoUrl} size={20} />
               {g.name}
               <span className="zq-item-s" style={{ fontWeight: 400 }}>
-                {mine.length} {mine.length === 1 ? "instance" : "instances"}
+                @{g.orgSlug}/{g.slug} · {mine.length} {mine.length === 1 ? "instance" : "instances"}
               </span>
+              {isOwner && !(g.official && g.slug === "dokploy") && (
+                <a className="zq-textlink" style={{ marginLeft: "auto", fontSize: 13, fontWeight: 500 }} href={`/app/integrations?connect=${g.id}`}>
+                  Add instance
+                </a>
+              )}
             </h2>
+            {(g.specUrl || g.docsUrl) && (
+              <p className="zq-item-s" style={{ margin: "2px 0 10px" }}>
+                {g.specUrl && (
+                  <a className="zq-textlink" href={g.specUrl} rel="noreferrer" target="_blank">
+                    Spec
+                  </a>
+                )}
+                {g.specUrl && g.docsUrl && " · "}
+                {g.docsUrl && (
+                  <a className="zq-textlink" href={g.docsUrl} rel="noreferrer" target="_blank">
+                    Docs
+                  </a>
+                )}
+              </p>
+            )}
             {mine.length === 0 ? (
               <p className="zq-empty">
                 {isOwner
@@ -130,7 +217,7 @@ export default async function IntegrationsPage({
                 {mine.map((r) => (
                   <a className="zq-item" key={r.id} href={`/app/instances/${r.id}`}>
                     <span className="zq-item-ic">
-                      <IntegrationMark slug={g.slug} name={g.name} size={18} />
+                      <IntegrationMark slug={g.slug} name={g.name} logo={g.logoUrl} size={18} />
                     </span>
                     <div className="zq-item-main">
                       <div className="zq-item-t">{r.alias}</div>

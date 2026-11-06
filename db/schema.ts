@@ -255,6 +255,13 @@ export const integration = pgTable("integration", {
   slug: text("slug").notNull(), // e.g. "dokploy"
   name: text("name").notNull(), // e.g. "Dokploy"
   official: boolean("official").notNull().default(false),
+  // Set when the integration was imported from a URL (lib/spec-import.ts):
+  // where its spec and docs live, the logo the UI shows for its calls, and
+  // the API's own address from the spec, offered when adding an instance.
+  specUrl: text("spec_url"),
+  docsUrl: text("docs_url"),
+  logoUrl: text("logo_url"),
+  defaultBaseUrl: text("default_base_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   unique("integration_org_slug_unique").on(t.organizationId, t.slug),
@@ -318,6 +325,11 @@ export const apiEndpoint = pgTable("api_endpoint", {
   outputSchema: jsonb("output_schema"),
   outputSchemaSource: text("output_schema_source").notNull().default("declared"),
   pathParams: jsonb("path_params").notNull().default(sql`'[]'::jsonb`).$type<string[]>(),
+  // Inputs the spec puts in the query string. On GET/DELETE every input
+  // that isn't a path param goes there anyway; on POST/PUT/PATCH only these.
+  queryParams: jsonb("query_params").notNull().default(sql`'[]'::jsonb`).$type<string[]>(),
+  // How a request body is sent: JSON, or form-encoded (Stripe and others).
+  bodyEncoding: text("body_encoding").notNull().default("json"),
   credentialScheme: jsonb("credential_scheme").notNull(),
   // Assigned by hand in catalog/<slug>/kinds.json and applied on every
   // import, never derived from `method` — Dokploy's tRPC-style API doesn't
@@ -338,6 +350,7 @@ export const apiEndpoint = pgTable("api_endpoint", {
   check("api_endpoint_path_check", sql`${t.path} like '/%'`),
   check("api_endpoint_input_schema_check", sql`jsonb_typeof(${t.inputSchema}) = 'object'`),
   check("api_endpoint_output_schema_source_check", sql`${t.outputSchemaSource} in ('declared','observed')`),
+  check("api_endpoint_body_encoding_check", sql`${t.bodyEncoding} in ('json','form')`),
   check("api_endpoint_kind_check", sql`${t.kind} in ('read','create','edit','delete')`),
 ]);
 

@@ -123,6 +123,8 @@ export async function importSpec(tx: Tx, p: ImportParams): Promise<ImportSummary
       outputSchema: e.outputSchema,
       outputSchemaSource: "declared",
       pathParams: e.pathParams,
+      queryParams: e.queryParams,
+      bodyEncoding: e.bodyEncoding,
       credentialScheme: e.credentialScheme,
       kind: e.kind,
       importWarnings: e.importWarnings,
@@ -146,6 +148,8 @@ export async function importSpec(tx: Tx, p: ImportParams): Promise<ImportSummary
           // An observed output shape beats the spec's.
           outputSchema: sql`case when ${apiEndpoint.outputSchemaSource} = 'observed' then ${apiEndpoint.outputSchema} else excluded.output_schema end`,
           pathParams: sql`excluded.path_params`,
+          queryParams: sql`excluded.query_params`,
+          bodyEncoding: sql`excluded.body_encoding`,
           credentialScheme: sql`excluded.credential_scheme`,
           kind: sql`excluded.kind`,
           importWarnings: sql`excluded.import_warnings`,

@@ -17,7 +17,7 @@ export const MAX_REASON_CHARS = 300;
 
 // The built-ins a reason is required on. whoami, policy and docs take one
 // optionally, so they join the request when the agent passes it.
-export const REASON_REQUIRED = new Set(["search", "describe", "run", "secret"]);
+export const REASON_REQUIRED = new Set(["search", "describe", "run", "secret", "import"]);
 
 export const REASON_DESCRIPTION =
   "Required. One line saying what the user asked you to do, in plain words (e.g. \"Redeploy My App so the new env vars take effect\"). Use exactly the same wording on every call you make for the same request. People read it in the Zeqqat activity log.";

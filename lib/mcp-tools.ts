@@ -11,6 +11,7 @@ import { runEndpoint, toolError, toolOk, type ToolResult } from "./executor";
 import { accessSummary, toolAllowed } from "./policies";
 import { builtinToolName } from "./tool-names";
 import { mintGenerated, type GenerateKind } from "./secret-handles";
+import { ImportError, importFromUrl } from "./spec-import";
 
 // The built-in tools, the only ones in tools/list. Built via
 // builtinToolName so they always pass Claude's client-side name check
@@ -25,6 +26,7 @@ export const TOOL_NAMES = {
   docs: builtinToolName("docs"),
   policy: builtinToolName("policy"),
   secret: builtinToolName("secret"),
+  import: builtinToolName("import"),
 } as const;
 
 type Ctx = McpContext;
@@ -335,4 +337,51 @@ export async function toolSecret(ctx: Ctx, args: { kind?: string; length?: numbe
       `Created ${handle} (${kind}, ${length}${kind === "password" ? " characters" : " bytes"}). Put it in zeqqat_run inputs wherever the value belongs, in an env block or a password, token or key field, alone or inside a string. Use the same handle everywhere the same value is needed. It binds to the first instance it is used on and expires at ${expiresAt}.`,
     ),
   );
+}
+
+// Adds an app to this connection's account from a link to its OpenAPI spec
+// (lib/spec-import.ts). Workspace admins only: an import changes the
+// account's catalog. The tools become usable once someone adds an instance
+// with the app's key in the dashboard, so no key ever passes through here.
+export async function toolImport(
+  ctx: Ctx,
+  args: { spec_url?: string; docs_url?: string; name?: string },
+): Promise<ToolResult> {
+  const requestArgs = { spec_url: args.spec_url, docs_url: args.docs_url, name: args.name };
+  if (ctx.callerRole !== "admin") {
+    return logged(ctx, TOOL_NAMES.import, requestArgs, toolError("Only a workspace admin can add apps. Ask an admin, or add it in the Zeqqat dashboard."));
+  }
+  if (typeof args.spec_url !== "string" || !args.spec_url.trim()) {
+    return logged(ctx, TOOL_NAMES.import, requestArgs, toolError("spec_url is required: a link to the app's OpenAPI spec (JSON or YAML)."));
+  }
+  try {
+    const r = await importFromUrl({
+      organizationId: ctx.organizationId,
+      orgSlug: ctx.organizationSlug,
+      specUrl: args.spec_url,
+      docsUrl: args.docs_url ?? null,
+      name: args.name ?? null,
+    });
+    const data = {
+      integration: r.ref,
+      name: r.name,
+      updated: r.updated,
+      tools: r.endpoints,
+      added: r.added,
+      removed: r.removed,
+      kinds: r.kinds,
+      baseUrl: r.baseUrl,
+      warnings: r.warnings.slice(0, 10),
+    };
+    const text =
+      `${r.updated ? "Updated" : "Added"} ${r.ref} (${r.name}) with ${r.endpoints} tools: ` +
+      `${r.kinds.read} read, ${r.kinds.create} create, ${r.kinds.edit} edit, ${r.kinds.delete} delete. ` +
+      "Kinds are guessed from each endpoint's method and name; anything that looks destructive is marked delete. " +
+      `To use it, the user adds an instance in the Zeqqat dashboard (Integrations) with the app's URL${r.baseUrl ? ` (${r.baseUrl})` : ""} and API key, then attaches it to this connection.`;
+    return logged(ctx, TOOL_NAMES.import, requestArgs, toolOk(data, text));
+  } catch (err) {
+    const msg = err instanceof ImportError ? err.message : "The import failed. Check the link and try again.";
+    if (!(err instanceof ImportError)) console.error("[zeqqat] import failed:", err);
+    return logged(ctx, TOOL_NAMES.import, requestArgs, toolError(msg));
+  }
 }
