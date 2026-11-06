@@ -57,9 +57,22 @@ written once and bundled, because Dokploy's spec has none; search matches
 on it, and the spec's own summary wins when it has one) and
 `manifest.json` (name, source, release, and `nameFrom`). `lib/official-catalog.ts` imports it on startup (after
 migrations; `ZEQQAT_CATALOG_SYNC=0` skips it) and before an instance is
-added, so every install has it with no manual step. `zeqqat` is a reserved
-name, so the org is created there, owned by the operator. Re-running is a
+added, so every install has it with no manual step. Re-running is a
 no-op unless the spec or kinds changed.
+
+**zeqqat.com is the source of truth, self-hosted installs are local.**
+@zeqqat exists on every install, but it means zeqqat.com's @zeqqat: the
+catalog a self-hosted install has came from (and will be pulled from)
+zeqqat.com. So `zeqqat` is reserved everywhere (no sign-up or new org can
+take it), and the org is only created by `lib/official-catalog.ts`. On
+zeqqat.com it is owned by the operator. On a self-hosted install it is a
+system org with **no owner and no members** (`organization.owner_user_id`
+is null only there), so nobody on someone else's install ever holds
+@zeqqat; older installs that gave it to their first user have that taken
+back on start. Every other org name on a self-hosted install is local to
+that install. Publishing anything (policies, integrations) for others will
+need an org on zeqqat.com, not a local one (planned, not built).
+`pnpm exec tsx tests/e2e/system-org-flow.ts` checks the ownership rules.
 
 - `lib/importer/openapi.ts` is pure (spec in, rows out) and tested against
   the bundled spec. `lib/catalog-import.ts` persists: one snapshot per

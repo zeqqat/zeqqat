@@ -75,9 +75,10 @@ export const organization = pgTable("organization", {
   slug: text("slug").notNull().unique(),
   displayName: text("display_name").notNull(),
   kind: text("kind").notNull(), // 'personal' | 'organization'
-  ownerUserId: uuid("owner_user_id")
-    .notNull()
-    .references(() => user.id),
+  // Null only for the system @zeqqat org on a self-hosted install, which
+  // holds the bundled catalog and has no owner or members
+  // (lib/official-catalog.ts). Every other org has an owner.
+  ownerUserId: uuid("owner_user_id").references(() => user.id),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   check("organization_kind_check", sql`${t.kind} in ('personal','organization')`),

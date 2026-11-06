@@ -5,15 +5,22 @@
 // self-hosted) has the full catalog with no manual step.
 //
 // `zeqqat` is a reserved name (lib/username.ts), so nobody can sign up as
-// it; the org is created here. Its owner is the operator: the owner of the
-// org that held the official catalog before, otherwise the oldest user.
+// it or create it; the org is only ever created here.
+//
+// Who owns it depends on the edition:
+// - cloud (zeqqat.com): the operator, i.e. the owner of the org that held
+//   the official catalog before, otherwise the oldest user.
+// - self-hosted: nobody. It is a system org with no owner and no members,
+//   so no one on someone else's install ever holds @zeqqat. Installs that
+//   gave it to their first user (before v0.2.2) have that taken back.
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "../db";
-import { integration, membership, organization, user, workspace } from "../db/schema";
+import { connection, instance, integration, membership, organization, user, workspace, workspaceMember } from "../db/schema";
 import { importSpec, moveIntegration, sha256, type ImportSummary, type Tx } from "./catalog-import";
+import { edition } from "./edition";
 import { newId } from "./id";
 import type { KindMap } from "./importer/openapi";
 
@@ -36,9 +43,55 @@ type Manifest = {
 
 type KindsFile = { specSha256?: string; kinds: KindMap };
 
+// Self-hosted: make sure nobody owns or belongs to @zeqqat. Skipped (with a
+// warning) if someone already put instances or connections in its
+// workspaces, since taking it back would lock them out of their own keys.
+async function releaseSystemOrg(tx: Tx, orgId: string, ownerUserId: string | null) {
+  const wsIds = (await tx.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, orgId))).map((w) => w.id);
+  const [hasMembers] = await tx.select({ id: membership.id }).from(membership).where(eq(membership.organizationId, orgId)).limit(1);
+  const [hasWsMembers] = wsIds.length
+    ? await tx.select({ id: workspaceMember.workspaceId }).from(workspaceMember).where(inArray(workspaceMember.workspaceId, wsIds)).limit(1)
+    : [];
+  if (!ownerUserId && !hasMembers && !hasWsMembers) return;
+
+  if (wsIds.length) {
+    const [inst] = await tx.select({ id: instance.id }).from(instance).where(inArray(instance.workspaceId, wsIds)).limit(1);
+    const [conn] = await tx.select({ id: connection.id }).from(connection).where(inArray(connection.workspaceId, wsIds)).limit(1);
+    if (inst || conn) {
+      console.warn(
+        `[zeqqat] @${OFFICIAL_ORG_SLUG} has instances or connections in its workspace, so its members were kept. ` +
+          `Transfer that workspace to your own organization, then restart to make @${OFFICIAL_ORG_SLUG} a system org.`,
+      );
+      return;
+    }
+    await tx.delete(workspaceMember).where(inArray(workspaceMember.workspaceId, wsIds));
+  }
+  await tx.delete(membership).where(eq(membership.organizationId, orgId));
+  await tx.update(organization).set({ ownerUserId: null }).where(eq(organization.id, orgId));
+  console.log(`[zeqqat] @${OFFICIAL_ORG_SLUG} is now a system org with no owner or members`);
+}
+
 async function ensureOfficialOrg(tx: Tx): Promise<string | null> {
+  const selfHosted = edition() !== "cloud";
   const found = await tx.query.organization.findFirst({ where: eq(organization.slug, OFFICIAL_ORG_SLUG) });
-  if (found) return found.id;
+  if (found) {
+    if (selfHosted) await releaseSystemOrg(tx, found.id, found.ownerUserId);
+    return found.id;
+  }
+
+  if (selfHosted) {
+    const orgId = newId();
+    await tx.insert(organization).values({
+      id: orgId,
+      slug: OFFICIAL_ORG_SLUG,
+      displayName: "Zeqqat",
+      kind: "organization",
+      ownerUserId: null,
+    });
+    await tx.insert(workspace).values({ id: newId(), organizationId: orgId, slug: "default", name: "Default" });
+    console.log(`[zeqqat] created the @${OFFICIAL_ORG_SLUG} system organization for the official catalog`);
+    return orgId;
+  }
 
   const [previous] = await tx
     .select({ ownerUserId: organization.ownerUserId })
