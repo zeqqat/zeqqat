@@ -694,3 +694,26 @@ export const callLog = pgTable("call_log", {
   index("call_log_request_idx").on(t.requestId, t.createdAt),
   index("call_log_org_created_idx").on(t.organizationId, t.createdAt),
 ]);
+
+// ---------- Install telemetry (lib/telemetry.ts) ----------
+
+// This install's anonymous id: one row, created on first start. It is the
+// only thing that ties one install's pings together; it is random and says
+// nothing about who runs the install.
+export const installIdentity = pgTable("install_identity", {
+  id: uuid("id").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Received pings, one row per install. Only the hosted zeqqat.com
+// (ZEQQAT_EDITION=cloud) accepts pings, so on a self-hosted install this
+// stays empty. No IP address, hostname or user data is stored.
+export const telemetryInstall = pgTable("telemetry_install", {
+  installId: uuid("install_id").primaryKey(),
+  version: text("version").notNull(),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  pingCount: integer("ping_count").notNull().default(1),
+}, (t) => [
+  index("telemetry_install_last_seen_idx").on(t.lastSeenAt),
+]);

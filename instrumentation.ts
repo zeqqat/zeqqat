@@ -6,5 +6,7 @@ export async function register() {
     await runMigrations();
     const { syncOfficialCatalogOnStartup } = await import("./lib/official-catalog");
     await syncOfficialCatalogOnStartup();
+    const { startTelemetry } = await import("./lib/telemetry");
+    await startTelemetry();
   }
 }

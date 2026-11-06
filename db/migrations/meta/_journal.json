@@ -92,6 +92,13 @@
       "when": 1793903244256,
       "tag": "0012_spec_import",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793975775716,
+      "tag": "0013_install_telemetry",
+      "breakpoints": true
     }
   ]
 }

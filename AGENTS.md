@@ -197,6 +197,17 @@ Rows from before reasons existed show as single-call cards.
 `tests/e2e/activity-seed.ts` runs the whole flow locally against a
 throwaway Postgres and a stand-in Dokploy.
 
+**Install telemetry** (`lib/telemetry.ts`): a self-hosted install sends
+`{ installId, version }` to `https://zeqqat.com/api/telemetry` on start and
+daily (`install_identity` holds the random id). Only the cloud edition
+accepts pings (`app/api/telemetry`, into `telemetry_install`, no IP stored).
+Off with `ZEQQAT_TELEMETRY=0` or `DO_NOT_TRACK=1`, and never in dev or the
+cloud edition. Never add a field to the ping without updating the README's
+"Anonymous install ping" section: what is sent is a promise to self-hosters.
+The **Operator** page (`/app/operator`, `lib/operator.ts`) is visible only to
+the owner of `@zeqqat`: sign-ups, usage counts and received installs.
+`pnpm exec tsx tests/e2e/telemetry-flow.ts` runs the ping loop end to end.
+
 **Agent docs** live in `lib/agent-docs.ts`: `zeqqat_docs` ranks them with
 Postgres full-text search, and they're public at `/docs/agents/<page>`
 (each passage links to its `#section`).

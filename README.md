@@ -82,6 +82,18 @@ After you connect your Dokploy, Zeqqat gives you a connection URL like `https://
 
 Every option is documented in [`.env.example`](.env.example).
 
+### Anonymous install ping
+
+So we can tell how many self-hosted installs exist and which versions they run, a self-hosted install sends one small ping to `https://zeqqat.com/api/telemetry` when it starts and once a day after that. The ping is exactly this, and nothing else:
+
+```json
+{ "installId": "a random UUID made on first start", "version": "0.2.1" }
+```
+
+No IP address, hostname, users, emails, instances, API keys, connections or tool calls are ever sent, and zeqqat.com doesn't store your IP. The code is in [`lib/telemetry.ts`](lib/telemetry.ts).
+
+To turn it off, set `ZEQQAT_TELEMETRY=0` (`DO_NOT_TRACK=1` works too) and restart.
+
 ## ☁️ Cloud vs Self-hosted
 
 | | Zeqqat Cloud | Self-hosted |

@@ -61,6 +61,10 @@ GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>`}</pre>
             <b>https://zeqqat.example.com/api/auth/callback/github</b>. Google sign-in works the same way with{" "}
             <b>GOOGLE_CLIENT_ID</b> and <b>GOOGLE_CLIENT_SECRET</b>.
           </p>
+          <p className="zq-note">
+            Your install sends zeqqat.com one anonymous ping on start and once a day: a random install id and the
+            version, nothing else (no IP, users or keys). Set <b>ZEQQAT_TELEMETRY=0</b> to turn it off.
+          </p>
         </section>
 
         <section className="zq-block">

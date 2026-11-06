@@ -6,7 +6,7 @@ import { authClient } from "../lib/auth-client";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
 import { ThemeToggle } from "./ThemeToggle";
 
-type Pane = "overview" | "connections" | "integrations" | "tools" | "policies" | "activity" | "members" | "settings";
+type Pane = "overview" | "connections" | "integrations" | "tools" | "policies" | "activity" | "members" | "settings" | "operator";
 
 // `also` lists other paths that belong to the same pane, so an instance
 // page (/app/instances/<id>) still highlights Integrations.
@@ -20,6 +20,8 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[] }[] = [
   { pane: "members", label: "Members", href: "/app/team" },
   { pane: "settings", label: "Settings", href: "/app/settings" },
 ];
+// Shown only to the operator (lib/operator.ts).
+const OPERATOR_ITEM: (typeof ITEMS)[number] = { pane: "operator", label: "Operator", href: "/app/operator" };
 
 export type ShellOrg = { id: string; slug: string; name: string };
 export type ShellWorkspace = { id: string; slug: string; name: string; role: "admin" | "member" | "viewer" };
@@ -44,6 +46,7 @@ export function AppShell({
   workspaces,
   currentWorkspace,
   initialMenu,
+  operator = false,
   children,
 }: {
   user: { name: string; email: string; image: string | null; username: string };
@@ -55,6 +58,7 @@ export function AppShell({
   workspaces: ShellWorkspace[]; // the current org's workspaces this user can open
   currentWorkspace: ShellWorkspace;
   initialMenu: MenuState;
+  operator?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -284,7 +288,7 @@ export function AppShell({
             </div>
 
             <nav className="zq-menu" aria-label="Dashboard">
-              {ITEMS.map((item) => {
+              {(operator ? [...ITEMS, OPERATOR_ITEM] : ITEMS).map((item) => {
                 const isActive =
                   item.pane === "overview"
                     ? pathname === "/app"
