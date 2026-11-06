@@ -4,7 +4,6 @@ import { edition, siteHost } from "../../lib/edition";
 import { APP_VERSION } from "../../lib/version";
 import { requireWorkspace } from "../../lib/guard";
 import { listUserWorkspaces, orgsOf } from "../../lib/workspace";
-import { isOperator } from "../../lib/operator";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, ws } = await requireWorkspace();
@@ -17,7 +16,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const personal = all.find((w) => w.organizationKind === "personal" && w.orgRole === "owner");
   const username = personal?.organizationSlug ?? user.email.split("@")[0];
   const menuCookie = (await cookies()).get("zq_menu")?.value;
-  const operator = await isOperator(user.id);
   const initialMenu: MenuState = menuCookie === "open" || menuCookie === "closed" ? menuCookie : null;
 
   return (
@@ -32,7 +30,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         workspaces={inOrg}
         currentWorkspace={{ id: ws.workspaceId, slug: ws.workspaceSlug, name: ws.workspaceName, role: ws.wsRole }}
         initialMenu={initialMenu}
-        operator={operator}
       >
         {children}
       </AppShell>

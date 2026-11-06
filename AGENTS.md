@@ -217,8 +217,12 @@ accepts pings (`app/api/telemetry`, into `telemetry_install`, no IP stored).
 Off with `ZEQQAT_TELEMETRY=0` or `DO_NOT_TRACK=1`, and never in dev or the
 cloud edition. Never add a field to the ping without updating the README's
 "Anonymous install ping" section: what is sent is a promise to self-hosters.
-The **Operator** page (`/app/operator`, `lib/operator.ts`) is visible only to
-the owner of `@zeqqat`: sign-ups, usage counts and received installs.
+The **operator stats API** (`/api/operator/*`, `lib/operator.ts`) serves
+read-only sign-up, usage and install numbers to the operator's dashboard,
+which reads it through Zeqqat itself (import `/api/operator/openapi.json`
+as an app). Off (404) unless `ZEQQAT_OPERATOR_KEY` (32+ chars) is set;
+every call but the spec needs it as a Bearer token. No dashboard UI lives
+in the app.
 `pnpm exec tsx tests/e2e/telemetry-flow.ts` runs the ping loop end to end.
 
 **Agent docs** live in `lib/agent-docs.ts`: `zeqqat_docs` ranks them with

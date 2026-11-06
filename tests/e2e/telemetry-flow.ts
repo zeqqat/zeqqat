@@ -90,11 +90,12 @@ async function main() {
     const after = await db.select().from(telemetryInstall);
     assert(after.length === 1 && after[0].pingCount === 2 && after[0].version === "9.9.9", "a repeat ping updates the same install");
 
-    // The Operator page's queries run and count this install.
-    const { operatorStats } = await import("../../lib/operator");
-    const stats = await operatorStats();
-    assert(stats.installs.total === 1 && stats.installs.active7 === 1, "operator stats count the install as active");
-    assert(stats.signupsDaily.length === 30 && stats.users.total === 0, "operator stats return 30 days of sign-ups");
+    // The operator stats API's queries run and count this install.
+    const { summary, daily, installs } = await import("../../lib/operator");
+    const sum = await summary();
+    assert(sum.installsSeen === 1 && sum.installsActive7d === 1 && sum.usersTotal === 0, "operator summary counts the install as active");
+    assert((await daily(30)).length === 30, "operator daily returns 30 days");
+    assert((await installs(10))[0]?.version === "9.9.9", "operator installs lists it");
 
     console.log("\nall telemetry checks passed");
   } finally {
