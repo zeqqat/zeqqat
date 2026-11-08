@@ -76,9 +76,10 @@ After you connect your Dokploy, Zeqqat gives you a connection URL like `https://
 | `POSTGRES_PASSWORD` | yes | Password for the bundled Postgres |
 | `BETTER_AUTH_SECRET` | yes | Session secret: `openssl rand -base64 32` |
 | `ZEQQAT_ENCRYPTION_KEY` | yes | Encrypts stored API keys: `openssl rand -base64 32`. Keep it safe, a new key makes stored keys unreadable |
-| `ENABLED_AUTH_PROVIDERS` | yes | `github`, `google`, or both, comma separated |
+| `ENABLED_AUTH_PROVIDERS` | yes | Any of `github`, `google` and `email`, comma separated |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for GitHub sign-in | A GitHub OAuth app with callback `<your URL>/api/auth/callback/github` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | for Google sign-in | A Google OAuth client with redirect URI `<your URL>/api/auth/callback/google` |
+| `MAIL_FROM` plus `SMTP_URL` or `RESEND_API_KEY` | for email sign-in | Sender address, and how to send: any SMTP server (`smtps://user:password@smtp.example.com:465`) or a Resend API key. People sign in with a 6-digit code sent to their email |
 
 Every option is documented in [`.env.example`](.env.example).
 

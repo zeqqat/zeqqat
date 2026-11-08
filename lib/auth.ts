@@ -1,10 +1,12 @@
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { user as userTable } from "../db/schema";
 import { newId } from "./id";
+import { mailerConfigured, sendMail, signInCodeMail } from "./mailer";
 import { runSignupTransaction } from "./signup";
 
 // ZEQQAT_EDITION gate: this is the one module that answers "which providers
@@ -12,9 +14,16 @@ import { runSignupTransaction } from "./signup";
 // 'cloud' is built in this slice.
 const enabledProviders = (process.env.ENABLED_AUTH_PROVIDERS ?? "google").split(",").map((p) => p.trim());
 
-// Sign-in buttons to render, in display order. Only providers that are both
-// enabled and configured here; email sign-in isn't built yet.
-export const signInProviders = (["google", "github"] as const).filter((p) => enabledProviders.includes(p));
+// Email sign-in sends a one-time code, so it needs a mailer (lib/mailer.ts).
+// Listed in ENABLED_AUTH_PROVIDERS without one, it stays off.
+const emailEnabled = enabledProviders.includes("email") && mailerConfigured();
+
+// Sign-in methods to render, in display order. Only providers that are both
+// enabled and configured here. "email" renders as a code form under the
+// buttons.
+export const signInProviders = (["google", "github", "email"] as const).filter((p) =>
+  p === "email" ? emailEnabled : enabledProviders.includes(p),
+);
 
 export const auth = betterAuth({
   baseURL: process.env.ZEQQAT_PUBLIC_URL,
@@ -57,6 +66,31 @@ export const auth = betterAuth({
           },
         }
       : {}),
+  },
+  // Email sign-in: a 6-digit code, good for 10 minutes and 5 tries. A code
+  // proves the person owns the address, so the account is created with a
+  // verified email (and an existing account with that email signs in).
+  plugins: emailEnabled
+    ? [
+        emailOTP({
+          otpLength: 6,
+          expiresIn: 600,
+          allowedAttempts: 5,
+          storeOTP: "hashed",
+          async sendVerificationOTP({ email, otp, type }) {
+            if (type !== "sign-in") return;
+            await sendMail(signInCodeMail(email, otp));
+          },
+        }),
+      ]
+    : [],
+  // Each code request sends an email, so it gets a tighter limit than the
+  // rest of the auth API.
+  rateLimit: {
+    customRules: {
+      "/email-otp/send-verification-otp": { window: 60, max: 3 },
+      "/sign-in/email-otp": { window: 60, max: 10 },
+    },
   },
   // OAuth failures land back on the page that started the sign-in (the
   // client passes errorCallbackURL); this is only the fallback.

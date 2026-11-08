@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts, SITE_URL } from "@/lib/blog";
 
-// Only public pages belong here. The rest of the site is gated until launch.
+// Public pages only: the landing page, integrations and the blog. The
+// dashboard needs a sign-in and stays out.
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   const newest = posts[0]?.date;
   return [
+    { url: `${SITE_URL}/`, changeFrequency: "weekly", priority: 1 },
+    { url: `${SITE_URL}/integrations`, changeFrequency: "weekly", priority: 0.9 },
     {
       url: `${SITE_URL}/blog`,
       lastModified: newest ? new Date(newest) : undefined,

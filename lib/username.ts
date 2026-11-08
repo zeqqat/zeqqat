@@ -18,7 +18,7 @@ export const RESERVED_USERNAMES = new Set([
   "app", "signin", "signup", "signout", "logout", "invite", "invites", "auth",
   "v1", "search", "new", "about", "help", "support", "official", "verified",
   "status", "blog", "pricing", "terms", "privacy", "security", "static", "assets",
-  "public", "favicon", "robots", "sitemap", "well_known",
+  "public", "favicon", "robots", "sitemap", "well_known", "integrations", "apps",
 ]);
 
 export function normalizeSlug(raw: string): string {

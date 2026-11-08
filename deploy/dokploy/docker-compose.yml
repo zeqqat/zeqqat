@@ -1,6 +1,6 @@
 services:
   zeqqat:
-    image: ghcr.io/zeqqat/zeqqat:0.2.5
+    image: ghcr.io/zeqqat/zeqqat:0.3.0
     restart: unless-stopped
     depends_on:
       postgres:
@@ -16,6 +16,9 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      MAIL_FROM: ${MAIL_FROM:-}
+      SMTP_URL: ${SMTP_URL:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       ZEQQAT_TELEMETRY: ${ZEQQAT_TELEMETRY:-1}
     expose:
       - "3000"

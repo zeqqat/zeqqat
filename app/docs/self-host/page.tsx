@@ -59,7 +59,9 @@ GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>`}</pre>
             Generate the secrets once and keep them. A new <b>ZEQQAT_ENCRYPTION_KEY</b> makes stored Dokploy keys
             unreadable. In your GitHub OAuth app, set the callback URL to{" "}
             <b>https://zeqqat.example.com/api/auth/callback/github</b>. Google sign-in works the same way with{" "}
-            <b>GOOGLE_CLIENT_ID</b> and <b>GOOGLE_CLIENT_SECRET</b>.
+            <b>GOOGLE_CLIENT_ID</b> and <b>GOOGLE_CLIENT_SECRET</b>. For email sign-in (a 6-digit code by email), add{" "}
+            <b>email</b> to <b>ENABLED_AUTH_PROVIDERS</b> and set <b>MAIL_FROM</b> plus <b>SMTP_URL</b> (or{" "}
+            <b>RESEND_API_KEY</b>).
           </p>
           <p className="zq-note">
             Your install sends zeqqat.com one anonymous ping on start and once a day: a random install id and the

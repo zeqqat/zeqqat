@@ -24,6 +24,9 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_URL: ${SMTP_URL:-}
       # Anonymous install ping (README, "Anonymous install ping"). 0 turns it off.
       ZEQQAT_TELEMETRY: ${ZEQQAT_TELEMETRY:-1}
     expose:

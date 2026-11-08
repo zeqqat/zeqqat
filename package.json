@@ -1,6 +1,6 @@
 {
   "name": "zeqqat",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
@@ -23,6 +23,7 @@
     "drizzle-orm": "^0.45.2",
     "marked": "^15",
     "next": "16.3.5",
+    "nodemailer": "^7",
     "pg": "^8.13.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.11.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",

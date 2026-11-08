@@ -9,9 +9,9 @@ import { authClient } from "../lib/auth-client";
 // no provider is the "main" one), Allow/Cancel with a pending state, and
 // "Switch account".
 
-export type SignInProvider = "google" | "github";
+export type SignInProvider = "google" | "github" | "email";
 
-const LABELS: Record<SignInProvider, string> = {
+const LABELS: Record<Exclude<SignInProvider, "email">, string> = {
   google: "Continue with Google",
   github: "Continue with GitHub",
 };
@@ -47,8 +47,10 @@ export function SignInButtons({
   error?: string | null;
 }) {
   const [busy, setBusy] = useState<SignInProvider | null>(null);
+  const social = providers.filter((p): p is Exclude<SignInProvider, "email"> => p !== "email");
+  const withEmail = providers.includes("email");
 
-  async function start(provider: SignInProvider) {
+  async function start(provider: Exclude<SignInProvider, "email">) {
     setBusy(provider);
     try {
       await authClient.signIn.social({ provider, callbackURL, errorCallbackURL });
@@ -64,7 +66,7 @@ export function SignInButtons({
           {error}
         </p>
       )}
-      {providers.map((p) => (
+      {social.map((p) => (
         <button
           key={p}
           type="button"
@@ -78,7 +80,161 @@ export function SignInButtons({
           {busy === p && <Spinner />}
         </button>
       ))}
+      {withEmail && (
+        <>
+          {social.length > 0 && (
+            <div className="zq-or" role="separator">
+              <span>or</span>
+            </div>
+          )}
+          <EmailCode callbackURL={callbackURL} locked={busy !== null && busy !== "email"} onBusy={(b) => setBusy(b ? "email" : null)} />
+        </>
+      )}
     </div>
+  );
+}
+
+const CODE_ERRORS: Record<string, string> = {
+  INVALID_OTP: "That code isn't right. Check the email and try again.",
+  OTP_EXPIRED: "That code has expired. Send a new one.",
+  TOO_MANY_ATTEMPTS: "Too many wrong codes. Send a new one.",
+  email_not_verified: "Sign-in didn't work. Try again.",
+};
+
+function codeError(e: { code?: string; status?: number; message?: string } | null | undefined): string {
+  if (!e) return "Sign-in didn't work. Try again.";
+  if (e.status === 429) return "Too many tries. Wait a minute, then try again.";
+  return (e.code && CODE_ERRORS[e.code]) || "Sign-in didn't work. Try again.";
+}
+
+// Email sign-in: type your email, get a 6-digit code, type the code. A new
+// email creates the account, an existing one signs in.
+function EmailCode({ callbackURL, locked, onBusy }: { callbackURL: string; locked: boolean; onBusy: (b: boolean) => void }) {
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [pending, setPending] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [sentNote, setSentNote] = useState<string | null>(null);
+
+  async function send(e?: React.FormEvent) {
+    e?.preventDefault();
+    setPending(true);
+    onBusy(true);
+    setErr(null);
+    const { error } = await authClient.emailOtp.sendVerificationOtp({ email: email.trim(), type: "sign-in" });
+    setPending(false);
+    onBusy(false);
+    if (error) {
+      setErr(error.status === 429 ? "Too many codes asked for. Wait a minute, then try again." : "Couldn't send the code. Check the address and try again.");
+      return;
+    }
+    setStep("code");
+    setCode("");
+    setSentNote(`We sent a code to ${email.trim()}.`);
+  }
+
+  async function verify(e: React.FormEvent) {
+    e.preventDefault();
+    setPending(true);
+    onBusy(true);
+    setErr(null);
+    const { error } = await authClient.signIn.emailOtp({ email: email.trim(), otp: code.trim() });
+    if (error) {
+      setPending(false);
+      onBusy(false);
+      setErr(codeError(error));
+      return;
+    }
+    window.location.assign(callbackURL);
+  }
+
+  if (step === "email") {
+    return (
+      <form className="zq-email-form" onSubmit={send}>
+        <label className="zq-visually-hidden" htmlFor="zq-signin-email">
+          Email
+        </label>
+        <input
+          id="zq-signin-email"
+          className="zq-input"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={pending || locked}
+        />
+        {err && (
+          <p className="zq-consent-error" role="alert">
+            {err}
+          </p>
+        )}
+        <button type="submit" className="zq-google zq-consent-alt" disabled={pending || locked || !email.trim()} aria-busy={pending}>
+          <MailIcon />
+          Email me a code
+          {pending && <Spinner />}
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <form className="zq-email-form" onSubmit={verify}>
+      <p className="zq-email-sent">{sentNote}</p>
+      <label className="zq-visually-hidden" htmlFor="zq-signin-code">
+        Code
+      </label>
+      <input
+        id="zq-signin-code"
+        className="zq-input zq-code-input"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="[0-9]{6}"
+        maxLength={6}
+        required
+        autoFocus
+        placeholder="000000"
+        value={code}
+        onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+        disabled={pending}
+      />
+      {err && (
+        <p className="zq-consent-error" role="alert">
+          {err}
+        </p>
+      )}
+      <button type="submit" className="zq-google" disabled={pending || code.length !== 6} aria-busy={pending}>
+        Sign in
+        {pending && <Spinner />}
+      </button>
+      <div className="zq-email-links">
+        <button type="button" className="zq-link" onClick={() => send()} disabled={pending}>
+          Send a new code
+        </button>
+        <button
+          type="button"
+          className="zq-link"
+          onClick={() => {
+            setStep("email");
+            setErr(null);
+          }}
+          disabled={pending}
+        >
+          Use another email
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3.5 6.5 8.5 6.5 8.5-6.5" />
+    </svg>
   );
 }
 

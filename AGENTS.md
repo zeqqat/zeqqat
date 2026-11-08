@@ -11,8 +11,10 @@ integration.
 
 - Next.js 16 (App Router, Turbopack), TypeScript, React 19
 - Postgres via `drizzle-orm` (`node-postgres` driver)
-- Better Auth (Google and GitHub sign-in for humans, accounts linked by
-  verified email; email sign-in planned)
+- Better Auth (Google, GitHub and email sign-in for humans, accounts linked
+  by verified email). Email sign-in is a 6-digit code (`emailOTP` plugin),
+  offered only when `email` is in `ENABLED_AUTH_PROVIDERS` and a mailer is
+  set (`lib/mailer.ts`: `MAIL_FROM` plus `RESEND_API_KEY` or `SMTP_URL`)
 - pnpm — this repo enforces it (`preinstall: npx only-allow pnpm`)
 
 ## Commands
@@ -224,6 +226,15 @@ as an app). Off (404) unless `ZEQQAT_OPERATOR_KEY` (32+ chars) is set;
 every call but the spec needs it as a Bearer token. No dashboard UI lives
 in the app.
 `pnpm exec tsx tests/e2e/telemetry-flow.ts` runs the ping loop end to end.
+
+**Public site** (cloud edition only; self-hosted redirects into `/app`):
+`/` and `/integrations` share `components/SiteChrome.tsx`. The apps listed
+on `/integrations` and in the landing page's "Works with" row come from
+`lib/integrations-directory.ts`. Only list a spec app after running its
+spec through the importer: specs over 15 MB (Cloudflare's), Swagger 2 files
+and GraphQL-only APIs don't import. "Add" links go to
+`/app/integrations?add=app&spec=...` (the import form, filled in), through
+`/signup?next=...` when signed out (`lib/next-path.ts` keeps `next` on-site).
 
 **Agent docs** live in `lib/agent-docs.ts`: `zeqqat_docs` ranks them with
 Postgres full-text search, and they're public at `/docs/agents/<page>`

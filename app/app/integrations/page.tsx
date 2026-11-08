@@ -155,7 +155,14 @@ export default async function IntegrationsPage({
       {importing && isOwner && (
         <section className="zq-block">
           <h2 className="zq-block-t">Add an app</h2>
-          <ImportAppForm account={ws.organizationSlug} />
+          <ImportAppForm
+            account={ws.organizationSlug}
+            prefill={{
+              specUrl: typeof params.spec === "string" ? params.spec : undefined,
+              docsUrl: typeof params.docs === "string" ? params.docs : undefined,
+              name: typeof params.name === "string" ? params.name : undefined,
+            }}
+          />
         </section>
       )}
 
