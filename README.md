@@ -13,7 +13,7 @@
     <a href="https://github.com/zeqqat/zeqqat/stargazers"><img src="https://img.shields.io/github/stars/zeqqat/zeqqat?style=flat" alt="Stars"></a>
   </p>
 
-  <p><b>Give AI access to your APIs and MCPs. Minus the risk.</b></p>
+  <p><b>Give AI access to your Dokploy. Minus the risk.</b></p>
 
   <p>
     <a href="https://zeqqat.com">Website</a> ·
@@ -27,7 +27,7 @@
 
 <br>
 
-Zeqqat is an open source MCP gateway between AI agents and your APIs. Your agent connects to one Zeqqat URL instead of holding your API keys. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
+Zeqqat is the safe, open source MCP for Dokploy, self-hosted or Cloud. Your agent connects to one Zeqqat URL instead of holding your API keys. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
 
 ## ✨ Features
 

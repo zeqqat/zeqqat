@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "zeqqat",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Open source MCP gateway. Your agent connects to one Zeqqat URL instead of holding your API keys; Zeqqat enforces permissions, keeps secrets out of the model and logs every call.",
   "author": {
     "name": "Zeqqat",

@@ -16,19 +16,19 @@ export default function LandingPage() {
       <div className="zq-mid">
         <main className="zq-in">
           <h1 className="zq-mark zq-mark-wide">
-            Give AI access to your
+            Give AI access to
             <br />
-            APIs and MCPs.
+            your Dokploy.
             <br />
             Minus the risk<span className="dot">.</span>
           </h1>
           <p className="zq-tagline">
-            Control and monitor every agent from one place:{" "}
+            The safe MCP for Dokploy, self-hosted or Cloud. Works with{" "}
             <br className="zq-br-wide" />
             <AgentRotator />{" "}
             <br className="zq-br-wide" />
-            Decide what each one can and can&rsquo;t do, add teammates with their own roles, and
-            keep your API keys, env vars and secrets away from the LLM.
+            Let it deploy, read logs and fix your apps. You decide exactly what it may touch,
+            see every call it makes, and your API keys, env vars and secrets never reach the LLM.
           </p>
 
           <div className="zq-hero-cta">
@@ -44,8 +44,8 @@ export default function LandingPage() {
               Get started free <span aria-hidden="true">&rarr;</span>
             </a>
             <p className="zq-hero-note">
-              Connect your agent once, add your apps, and pick what each agent may do. Dokploy is
-              ready to go, and any app with an OpenAPI spec adds in a minute.
+              Nothing to install: one remote URL that works from Claude on your laptop or your
+              phone. Add your Dokploy, pick what your agent may do, and you&rsquo;re done.
             </p>
             <p className="zq-hero-alt">
               Prefer your own server? <a href={SITE_LINKS.selfHost}>Self-host it</a>

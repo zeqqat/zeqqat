@@ -20,11 +20,11 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Zeqqat: give AI access to your APIs and MCPs, minus the risk",
+    default: "Zeqqat: the safe MCP for Dokploy",
     template: "%s | Zeqqat",
   },
   description:
-    "Control and monitor every agent from one place. Decide what each one can and can't do, add teammates with their own roles, and keep your API keys, env vars and secrets away from the LLM.",
+    "Give AI access to your Dokploy, self-hosted or Cloud. Your agent deploys, reads logs and fixes your apps, you decide exactly what it may touch, and your API keys, env vars and secrets never reach the LLM.",
 };
 
 // Applied before first paint so a dark-mode reader never sees a white flash;
