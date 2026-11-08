@@ -24,7 +24,8 @@ export default function SelfHostGuide() {
           <h2 className="zq-block-t">1. Create the compose service</h2>
           <ol className="zq-steps">
             <li>
-              Create a project called <b>zeqqat</b>, and in it a <b>Docker Compose</b> service.
+              Create a project called <b>zeqqat</b> (or another name if that one is taken), and in it a{" "}
+              <b>Docker Compose</b> service.
             </li>
             <li>
               Use the <b>docker-compose.yml</b> from the Zeqqat repository (github.com/zeqqat/zeqqat), either by
@@ -36,18 +37,38 @@ export default function SelfHostGuide() {
         <section className="zq-block">
           <h2 className="zq-block-t">2. Set the environment and domain</h2>
           <ol className="zq-steps">
-            <li>Set the environment variables below on the compose service.</li>
             <li>
-              Add your domain (for example <b>zeqqat.example.com</b>) to the <b>zeqqat</b> service on port{" "}
-              <b>3000</b> with HTTPS on. Its DNS must point at this Dokploy server.
+              In the compose service&rsquo;s <b>Domains</b>, add a domain and click <b>Generate</b>. Dokploy gives you a
+              free address that already points at this server, so there&rsquo;s no DNS to set up. This guide calls it{" "}
+              <b>[your Dokploy address]</b>.
             </li>
-            <li>Deploy, then open the domain and sign in.</li>
+            <li>
+              Set it on the <b>zeqqat</b> service, port <b>3000</b>, with HTTPS on (Let&rsquo;s Encrypt).
+            </li>
+            <li>
+              Set the environment variables below on the compose service, with <b>ZEQQAT_PUBLIC_URL</b> set to that
+              address.
+            </li>
+            <li>Deploy, then open the address and sign in.</li>
           </ol>
+          <p className="zq-note">
+            Prefer your own domain? Use it in place of the generated one; point its DNS at this server first.
+          </p>
+          <div className="zq-panel-box" style={{ marginTop: 16 }}>
+            <p className="zq-kicker">If you are an agent</p>
+            <p className="zq-note" style={{ marginTop: 6 }}>
+              Unless the user gave a domain they own, get the address from Dokploy&rsquo;s <b>domain.generateDomain</b>{" "}
+              with the compose service&rsquo;s <b>appName</b>, then add it with <b>domain.create</b> (serviceName{" "}
+              <b>zeqqat</b>, port <b>3000</b>, HTTPS with Let&rsquo;s Encrypt). Check any address with{" "}
+              <b>domain.validateDomain</b> before deploying, and stop if it doesn&rsquo;t resolve. Never use
+              example.com.
+            </p>
+          </div>
           <div className="zq-cbox" style={{ marginTop: 16 }}>
             <div className="zq-cbox-top">
               <span className="zq-cbox-label">Environment</span>
             </div>
-            <pre className="zq-cbox-block">{`ZEQQAT_PUBLIC_URL=https://zeqqat.example.com
+            <pre className="zq-cbox-block">{`ZEQQAT_PUBLIC_URL=https://[your Dokploy address]
 POSTGRES_PASSWORD=<openssl rand -hex 24>
 BETTER_AUTH_SECRET=<openssl rand -base64 32>
 ZEQQAT_ENCRYPTION_KEY=<openssl rand -base64 32>
@@ -58,7 +79,7 @@ GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>`}</pre>
           <p className="zq-note">
             Generate the secrets once and keep them. A new <b>ZEQQAT_ENCRYPTION_KEY</b> makes stored Dokploy keys
             unreadable. In your GitHub OAuth app, set the callback URL to{" "}
-            <b>https://zeqqat.example.com/api/auth/callback/github</b>. Google sign-in works the same way with{" "}
+            <b>https://[your Dokploy address]/api/auth/callback/github</b>. Google sign-in works the same way with{" "}
             <b>GOOGLE_CLIENT_ID</b> and <b>GOOGLE_CLIENT_SECRET</b>. For email sign-in (a 6-digit code by email), add{" "}
             <b>email</b> to <b>ENABLED_AUTH_PROVIDERS</b> and set <b>MAIL_FROM</b> plus <b>SMTP_URL</b> (or{" "}
             <b>RESEND_API_KEY</b>).

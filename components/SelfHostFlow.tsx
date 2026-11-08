@@ -19,7 +19,9 @@ type Props = {
 // simulation: it shows exactly what the agent did.
 export function SelfHostFlow({ instances, agents, guideUrl, siteHost }: Props) {
   const [instanceId, setInstanceId] = useState(instances[0]?.id ?? "");
-  const [domain, setDomain] = useState("zeqqat.example.com");
+  // Empty by default: the agent uses the free address Dokploy generates,
+  // which already points at the server, so no DNS setup is needed.
+  const [domain, setDomain] = useState("");
   const [since, setSince] = useState<string | null>(null);
   const [calls, setCalls] = useState<CallView[]>([]);
   const [newUrl, setNewUrl] = useState("");
@@ -27,7 +29,12 @@ export function SelfHostFlow({ instances, agents, guideUrl, siteHost }: Props) {
   const [urlError, setUrlError] = useState<string | null>(null);
 
   const alias = instances.find((i) => i.id === instanceId)?.alias ?? "production";
-  const prompt = `Install Zeqqat on my Dokploy instance "${alias}", following ${guideUrl}. Use the domain ${domain}. Tell me when it is live.`;
+  const typed = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const placeholder = /example\.(com|org|net)$|\[|yourdomain/i.test(typed);
+  const domainLine = typed
+    ? `Use the domain ${typed}.`
+    : `Use the address Dokploy generates for it.`;
+  const prompt = `Install Zeqqat on my Dokploy instance "${alias}", following ${guideUrl}. ${domainLine} Tell me when it is live.`;
 
   useEffect(() => {
     if (!since || !instanceId) return;
@@ -87,9 +94,23 @@ export function SelfHostFlow({ instances, agents, guideUrl, siteHost }: Props) {
             <label className="zq-label" htmlFor="sh-domain">
               Domain for your Zeqqat
             </label>
-            <input className="zq-input" id="sh-domain" value={domain} onChange={(e) => setDomain(e.target.value)} />
+            <input
+              className="zq-input"
+              id="sh-domain"
+              value={domain}
+              placeholder="Leave empty to use Dokploy's free address"
+              onChange={(e) => setDomain(e.target.value)}
+            />
           </div>
         </div>
+        {placeholder && (
+          <div className="zq-warn-box" role="alert" style={{ marginTop: 10 }}>
+            <span className="ic" aria-hidden="true">
+              !
+            </span>
+            <span>That&rsquo;s a placeholder. Leave it empty to use Dokploy&rsquo;s free address, or use a domain you own.</span>
+          </div>
+        )}
         <div className="zq-cbox" style={{ marginTop: 16 }}>
           <div className="zq-cbox-top">
             <span className="zq-cbox-label">Send this to your agent</span>
@@ -100,8 +121,8 @@ export function SelfHostFlow({ instances, agents, guideUrl, siteHost }: Props) {
           </pre>
         </div>
         <p className="zq-help">
-          The agent needs Create and Edit on {alias}. New agents have both by default. Point the domain&rsquo;s DNS at that
-          Dokploy server first.
+          The agent needs Create and Edit on {alias}. New agents have both by default. Left empty, your Zeqqat gets a
+          free address from Dokploy with nothing to set up. A domain of your own needs its DNS pointed at that server first.
         </p>
         {!since && (
           <div className="zq-row-actions">
@@ -168,7 +189,7 @@ export function SelfHostFlow({ instances, agents, guideUrl, siteHost }: Props) {
               <input
                 className="zq-input"
                 id="sh-url"
-                placeholder={`https://${domain}`}
+                placeholder={typed ? `https://${typed}` : "https://the address your agent reports"}
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 style={{ flex: "999 1 260px" }}
@@ -200,8 +221,7 @@ export function SelfHostFlow({ instances, agents, guideUrl, siteHost }: Props) {
             </div>
             <ol className="zq-steps">
               <li>
-                Open <b>{confirmedUrl.replace(/^https:\/\//, "")}</b> and sign in with Google. The first account becomes its
-                owner.
+                Open <b>{confirmedUrl.replace(/^https:\/\//, "")}</b> and sign in. The first account becomes its owner.
               </li>
               <li>Connect your Dokploy there. The key is stored on your own server.</li>
               <li>In each agent, replace the {siteHost} URL with the one above and sign in again.</li>

@@ -49,8 +49,8 @@ Zeqqat is the safe, open source MCP for Dokploy, self-hosted or Cloud. Your agen
 
 1. Create a **Docker Compose** service from this repository, or paste [`docker-compose.yml`](docker-compose.yml).
 2. Set the environment variables listed under Configuration below.
-3. Add your domain to the `zeqqat` service on port **3000** and deploy.
-4. Open your domain, sign in, and connect your Dokploy.
+3. In Domains, click **Generate** for a free address that already points at your server (or use your own domain), and add it to the `zeqqat` service on port **3000** with HTTPS on. Deploy.
+4. Open that address, sign in, and connect your Dokploy.
 
 The full walkthrough is at [zeqqat.com/docs/self-host](https://zeqqat.com/docs/self-host).
 
@@ -67,13 +67,13 @@ To reach it locally on `http://localhost:3000`, uncomment the `ports` lines in `
 
 ### Connect an agent
 
-After you connect your Dokploy, Zeqqat gives you a connection URL like `https://zeqqat.example.com/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
+After you connect your Dokploy, Zeqqat gives you a connection URL like `https://your-zeqqat-address/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
 
 ## ⚙️ Configuration
 
 | Variable | Required | What it is |
 | --- | --- | --- |
-| `ZEQQAT_PUBLIC_URL` | yes | Your install's URL, for example `https://zeqqat.example.com` |
+| `ZEQQAT_PUBLIC_URL` | yes | Your install's URL, the address Dokploy generates for it, or a domain you own |
 | `POSTGRES_PASSWORD` | yes | Password for the bundled Postgres |
 | `BETTER_AUTH_SECRET` | yes | Session secret: `openssl rand -base64 32` |
 | `ZEQQAT_ENCRYPTION_KEY` | yes | Encrypts stored API keys: `openssl rand -base64 32`. Keep it safe, a new key makes stored keys unreadable |
