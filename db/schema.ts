@@ -320,6 +320,10 @@ export const apiEndpoint = pgTable("api_endpoint", {
   method: text("method").notNull(),
   path: text("path").notNull(),
   summary: text("summary"),
+  // Where summary came from: 'spec' (the spec or the bundled
+  // summaries.json) or 'accepted' (the publisher accepted a suggestion,
+  // lib/feedback.ts). Imports never overwrite an accepted summary.
+  summarySource: text("summary_source").notNull().default("spec"),
   description: text("description"),
   tags: jsonb("tags").notNull().default(sql`'[]'::jsonb`).$type<string[]>(),
   inputSchema: jsonb("input_schema").notNull(),
@@ -353,6 +357,7 @@ export const apiEndpoint = pgTable("api_endpoint", {
   check("api_endpoint_output_schema_source_check", sql`${t.outputSchemaSource} in ('declared','observed')`),
   check("api_endpoint_body_encoding_check", sql`${t.bodyEncoding} in ('json','form')`),
   check("api_endpoint_kind_check", sql`${t.kind} in ('read','create','edit','delete')`),
+  check("api_endpoint_summary_source_check", sql`${t.summarySource} in ('spec','accepted')`),
 ]);
 
 export const instance = pgTable("instance", {
@@ -717,4 +722,65 @@ export const telemetryInstall = pgTable("telemetry_install", {
   pingCount: integer("ping_count").notNull().default(1),
 }, (t) => [
   index("telemetry_install_last_seen_idx").on(t.lastSeenAt),
+]);
+
+// Search words agents used before finding a tool (lib/keywords.ts). When
+// an agent searched, the search missed a tool, and the agent then ran that
+// tool in the same request, each new plain word of the search is recorded
+// here, once per request. A word becomes a keyword of the tool (matched by
+// zeqqat_search, never shown to agents) once KEYWORD_MIN_REQUESTS
+// different requests recorded it. Only the word is stored: never the
+// query, inputs or results.
+export const endpointKeywordHit = pgTable("endpoint_keyword_hit", {
+  id: uuid("id").primaryKey(),
+  apiEndpointId: uuid("api_endpoint_id")
+    .notNull()
+    .references(() => apiEndpoint.id, { onDelete: "cascade" }),
+  word: text("word").notNull(),
+  requestId: uuid("request_id")
+    .notNull()
+    .references(() => agentRequest.id, { onDelete: "cascade" }),
+  // Who the request belonged to, so a threshold can later require several
+  // organizations before a word counts for everyone.
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("endpoint_keyword_hit_unique").on(t.apiEndpointId, t.word, t.requestId),
+  index("endpoint_keyword_hit_word_idx").on(t.word),
+  check("endpoint_keyword_hit_word_check", sql`${t.word} ~ '^[a-z]{3,20}$'`),
+]);
+
+// A better one-line summary for a tool, proposed by an agent through
+// zeqqat_feedback (lib/feedback.ts). Owners of the org that publishes the
+// integration accept or reject it in the dashboard; an accepted one
+// becomes the tool's summary for everyone using that integration.
+// Summaries are read by models, so none goes live without a person.
+export const summarySuggestion = pgTable("summary_suggestion", {
+  id: uuid("id").primaryKey(),
+  apiEndpointId: uuid("api_endpoint_id")
+    .notNull()
+    .references(() => apiEndpoint.id, { onDelete: "cascade" }),
+  // The org that publishes the integration: its owners review.
+  publisherOrganizationId: uuid("publisher_organization_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  // Where it came from. Shown to the publisher as the account's username.
+  fromOrganizationId: uuid("from_organization_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => user.id, { onDelete: "set null" }),
+  requestId: uuid("request_id").references(() => agentRequest.id, { onDelete: "set null" }),
+  currentSummary: text("current_summary"),
+  suggestedSummary: text("suggested_summary").notNull(),
+  note: text("note"),
+  status: text("status").notNull().default("pending"),
+  reviewedBy: uuid("reviewed_by").references(() => user.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("summary_suggestion_publisher_status_idx").on(t.publisherOrganizationId, t.status),
+  check("summary_suggestion_status_check", sql`${t.status} in ('pending','accepted','rejected')`),
+  check("summary_suggestion_length_check", sql`char_length(${t.suggestedSummary}) between 10 and 120`),
 ]);

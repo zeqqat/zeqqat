@@ -3,7 +3,7 @@ import { buildContext, type ZeqqatContext } from "./mcp-context";
 import { rateLimit } from "./rate-limit";
 import { normalizeReason, REASON_DESCRIPTION, REASON_MISSING, REASON_REQUIRED, resolveRequest } from "./requests";
 import { builtinAction } from "./tool-names";
-import { TOOL_NAMES, toolDescribe, toolDocs, toolImport, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
+import { TOOL_NAMES, toolDescribe, toolDocs, toolFeedback, toolImport, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
 import type { ToolResult } from "./executor";
 import { APP_VERSION } from "./version";
 
@@ -200,6 +200,27 @@ export const TOOLS = [
     outputSchema: outputSchema({ type: "object", properties: { integration: { type: "string" } }, required: ["integration"] }),
   },
   {
+    name: TOOL_NAMES.feedback,
+    description:
+      "Suggest a better one-line summary for a tool, after finishing the user's task, when its summary made it hard to find or pick: a search missed it, or you took a long way. The integration's publisher reviews it; nothing changes until they accept." +
+      CONTEXT_HINT,
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "operationId from zeqqat_search, e.g. deployment.queueList" },
+        instance: { type: "string", description: "Optional instance name, if two integrations share the operationId" },
+        summary: {
+          type: "string",
+          description: "The summary you would have wanted: one line of plain text, 10 to 120 characters, saying what the tool answers",
+        },
+        note: { type: "string", description: "Optional: what you searched for or tried first" },
+        reason: REASON,
+      },
+      required: ["name", "summary", "reason"],
+    },
+    outputSchema: outputSchema({ type: "object", properties: { suggestion: { type: "string" } }, required: ["suggestion"] }),
+  },
+  {
     name: TOOL_NAMES.docs,
     description:
       "Answers questions about how Zeqqat works: why a call was denied, permissions, integrations, instances, connections, errors. Pass a question; returns short passages." +
@@ -337,6 +358,9 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
       break;
     case TOOL_NAMES.secret:
       result = await toolSecret(ctx, args);
+      break;
+    case TOOL_NAMES.feedback:
+      result = await toolFeedback(ctx, args);
       break;
     case TOOL_NAMES.import:
       result = await toolImport(ctx, args);

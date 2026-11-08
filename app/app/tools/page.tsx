@@ -1,6 +1,7 @@
 import { and, asc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "../../../db";
 import { apiEndpoint, instance, integration, organization } from "../../../db/schema";
+import { reviewableOrgIds, suggestionsFor } from "../../../lib/feedback";
 import { requireWorkspace } from "../../../lib/guard";
 import { toCanonical, toolPagePath } from "../../../lib/tool-names";
 
@@ -15,8 +16,9 @@ export default async function ToolsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { ws } = await requireWorkspace();
+  const { user, ws } = await requireWorkspace();
   const params = await searchParams;
+  const toReview = (await suggestionsFor(await reviewableOrgIds(user.id), "pending")).length;
   const q = typeof params.q === "string" ? params.q.trim().slice(0, 80) : "";
   const kind = typeof params.kind === "string" && (KINDS as readonly string[]).includes(params.kind) ? params.kind : "";
 
@@ -75,6 +77,13 @@ export default async function ToolsPage({
         with zeqqat_search and run them with zeqqat_run by operationId on an instance; whether a run is allowed is decided by
         the connection (or the policy attached to the instance) and the person&rsquo;s role.
       </p>
+      {toReview > 0 && (
+        <p className="zq-note">
+          <a className="zq-textlink" href="/app/feedback">
+            {toReview === 1 ? "1 summary suggestion" : `${toReview} summary suggestions`} from agents to review
+          </a>
+        </p>
+      )}
 
       <form className="zq-search" role="search">
         <input className="zq-input" name="q" defaultValue={q} placeholder="Search, e.g. deploy, logs, domain" aria-label="Search tools" />

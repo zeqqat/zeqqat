@@ -30,9 +30,17 @@ export const AGENT_DOCS: DocSection[] = [
     title: "How Zeqqat works",
     text:
       "Zeqqat is an MCP gateway. One connection URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
-      "The agent sees eight built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat. " +
+      "The agent sees nine built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat, zeqqat_feedback suggests a better summary for a tool. " +
       "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
       "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the connection. A call without a reason is refused.",
+  },
+  {
+    id: "feedback",
+    page: "overview",
+    title: "Improving tool summaries",
+    text:
+      "zeqqat_search matches each word of a query on its own, against a tool's operationId, summary, path and tags, plus keywords learned from earlier searches: when a search missed a tool and the agent then ran it in the same request, the search's plain words are recorded, and once two requests used a word it finds that tool. " +
+      "When a summary made a tool hard to find or pick, call zeqqat_feedback after the task with the operationId and the one-line summary you would have wanted (10 to 120 characters, plain text). The integration's publisher reviews it; nothing changes until they accept, and then everyone using that integration gets it.",
   },
   {
     id: "context",

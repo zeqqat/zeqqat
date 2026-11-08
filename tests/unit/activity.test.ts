@@ -72,8 +72,8 @@ describe("small formatters", () => {
 });
 
 describe("the reason", () => {
-  it("is required on search, describe, run, secret and import, in their schemas too", () => {
-    expect([...REASON_REQUIRED].sort()).toEqual(["describe", "import", "run", "search", "secret"]);
+  it("is required on search, describe, run, secret, import and feedback, in their schemas too", () => {
+    expect([...REASON_REQUIRED].sort()).toEqual(["describe", "feedback", "import", "run", "search", "secret"]);
     for (const tool of TOOLS) {
       const action = builtinAction(tool.name)!;
       const required = (tool.inputSchema as { required?: string[] }).required ?? [];

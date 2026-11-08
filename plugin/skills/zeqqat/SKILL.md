@@ -42,4 +42,5 @@ Each instance either has a policy (an explicit allow list of tools) or allows wh
 
 - `zeqqat_docs` answers questions about Zeqqat.
 - `zeqqat_import` adds an app from a link to its OpenAPI spec.
+- `zeqqat_feedback` suggests a better one-line summary for a tool when its summary made it hard to find. Call it after the task; the publisher reviews it.
 - Agent docs: https://zeqqat.com/docs/agents

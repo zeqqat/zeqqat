@@ -2,7 +2,9 @@ import { and, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "../db";
 import { apiEndpoint, callLog, integration, organization } from "../db/schema";
 import { docSection, docsIndex, searchDocs } from "./agent-docs";
-import { endpointNames, findEndpoints, integrationRef, type FoundEndpoint } from "./catalog";
+import { endpointNames, findEndpoint, findEndpoints, integrationRef, type FoundEndpoint } from "./catalog";
+import { activeKeywords, endpointsWithKeywords, learnFromRun } from "./keywords";
+import { prefilterTerms, queryWords, rank } from "./search-rank";
 import { capJson } from "./call-log";
 import type { McpContext } from "./mcp-auth";
 import { reachableInstances, type ReachableInstance } from "./mcp-context";
@@ -12,6 +14,7 @@ import { accessSummary, toolAllowed } from "./policies";
 import { builtinToolName } from "./tool-names";
 import { mintGenerated, type GenerateKind } from "./secret-handles";
 import { ImportError, importFromUrl } from "./spec-import";
+import { submitSuggestion } from "./feedback";
 
 // The built-in tools, the only ones in tools/list. Built via
 // builtinToolName so they always pass Claude's client-side name check
@@ -27,6 +30,7 @@ export const TOOL_NAMES = {
   policy: builtinToolName("policy"),
   secret: builtinToolName("secret"),
   import: builtinToolName("import"),
+  feedback: builtinToolName("feedback"),
 } as const;
 
 type Ctx = McpContext;
@@ -90,16 +94,34 @@ export async function toolSearch(ctx: Ctx, args: { query?: string; limit?: numbe
   const integrationIds = [...new Set(instances.map((i) => i.integrationId))];
   const scope = inArray(apiEndpoint.integrationId, integrationIds.length ? integrationIds : [NO_ID]);
 
-  // Matches the operationId, the action segment, the summary, the path and
-  // the spec tags, so a category from the context finds its tools.
-  const like = `%${query}%`;
-  const rows = query
+  // Each query word is matched on its own (lib/search-rank.ts), so
+  // "deploy application" finds application.deploy. SQL narrows to tools
+  // containing any form of any word (operationId, action, summary, path,
+  // tags) or having it as a learned keyword (lib/keywords.ts); ranking
+  // keeps real word matches and orders them.
+  const qw = queryWords(query);
+  const terms = prefilterTerms(qw);
+  const byKeyword = await endpointsWithKeywords(qw.flatMap((q) => q.direct));
+  const anyTerm = terms.flatMap((t) => {
+    const like = `%${t}%`;
+    return [
+      ilike(apiEndpoint.name, like),
+      ilike(apiEndpoint.action, like),
+      ilike(apiEndpoint.summary, like),
+      ilike(apiEndpoint.path, like),
+      sql`exists (select 1 from jsonb_array_elements_text(${apiEndpoint.tags}) as t(tag) where t.tag ilike ${like})`,
+    ];
+  });
+  if (byKeyword.length) anyTerm.push(inArray(apiEndpoint.id, byKeyword));
+  const candidates = terms.length
     ? await db
         .select({
+          id: apiEndpoint.id,
           operationId: apiEndpoint.name,
           action: apiEndpoint.action,
           summary: apiEndpoint.summary,
           path: apiEndpoint.path,
+          tags: apiEndpoint.tags,
           kind: apiEndpoint.kind,
           integrationId: apiEndpoint.integrationId,
           integrationSlug: integration.slug,
@@ -109,22 +131,16 @@ export async function toolSearch(ctx: Ctx, args: { query?: string; limit?: numbe
         .from(apiEndpoint)
         .innerJoin(integration, eq(integration.id, apiEndpoint.integrationId))
         .innerJoin(organization, eq(organization.id, integration.organizationId))
-        .where(
-          and(
-            scope,
-            isNull(apiEndpoint.removedAt),
-            or(
-              ilike(apiEndpoint.name, like),
-              ilike(apiEndpoint.action, `%${query.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}%`),
-              ilike(apiEndpoint.summary, like),
-              ilike(apiEndpoint.path, like),
-              sql`exists (select 1 from jsonb_array_elements_text(${apiEndpoint.tags}) as t(tag) where t.tag ilike ${like})`,
-            ),
-          ),
-        )
-        .orderBy(integration.slug, apiEndpoint.name)
-        .limit(limit)
+        .where(and(scope, isNull(apiEndpoint.removedAt), or(...anyTerm)))
+        .limit(2000)
     : [];
+  const keywords = await activeKeywords(candidates.map((c) => c.id));
+  const rows = rank(
+    qw,
+    candidates.map((c) => ({ ...c, name: c.operationId, keywords: keywords.get(c.id) ?? [] })),
+  )
+    .slice(0, limit)
+    .map((r) => r.item);
 
   if (rows.length === 0) {
     // Never return a flat empty result: say what is connected so the
@@ -221,7 +237,27 @@ export async function toolRun(
       `name and instance are both required. name is an operationId from zeqqat_search; instance is one of: ${instanceNames(instances)}.`,
     );
   }
-  return runEndpoint(ctx, { endpointName: args.name, instanceAlias: args.instance, inputs: args.inputs ?? {} });
+  const result = await runEndpoint(ctx, { endpointName: args.name, instanceAlias: args.instance, inputs: args.inputs ?? {} });
+  if (result.ok && ctx.requestId) await learnAfterRun(ctx, args.name, args.instance);
+  return result;
+}
+
+// The searches earlier in this request that missed this tool teach it new
+// keywords (lib/keywords.ts).
+async function learnAfterRun(ctx: Ctx, name: string, alias: string) {
+  const inst = (await reachableInstances(ctx)).find((i) => i.alias === alias);
+  if (!inst) return;
+  const e = await findEndpoint(name, [inst.integrationId]);
+  if (!e) return;
+  await learnFromRun(ctx, {
+    id: e.id,
+    name: e.name,
+    summary: e.summary,
+    path: e.path,
+    tags: e.tags,
+    keywords: [],
+    integrationRef: integrationRef(e.orgSlug, e.integrationSlug),
+  });
 }
 
 // The context alone. lib/mcp-server.ts puts the full context (never the
@@ -384,4 +420,60 @@ export async function toolImport(
     if (!(err instanceof ImportError)) console.error("[zeqqat] import failed:", err);
     return logged(ctx, TOOL_NAMES.import, requestArgs, toolError(msg));
   }
+}
+
+// A better one-line summary for a tool, for its publisher to review
+// (lib/feedback.ts). Nothing changes until a person accepts it.
+export async function toolFeedback(
+  ctx: Ctx,
+  args: { name?: string; instance?: string; summary?: string; note?: string },
+): Promise<ToolResult> {
+  const summary = (args.summary ?? "").trim().replace(/\s+/g, " ");
+  const note = (args.note ?? "").trim() || null;
+  const requestArgs = { name: args.name ?? null, instance: args.instance ?? null, summary, note };
+  if (!args.name || !summary) {
+    return logged(ctx, TOOL_NAMES.feedback, requestArgs, toolError("name (an operationId from zeqqat_search) and summary are required."));
+  }
+  const instances = await reachableInstances(ctx);
+  let integrationIds = [...new Set(instances.map((i) => i.integrationId))];
+  if (args.instance) {
+    const inst = instances.find((i) => i.alias === args.instance);
+    if (!inst) {
+      return logged(
+        ctx,
+        TOOL_NAMES.feedback,
+        requestArgs,
+        toolError(`No instance called "${args.instance}" on this connection. Instances you can use: ${instanceNames(instances)}.`),
+      );
+    }
+    integrationIds = [inst.integrationId];
+  }
+  const found = await findEndpoints(args.name, integrationIds);
+  if (found.length !== 1) {
+    return logged(
+      ctx,
+      TOOL_NAMES.feedback,
+      requestArgs,
+      toolError(
+        found.length
+          ? `"${args.name}" exists in more than one integration. Pass an instance.`
+          : `No tool named "${args.name}" reachable through this connection. Use zeqqat_search to find the operationId.`,
+      ),
+    );
+  }
+  const e = found[0];
+  const sent = await submitSuggestion(ctx, e, summary, note);
+  if (!sent.ok) return logged(ctx, TOOL_NAMES.feedback, requestArgs, toolError(sent.error));
+  const ref = integrationRef(e.orgSlug, e.integrationSlug);
+  return logged(
+    ctx,
+    TOOL_NAMES.feedback,
+    requestArgs,
+    toolOk(
+      { suggestion: sent.value.id, status: "pending", reviewer: sent.value.publisher },
+      sent.value.duplicate
+        ? `The same summary for ${e.name} is already waiting for ${sent.value.publisher} to review. Nothing else to do.`
+        : `Sent to ${sent.value.publisher}, who publishes ${ref}, for review. The summary stays as it is until they accept it. Nothing else to do.`,
+    ),
+  );
 }

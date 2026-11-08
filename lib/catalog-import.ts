@@ -139,8 +139,9 @@ export async function importSpec(tx: Tx, p: ImportParams): Promise<ImportSummary
           lastSnapshotId: sql`excluded.last_snapshot_id`,
           method: sql`excluded.method`,
           path: sql`excluded.path`,
-          // A spec with no summary never erases one a person wrote.
-          summary: sql`coalesce(excluded.summary, ${apiEndpoint.summary})`,
+          // A summary the publisher accepted (lib/feedback.ts) stays; a
+          // spec with no summary never erases one a person wrote.
+          summary: sql`case when ${apiEndpoint.summarySource} = 'accepted' then ${apiEndpoint.summary} else coalesce(excluded.summary, ${apiEndpoint.summary}) end`,
           // Descriptions are authored: import fills them only when empty.
           description: sql`coalesce(${apiEndpoint.description}, excluded.description)`,
           tags: sql`excluded.tags`,
