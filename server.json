@@ -3,7 +3,7 @@
   "name": "io.github.zeqqat/zeqqat",
   "title": "Zeqqat",
   "description": "Open source MCP gateway: agents call your APIs without holding keys or seeing secrets.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "websiteUrl": "https://zeqqat.com",
   "repository": { "url": "https://github.com/zeqqat/zeqqat", "source": "github" },
   "remotes": [
