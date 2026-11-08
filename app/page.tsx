@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
-import { IntegrationsStrip } from "../components/IntegrationsStrip";
 import { SITE_LINKS, SiteFooter, SiteHeader } from "../components/SiteChrome";
 
 export default function LandingPage() {
@@ -52,7 +51,6 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <IntegrationsStrip />
         </main>
       </div>
 
