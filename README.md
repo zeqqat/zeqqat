@@ -50,7 +50,7 @@ Zeqqat is the safe, open source MCP for Dokploy, self-hosted or Cloud. Your agen
 1. Create a **Docker Compose** service from this repository, or paste [`docker-compose.yml`](docker-compose.yml).
 2. Set the environment variables listed under Configuration below.
 3. In Domains, click **Generate** for a free address that already points at your server (or use your own domain), and add it to the `zeqqat` service on port **3000** with HTTPS on. Deploy.
-4. Open that address, sign in, and connect your Dokploy.
+4. Open that address, create the first account (it owns this Zeqqat), and connect your Dokploy.
 
 The full walkthrough is at [zeqqat.com/docs/self-host](https://zeqqat.com/docs/self-host).
 
@@ -77,10 +77,10 @@ After you connect your Dokploy, Zeqqat gives you a connection URL like `https://
 | `POSTGRES_PASSWORD` | yes | Password for the bundled Postgres |
 | `BETTER_AUTH_SECRET` | yes | Session secret: `openssl rand -base64 32` |
 | `ZEQQAT_ENCRYPTION_KEY` | yes | Encrypts stored API keys: `openssl rand -base64 32`. Keep it safe, a new key makes stored keys unreadable |
-| `ENABLED_AUTH_PROVIDERS` | yes | Any of `github`, `google` and `email`, comma separated |
+| `ENABLED_AUTH_PROVIDERS` | no | Any of `password`, `github`, `google` and `email`, comma separated. Default `password`: the first account you create owns the install, and everyone else joins with an invite link |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | for GitHub sign-in | A GitHub OAuth app with callback `<your URL>/api/auth/callback/github` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | for Google sign-in | A Google OAuth client with redirect URI `<your URL>/api/auth/callback/google` |
-| `MAIL_FROM` plus `SMTP_URL` or `RESEND_API_KEY` | for email sign-in | Sender address, and how to send: any SMTP server (`smtps://user:password@smtp.example.com:465`) or a Resend API key. People sign in with a 6-digit code sent to their email |
+| `MAIL_FROM` plus `SMTP_URL` or `RESEND_API_KEY` | for email sign-in, optional with password | Sender address, and how to send: any SMTP server (`smtps://user:password@smtp.example.com:465`) or a Resend API key. With `email`, people sign in with a 6-digit code; with `password`, forgotten-password links go by email (without a mailer, the owner makes them on the Team page) |
 
 Every option is documented in [`.env.example`](.env.example).
 

@@ -145,7 +145,7 @@
   "domain.canGenerateTraefikMeDomains": "Check whether free traefik.me domains can be generated for a server",
   "domain.create": "Add a domain to an application or compose service: host, path, port and HTTPS certificate",
   "domain.delete": "Delete a domain",
-  "domain.generateDomain": "Generate a free traefik.me hostname for an app, without saving it",
+  "domain.generateDomain": "Generate a free hostname that already points at this server (sslip.io or traefik.me), without saving it",
   "domain.one": "Get one domain's details by domainId",
   "domain.update": "Update a domain's settings",
   "domain.validateDomain": "Check that a domain's DNS points at the server's IP",

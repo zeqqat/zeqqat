@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { InviteForm } from "../../../components/InviteForm";
+import { ResetLinkButton } from "../../../components/ResetLinkButton";
 import { db } from "../../../db";
-import { invitation, membership, organization, user, workspace, workspaceMember } from "../../../db/schema";
+import { account, invitation, membership, organization, user, workspace, workspaceMember } from "../../../db/schema";
 import {
   addToWorkspaceAction,
   changeOrgRoleAction,
@@ -10,7 +11,9 @@ import {
   removeFromWorkspaceAction,
   revokeInviteAction,
 } from "../../../lib/actions/team";
+import { passwordEnabled } from "../../../lib/auth-providers";
 import { requireWorkspace } from "../../../lib/guard";
+import { installOwnerId } from "../../../lib/password-auth";
 
 const ERRORS: Record<string, string> = {
   last_owner: "An org needs at least one owner. Make someone else an owner first.",
@@ -98,6 +101,19 @@ export default async function MembersPage({
     })
     .filter((m): m is NonNullable<typeof m> => m !== null);
   const notHere = orgMembers.filter((m) => m.role !== "owner" && !wsMembers.some((w) => w.userId === m.userId));
+  // The install's owner can make password reset links for people who sign
+  // in with a password (self-hosted installs, where there may be no mailer).
+  const canReset = passwordEnabled && (await installOwnerId()) === me.id;
+  const withPassword = new Set(
+    canReset && here.length
+      ? (
+          await db
+            .select({ userId: account.userId })
+            .from(account)
+            .where(and(eq(account.providerId, "credential"), inArray(account.userId, here.map((m) => m.userId))))
+        ).map((r) => r.userId)
+      : [],
+  );
   const wsName = wsCount > 1 ? `${ws.workspaceName} in @${ws.organizationSlug}` : `@${ws.organizationSlug}`;
 
   return (
@@ -151,6 +167,7 @@ export default async function MembersPage({
                   </div>
                 </div>
                 <div className="zq-item-r">
+                  {canReset && !isMe && withPassword.has(m.userId) && <ResetLinkButton userId={m.userId} />}
                   {isAdmin && m.memberId && !isMe ? (
                     <>
                       <form action={changeWorkspaceRoleAction} className="zq-inline-form">

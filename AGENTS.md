@@ -11,10 +11,20 @@ integration.
 
 - Next.js 16 (App Router, Turbopack), TypeScript, React 19
 - Postgres via `drizzle-orm` (`node-postgres` driver)
-- Better Auth (Google, GitHub and email sign-in for humans, accounts linked
-  by verified email). Email sign-in is a 6-digit code (`emailOTP` plugin),
-  offered only when `email` is in `ENABLED_AUTH_PROVIDERS` and a mailer is
-  set (`lib/mailer.ts`: `MAIL_FROM` plus `RESEND_API_KEY` or `SMTP_URL`)
+- Better Auth (Google, GitHub, email and password sign-in for humans,
+  accounts linked by email). `lib/auth-providers.ts` decides what renders.
+  Email sign-in is a 6-digit code (`emailOTP` plugin), offered only when
+  `email` is in `ENABLED_AUTH_PROVIDERS` and a mailer is set
+  (`lib/mailer.ts`: `MAIL_FROM` plus `RESEND_API_KEY` or `SMTP_URL`).
+  **Password is self-hosted only** (never on zeqqat.com) and the
+  self-hosted default: the first account signs itself up and owns the
+  install, then a password account can only be created from an invite link
+  for that exact email (`x-zeqqat-invite` header, `lib/password-auth.ts`).
+  Reset: emailed link with a mailer, else the install's owner (its first
+  account) makes one on the Team page (`lib/actions/password.ts`).
+  **Verified email is a zeqqat.com rule only:** cloud refuses accounts and
+  sessions without one; self-hosted installs don't check.
+  `pnpm exec tsx tests/e2e/password-flow.ts` runs the password flow.
 - pnpm — this repo enforces it (`preinstall: npx only-allow pnpm`)
 
 ## Commands

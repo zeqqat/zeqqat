@@ -49,7 +49,7 @@ export default function SelfHostGuide() {
               Set the environment variables below on the compose service, with <b>ZEQQAT_PUBLIC_URL</b> set to that
               address.
             </li>
-            <li>Deploy, then open the address and sign in.</li>
+            <li>Deploy, then open the address and create the first account. It owns this Zeqqat.</li>
           </ol>
           <p className="zq-note">
             Prefer your own domain? Use it in place of the generated one; point its DNS at this server first.
@@ -71,18 +71,19 @@ export default function SelfHostGuide() {
             <pre className="zq-cbox-block">{`ZEQQAT_PUBLIC_URL=https://[your Dokploy address]
 POSTGRES_PASSWORD=<openssl rand -hex 24>
 BETTER_AUTH_SECRET=<openssl rand -base64 32>
-ZEQQAT_ENCRYPTION_KEY=<openssl rand -base64 32>
-ENABLED_AUTH_PROVIDERS=github
-GITHUB_CLIENT_ID=<your GitHub OAuth app>
-GITHUB_CLIENT_SECRET=<your GitHub OAuth app secret>`}</pre>
+ZEQQAT_ENCRYPTION_KEY=<openssl rand -base64 32>`}</pre>
           </div>
           <p className="zq-note">
             Generate the secrets once and keep them. A new <b>ZEQQAT_ENCRYPTION_KEY</b> makes stored Dokploy keys
-            unreadable. In your GitHub OAuth app, set the callback URL to{" "}
-            <b>https://[your Dokploy address]/api/auth/callback/github</b>. Google sign-in works the same way with{" "}
-            <b>GOOGLE_CLIENT_ID</b> and <b>GOOGLE_CLIENT_SECRET</b>. For email sign-in (a 6-digit code by email), add{" "}
-            <b>email</b> to <b>ENABLED_AUTH_PROVIDERS</b> and set <b>MAIL_FROM</b> plus <b>SMTP_URL</b> (or{" "}
-            <b>RESEND_API_KEY</b>).
+            unreadable.
+          </p>
+          <p className="zq-note">
+            Sign-in is email and password, with nothing else to set up. The first account you create owns this Zeqqat;
+            everyone else joins with an invite link from the Team page. If someone forgets their password, the owner
+            makes them a reset link there. To also offer GitHub or Google, set <b>ENABLED_AUTH_PROVIDERS</b> (for
+            example <b>password,github</b>) plus <b>GITHUB_CLIENT_ID</b> and <b>GITHUB_CLIENT_SECRET</b>, with the
+            callback <b>https://[your Dokploy address]/api/auth/callback/github</b> (Google works the same way). With{" "}
+            <b>MAIL_FROM</b> plus <b>SMTP_URL</b> (or <b>RESEND_API_KEY</b>), forgotten-password links go by email.
           </p>
           <p className="zq-note">
             Your install sends zeqqat.com one anonymous ping on start and once a day: a random install id and the

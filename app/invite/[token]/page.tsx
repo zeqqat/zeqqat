@@ -1,6 +1,7 @@
-import { GoogleButton } from "../../../components/GoogleButton";
+import { SignInButtons } from "../../../components/ConsentControls";
 import { PublicHeader } from "../../../components/PublicHeader";
 import { acceptInviteAction } from "../../../lib/actions/team";
+import { signInProviders } from "../../../lib/auth-providers";
 import { findOpenInvite } from "../../../lib/invites";
 import { getServerSession } from "../../../lib/session";
 import { SignOutButton } from "../../../components/SignOutButton";
@@ -92,8 +93,8 @@ export default async function InvitePage({
                 !
               </span>
               <span>
-                You&rsquo;re signed in as {signedInAs}. This invite is for {invite.email}. Sign out and continue with that
-                Google account.
+                You&rsquo;re signed in as {signedInAs}. This invite is for {invite.email}. Sign out and continue as that
+                email.
               </span>
             </div>
           )}
@@ -108,7 +109,13 @@ export default async function InvitePage({
           ) : wrong ? (
             <SignOutButton redirectTo={here} />
           ) : (
-            <GoogleButton label="Accept with Google" callbackURL={here} />
+            <SignInButtons
+              providers={signInProviders}
+              callbackURL={here}
+              passwordMode="invite"
+              inviteEmail={invite.email}
+              inviteToken={token}
+            />
           )}
           <p className="zq-fineprint">
             This invite only works for {invite.email}. It expires {invite.expiresAt.toUTCString().slice(5, 16)}. If you

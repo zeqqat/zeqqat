@@ -9,9 +9,12 @@ import { authClient } from "../lib/auth-client";
 // no provider is the "main" one), Allow/Cancel with a pending state, and
 // "Switch account".
 
-export type SignInProvider = "google" | "github" | "email";
+export type SignInProvider = "google" | "github" | "email" | "password";
+export type PasswordMode = "setup" | "signin" | "invite";
 
-const LABELS: Record<Exclude<SignInProvider, "email">, string> = {
+type Social = Exclude<SignInProvider, "email" | "password">;
+
+const LABELS: Record<Social, string> = {
   google: "Continue with Google",
   github: "Continue with GitHub",
 };
@@ -40,17 +43,24 @@ export function SignInButtons({
   callbackURL,
   errorCallbackURL = callbackURL,
   error,
+  passwordMode = "signin",
+  inviteEmail,
+  inviteToken,
 }: {
   providers: SignInProvider[];
   callbackURL: string;
   errorCallbackURL?: string;
   error?: string | null;
+  passwordMode?: PasswordMode;
+  inviteEmail?: string;
+  inviteToken?: string;
 }) {
   const [busy, setBusy] = useState<SignInProvider | null>(null);
-  const social = providers.filter((p): p is Exclude<SignInProvider, "email"> => p !== "email");
+  const social = providers.filter((p): p is Social => p !== "email" && p !== "password");
   const withEmail = providers.includes("email");
+  const withPassword = providers.includes("password");
 
-  async function start(provider: Exclude<SignInProvider, "email">) {
+  async function start(provider: Social) {
     setBusy(provider);
     try {
       await authClient.signIn.social({ provider, callbackURL, errorCallbackURL });
@@ -88,6 +98,23 @@ export function SignInButtons({
             </div>
           )}
           <EmailCode callbackURL={callbackURL} locked={busy !== null && busy !== "email"} onBusy={(b) => setBusy(b ? "email" : null)} />
+        </>
+      )}
+      {withPassword && (
+        <>
+          {(social.length > 0 || withEmail) && (
+            <div className="zq-or" role="separator">
+              <span>or</span>
+            </div>
+          )}
+          <PasswordForm
+            mode={passwordMode}
+            callbackURL={callbackURL}
+            inviteEmail={inviteEmail}
+            inviteToken={inviteToken}
+            locked={busy !== null && busy !== "password"}
+            onBusy={(b) => setBusy(b ? "password" : null)}
+          />
         </>
       )}
     </div>
@@ -224,6 +251,148 @@ function EmailCode({ callbackURL, locked, onBusy }: { callbackURL: string; locke
         >
           Use another email
         </button>
+      </div>
+    </form>
+  );
+}
+
+const PASSWORD_ERRORS: Record<string, string> = {
+  INVALID_EMAIL_OR_PASSWORD: "That email and password don't match.",
+  USER_ALREADY_EXISTS: "That email already has an account. Sign in instead.",
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "That email already has an account. Sign in instead.",
+  PASSWORD_TOO_SHORT: "Use at least 10 characters.",
+  PASSWORD_TOO_LONG: "That password is too long.",
+  signups_closed: "Sign-ups are closed. Ask an owner of this Zeqqat for an invite.",
+};
+
+function passwordError(e: { code?: string; status?: number } | null | undefined): string {
+  if (e?.status === 429) return "Too many tries. Wait a minute, then try again.";
+  return (e?.code && PASSWORD_ERRORS[e.code]) || "That didn't work. Try again.";
+}
+
+// Email and password, for self-hosted installs. "setup" creates the first
+// account (the install's owner), "invite" creates an account for the
+// invited email or signs into an existing one, "signin" only signs in:
+// everyone after the first person joins by invite.
+function PasswordForm({
+  mode,
+  callbackURL,
+  inviteEmail,
+  inviteToken,
+  locked,
+  onBusy,
+}: {
+  mode: PasswordMode;
+  callbackURL: string;
+  inviteEmail?: string;
+  inviteToken?: string;
+  locked: boolean;
+  onBusy: (b: boolean) => void;
+}) {
+  const [creating, setCreating] = useState(mode !== "signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState(inviteEmail ?? "");
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const emailFixed = mode === "invite" && !!inviteEmail;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setPending(true);
+    onBusy(true);
+    setErr(null);
+    const { error } = creating
+      ? await authClient.signUp.email({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          fetchOptions: inviteToken ? { headers: { "x-zeqqat-invite": inviteToken } } : undefined,
+        })
+      : await authClient.signIn.email({ email: email.trim(), password });
+    if (error) {
+      setPending(false);
+      onBusy(false);
+      setErr(passwordError(error));
+      return;
+    }
+    window.location.assign(callbackURL);
+  }
+
+  return (
+    <form className="zq-email-form" onSubmit={submit}>
+      {creating && (
+        <>
+          <label className="zq-visually-hidden" htmlFor="zq-pw-name">
+            Your name
+          </label>
+          <input
+            id="zq-pw-name"
+            className="zq-input"
+            required
+            autoComplete="name"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={pending || locked}
+          />
+        </>
+      )}
+      <label className="zq-visually-hidden" htmlFor="zq-pw-email">
+        Email
+      </label>
+      <input
+        id="zq-pw-email"
+        className="zq-input"
+        type="email"
+        required
+        autoComplete="email"
+        placeholder="you@example.com"
+        value={email}
+        readOnly={emailFixed}
+        onChange={(e) => setEmail(e.target.value)}
+        disabled={pending || locked}
+      />
+      <label className="zq-visually-hidden" htmlFor="zq-pw-password">
+        Password
+      </label>
+      <input
+        id="zq-pw-password"
+        className="zq-input"
+        type="password"
+        required
+        minLength={creating ? 10 : undefined}
+        autoComplete={creating ? "new-password" : "current-password"}
+        placeholder={creating ? "Password (10+ characters)" : "Password"}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        disabled={pending || locked}
+      />
+      {err && (
+        <p className="zq-consent-error" role="alert">
+          {err}
+        </p>
+      )}
+      <button
+        type="submit"
+        className="zq-google"
+        disabled={pending || locked || !email.trim() || !password || (creating && !name.trim())}
+        aria-busy={pending}
+      >
+        {creating ? (mode === "setup" ? "Create owner account" : "Create account") : "Sign in"}
+        {pending && <Spinner />}
+      </button>
+      <div className="zq-email-links">
+        {mode === "invite" && (
+          <button type="button" className="zq-link" onClick={() => (setCreating(!creating), setErr(null))} disabled={pending}>
+            {creating ? "I already have an account" : "Create an account instead"}
+          </button>
+        )}
+        {!creating && (
+          <a className="zq-link" href="/forgot-password">
+            Forgot password?
+          </a>
+        )}
       </div>
     </form>
   );

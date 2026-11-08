@@ -41,6 +41,24 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
+// The forgotten-password email. The link opens /reset-password, good for 24
+// hours and one use.
+export function passwordResetMail(to: string, token: string): Mail {
+  const host = siteHost();
+  const url = `https://${host}/reset-password?token=${encodeURIComponent(token)}`;
+  const text = [
+    `Reset your ${host} password: ${url}`,
+    "",
+    "The link works once, for 24 hours. If you didn't ask for it, ignore this email: your password stays the same.",
+  ].join("\n");
+  const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#0d141a;max-width:420px">
+<p>Someone asked to reset the password for your ${escapeHtml(host)} account.</p>
+<p><a href="${escapeHtml(url)}" style="color:#0d141a;font-weight:600">Choose a new password</a></p>
+<p style="color:#5a6b78;font-size:13px">The link works once, for 24 hours. If you didn't ask for it, ignore this email: your password stays the same.</p>
+</div>`;
+  return { to, subject: `Reset your Zeqqat password`, text, html };
+}
+
 // The sign-in code email. The code is in the subject too, so it can be read
 // from a notification without opening the email.
 export function signInCodeMail(to: string, code: string): Mail {

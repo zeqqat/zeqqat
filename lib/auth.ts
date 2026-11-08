@@ -5,25 +5,20 @@ import { emailOTP } from "better-auth/plugins/email-otp";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { user as userTable } from "../db/schema";
+import { emailEnabled, enabledProviders, passwordEnabled } from "./auth-providers";
+import { edition } from "./edition";
 import { newId } from "./id";
-import { mailerConfigured, sendMail, signInCodeMail } from "./mailer";
+import { mailerConfigured, passwordResetMail, sendMail, signInCodeMail } from "./mailer";
+import { passwordSignUpAllowed } from "./password-auth";
 import { runSignupTransaction } from "./signup";
 
-// ZEQQAT_EDITION gate: this is the one module that answers "which providers
-// render" and "where does the namespace come from" (spec section 2). Only
-// 'cloud' is built in this slice.
-const enabledProviders = (process.env.ENABLED_AUTH_PROVIDERS ?? "google").split(",").map((p) => p.trim());
+export { signInProviders } from "./auth-providers";
 
-// Email sign-in sends a one-time code, so it needs a mailer (lib/mailer.ts).
-// Listed in ENABLED_AUTH_PROVIDERS without one, it stays off.
-const emailEnabled = enabledProviders.includes("email") && mailerConfigured();
-
-// Sign-in methods to render, in display order. Only providers that are both
-// enabled and configured here. "email" renders as a code form under the
-// buttons.
-export const signInProviders = (["google", "github", "email"] as const).filter((p) =>
-  p === "email" ? emailEnabled : enabledProviders.includes(p),
-);
+// zeqqat.com is open to anyone, so an account there must prove its email
+// through a provider (a claimed address is how someone takes over another
+// person's account). A self-hosted install is closed (first account, then
+// invites), so it doesn't check.
+const requireVerifiedEmail = edition() === "cloud";
 
 export const auth = betterAuth({
   baseURL: process.env.ZEQQAT_PUBLIC_URL,
@@ -48,6 +43,24 @@ export const auth = betterAuth({
     database: {
       generateId: () => newId(),
     },
+  },
+  // Passwords (self-hosted only, lib/auth-providers.ts). Who may create a
+  // password account is decided in the user.create hook below. Forgotten
+  // passwords: an emailed link when a mailer is set, otherwise a link the
+  // install's owner makes on the Team page (lib/actions/password.ts).
+  emailAndPassword: {
+    enabled: passwordEnabled,
+    minPasswordLength: 10,
+    autoSignIn: true,
+    revokeSessionsOnPasswordReset: true,
+    resetPasswordTokenExpiresIn: 60 * 60 * 24,
+    ...(passwordEnabled && mailerConfigured()
+      ? {
+          async sendResetPassword({ user, token }: { user: { email: string }; token: string }) {
+            await sendMail(passwordResetMail(user.email, token));
+          },
+        }
+      : {}),
   },
   socialProviders: {
     ...(enabledProviders.includes("google")
@@ -90,18 +103,22 @@ export const auth = betterAuth({
     customRules: {
       "/email-otp/send-verification-otp": { window: 60, max: 3 },
       "/sign-in/email-otp": { window: 60, max: 10 },
+      "/sign-in/email": { window: 60, max: 10 },
+      "/sign-up/email": { window: 60, max: 5 },
+      "/request-password-reset": { window: 60, max: 3 },
     },
   },
   // OAuth failures land back on the page that started the sign-in (the
   // client passes errorCallbackURL); this is only the fallback.
   onAPIError: { errorURL: "/signin" },
   databaseHooks: {
-    // No verified email, no account. Every provider must vouch for the email
-    // (Google always does; GitHub only for addresses the person confirmed).
-    // An unverified address is how someone claims an email that isn't theirs.
+    // zeqqat.com only: no verified email, no account. Every provider must
+    // vouch for the email (Google always does; GitHub only for addresses the
+    // person confirmed).
     session: {
       create: {
         before: async (session) => {
+          if (!requireVerifiedEmail) return;
           const u = await db.query.user.findFirst({ where: eq(userTable.id, session.userId) });
           if (!u?.emailVerified) {
             throw new APIError("FORBIDDEN", { code: "email_not_verified", message: "Email not verified" });
@@ -111,8 +128,18 @@ export const auth = betterAuth({
     },
     user: {
       create: {
-        before: async (user) => {
-          if (!user.emailVerified) {
+        before: async (user, ctx) => {
+          // A password account: the install's first account, or someone
+          // with an open invite for exactly this email (the invite page
+          // sends its token in a header).
+          if (ctx?.path === "/sign-up/email") {
+            const token = ctx.headers?.get("x-zeqqat-invite") ?? null;
+            if (!passwordEnabled || !(await passwordSignUpAllowed(user.email, token))) {
+              throw new APIError("FORBIDDEN", { code: "signups_closed", message: "Sign-ups are closed. Ask an owner for an invite." });
+            }
+            return;
+          }
+          if (requireVerifiedEmail && !user.emailVerified) {
             throw new APIError("FORBIDDEN", { code: "email_not_verified", message: "Email not verified" });
           }
         },
