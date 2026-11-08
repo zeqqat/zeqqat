@@ -1,6 +1,6 @@
 ---
 name: zeqqat
-description: Use when working through a Zeqqat MCP connection (tools named zeqqat_*) to call a person's apps such as Dokploy: how to find, describe and run tools, give reasons, and move secrets without seeing them.
+description: "Use when working through a Zeqqat MCP connection (tools named zeqqat_*) to call a person's apps such as Dokploy: how to find, describe and run tools, give reasons, and move secrets without seeing them."
 ---
 
 # Using Zeqqat
