@@ -1,0 +1,53 @@
+name: Publish to MCP Registry
+
+# Publishes server.json to registry.modelcontextprotocol.io whenever the
+# version in package.json changes on main (the same trigger as Release; tags
+# made by Release use GITHUB_TOKEN and so can't start other workflows).
+# Auth is GitHub OIDC, which proves ownership of the io.github.zeqqat namespace.
+on:
+  push:
+    branches: [main]
+    paths: ["package.json"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Skip unless the version changed
+        id: changed
+        run: |
+          now=$(jq -r .version package.json)
+          before=$(git show HEAD~1:package.json 2>/dev/null | jq -r .version || echo none)
+          if [ "$now" != "$before" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version unchanged ($now); nothing to publish."
+          fi
+
+      - name: Install mcp-publisher
+        if: steps.changed.outputs.publish == 'true'
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+
+      - name: Match server.json version to package.json
+        if: steps.changed.outputs.publish == 'true'
+        run: |
+          v=$(jq -r .version package.json)
+          jq --arg v "$v" '.version = $v' server.json > server.tmp && mv server.tmp server.json
+          cat server.json
+
+      - name: Log in with GitHub OIDC
+        if: steps.changed.outputs.publish == 'true'
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish
+        if: steps.changed.outputs.publish == 'true'
+        run: ./mcp-publisher publish
