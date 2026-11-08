@@ -33,16 +33,14 @@ function Brand() {
 
 // Signed-in visitors get "Dashboard" where others get "Sign in", so coming
 // back to zeqqat.com is one click from their work.
-export async function SiteHeader({ current }: { current?: "integrations" }) {
+// `current` is still accepted so /integrations renders, but the page is no longer linked.
+export async function SiteHeader(_props: { current?: "integrations" } = {}) {
   const session = await getServerSession();
   return (
     <header className="zq-top">
       <div className="zq-top-left">
         <Brand />
         <nav className="zq-nav" aria-label="Site">
-          <a href={SITE_LINKS.integrations} aria-current={current === "integrations" ? "page" : undefined}>
-            Integrations
-          </a>
           <a href={SITE_LINKS.docs}>Docs</a>
           <a href={SITE_LINKS.blog}>Blog</a>
         </nav>
@@ -79,7 +77,6 @@ export function SiteFooter() {
         <nav aria-label="Product">
           <h2>Product</h2>
           <ul>
-            <li><a href={SITE_LINKS.integrations}>Integrations</a></li>
             <li><a href={SITE_LINKS.docs}>Docs</a></li>
             <li><a href={SITE_LINKS.selfHost}>Self-hosting</a></li>
             <li><a href={SITE_LINKS.blog}>Blog</a></li>

@@ -14,10 +14,19 @@ export default function LandingPage() {
 
       <div className="zq-mid">
         <main className="zq-in">
-          <h1 className="zq-mark zq-mark-wide">
+          <h1 className="zq-mark">
             Give AI access to
             <br />
-            your Dokploy.
+            your{" "}
+            <span className="zq-hero-brand">
+              <span
+                className="zq-mono-logo"
+                style={{ maskImage: "url(/logos/dokploy.svg)", WebkitMaskImage: "url(/logos/dokploy.svg)" }}
+                aria-hidden="true"
+              />
+              Dokploy
+            </span>
+            .
             <br />
             Minus the risk<span className="dot">.</span>
           </h1>
