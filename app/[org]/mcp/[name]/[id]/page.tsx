@@ -86,7 +86,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
           <span className="dot">.</span>
         </h1>
         <p className="zq-sub">
-          {conn.description ? `${conn.description}. ` : ""}
+          {conn.description ? `${conn.description.replace(/[.!?]+$/, "")}. ` : ""}
           {isPublic ? "Anyone with this URL can use it without signing in. Read only." : "Agents sign in as a workspace member."}
           {isAdmin && ws ? ` In the ${ws.name} workspace.` : ""}
         </p>

@@ -90,7 +90,7 @@ export default async function ConnectionPage({
         <code>{conn.shortId}</code>
       </p>
       <p className="zq-sub">
-        {conn.description ? `${conn.description}. ` : ""}
+        {conn.description ? `${conn.description.replace(/[.!?]+$/, "")}. ` : ""}
         {isPublic
           ? "Anyone with this URL can use it without signing in. Read only."
           : "Agents sign in as a workspace member. What they can do is this policy narrowed by that person's role."}
