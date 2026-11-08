@@ -14,9 +14,10 @@ export const SITE_LINKS = {
   blog: "/blog",
   terms: "/terms",
   privacy: "/privacy",
-  // Empty until a real invite exists. An expired invite renders a Discord
-  // error page, which reads as an abandoned project, so absent beats dead.
-  discord: "",
+  // Permanent invite (never expires, no use limit) into #general of the
+  // Zeqqat server. If it is ever revoked, set this back to "" to hide it:
+  // an expired invite renders a Discord error page.
+  discord: "https://discord.gg/rY6H8Rjcxp",
 };
 
 function Brand() {

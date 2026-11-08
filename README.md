@@ -19,7 +19,8 @@
     <a href="https://zeqqat.com">Website</a> ·
     <a href="https://zeqqat.com/docs/self-host">Self-host guide</a> ·
     <a href="https://zeqqat.com/docs/agents">Agent docs</a> ·
-    <a href="https://zeqqat.com/blog">Blog</a>
+    <a href="https://zeqqat.com/blog">Blog</a> ·
+    <a href="https://discord.gg/rY6H8Rjcxp">Discord</a>
   </p>
 
   <p><sub>Works with Claude, Claude Code, ChatGPT, Cursor, Gemini and any MCP client.</sub></p>
