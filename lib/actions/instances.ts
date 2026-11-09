@@ -16,7 +16,9 @@ import { testAppConnection } from "../spec-import";
 
 export type ConnectState = { error?: string; values?: { alias: string; baseUrl: string } };
 
-const ALIAS = /^[a-z0-9][a-z0-9-]{0,39}$/;
+// Dashes or underscores, both fine: people name servers both ways
+// (prod-eu-1, dev_test_2), and the name is only a label agents pass back.
+const ALIAS = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 
 function pgCode(err: unknown) {
   const e = err as { code?: string; cause?: { code?: string } };
@@ -38,7 +40,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
 
   if (!alias || !baseUrlRaw || !apiKey) return { error: "Fill in the name, the URL and the API key.", values };
   if (!ALIAS.test(alias)) {
-    return { error: "Use lowercase letters, numbers and dashes for the name, for example production.", values };
+    return { error: "Use lowercase letters, numbers, dashes or underscores for the name, for example production.", values };
   }
 
   const findDokploy = () =>
@@ -107,7 +109,7 @@ export async function connectAppAction(_prev: ConnectState, formData: FormData):
   }
   if (!alias || !baseUrlRaw) return { error: "Fill in the name and the URL.", values };
   if (!ALIAS.test(alias)) {
-    return { error: "Use lowercase letters, numbers and dashes for the name, for example production.", values };
+    return { error: "Use lowercase letters, numbers, dashes or underscores for the name, for example production.", values };
   }
 
   const result = await testAppConnection(baseUrlRaw);
