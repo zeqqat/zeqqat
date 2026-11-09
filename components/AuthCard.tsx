@@ -6,6 +6,7 @@ import { safeNext } from "../lib/next-path";
 import { getServerSession } from "../lib/session";
 import { signInErrorText } from "../lib/sign-in-errors";
 import { SignInButtons } from "./ConsentControls";
+import { DokployMark } from "./Marks";
 import { PublicHeader } from "./PublicHeader";
 
 // Sign in and sign up are the same page: signing in with a new account
@@ -38,7 +39,16 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
             {setup
               ? "Create the first account. It owns this Zeqqat, and everyone else joins with an invite."
               : passwordOnly
-                ? "Give AI access to your Dokploy. Minus the risk."
+                ? (
+                  <>
+                    Give AI access to your{" "}
+                    <span className="zq-inline-brand">
+                      <DokployMark size={15} />
+                      Dokploy
+                    </span>
+                    . Minus the risk.
+                  </>
+                )
                 : "Sign in, or create your account."}
           </p>
           <SignInButtons

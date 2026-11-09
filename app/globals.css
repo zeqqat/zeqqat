@@ -3823,6 +3823,13 @@ button.zq-look:focus-visible {
   gap: 12px;
   font-size: 12px;
 }
+.zq-inline-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: -2px;
+  white-space: nowrap;
+}
 .zq-email-links .zq-link-end {
   margin-left: auto;
 }
