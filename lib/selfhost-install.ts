@@ -107,6 +107,10 @@ export async function createStep(t: Target): Promise<Created> {
     name: "zeqqat",
     description: "Zeqqat MCP gateway and its Postgres",
     environmentId,
+    // Dokploy adds a random suffix (zeqqat-ab12cd), and the free address is
+    // built from it, so it reads zeqqat-ab12cd-<ip>.sslip.io instead of a
+    // random word salad.
+    appName: "zeqqat",
     composeType: "docker-compose",
     composeFile: SELFHOST_COMPOSE,
   });

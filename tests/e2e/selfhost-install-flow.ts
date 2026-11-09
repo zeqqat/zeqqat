@@ -86,6 +86,7 @@ async function main() {
       created.dashboardUrl,
       `${baseUrl}/dashboard/project/p1/environment/e1/services/compose/c1`,
     );
+    assert.equal(calls.find((c) => c.op === "compose.create")?.body?.appName, "zeqqat");
     const update = calls.find((c) => c.op === "compose.update");
     assert.equal(update?.body?.sourceType, "raw");
     assert.equal(update?.body?.composeFile, SELFHOST_COMPOSE);
