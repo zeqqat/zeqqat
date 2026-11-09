@@ -3823,12 +3823,20 @@ button.zq-look:focus-visible {
   gap: 12px;
   font-size: 12px;
 }
-.zq-inline-brand {
+/* A logo + name inside a line of sign-in text ("your [logo] Dokploy.").
+   Uses <b>, not <span>: .zq-signin .zq-card-p span is a block (one line per
+   span), and the mark's own span is reset back to inline here. */
+.zq-signin .zq-card-p .zq-inline-brand {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  vertical-align: -2px;
+  gap: 5px;
+  font-weight: inherit;
+  color: var(--fg);
   white-space: nowrap;
+  vertical-align: bottom;
+}
+.zq-signin .zq-card-p .zq-inline-brand .zq-mark-ic {
+  display: inline-block;
 }
 .zq-email-links .zq-link-end {
   margin-left: auto;
