@@ -1,6 +1,6 @@
 services:
   zeqqat:
-    image: ghcr.io/zeqqat/zeqqat:0.3.1
+    image: ghcr.io/zeqqat/zeqqat:0.3.15
     restart: unless-stopped
     depends_on:
       postgres:
