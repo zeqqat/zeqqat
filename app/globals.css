@@ -4090,8 +4090,75 @@ button.zq-look:focus-visible {
 .zq-key-input {
   -webkit-text-security: disc;
   text-security: disc;
-  font-family: var(--mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
 }
 .zq-key-input::placeholder {
   font-family: inherit;
+}
+
+/* one-button self-host install (SelfHostFlow.tsx): state is shown by the
+   mark, not by words */
+.zq-install-steps {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.zq-install-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--dim);
+}
+.zq-install-steps li[data-state="running"],
+.zq-install-steps li[data-state="done"],
+.zq-install-steps li[data-state="failed"],
+.zq-install-steps li[data-state="warn"] {
+  color: var(--fg);
+}
+.zq-install-mark {
+  flex: 0 0 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ghost);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  line-height: 1;
+  margin-top: 1px;
+}
+[data-state="running"] > .zq-install-mark {
+  border-color: var(--line);
+  border-top-color: var(--cobalt);
+  animation: zq-consent-spin 0.8s linear infinite;
+}
+[data-state="done"] > .zq-install-mark {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--bg);
+}
+[data-state="failed"] > .zq-install-mark {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--bg);
+}
+[data-state="warn"] > .zq-install-mark {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: var(--bg);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-state="running"] > .zq-install-mark {
+    animation: none;
+    border-color: var(--cobalt);
+  }
+}
+.zq-install-sub {
+  display: block;
+  color: var(--faint);
+  font-size: 12.5px;
+  margin-top: 2px;
 }

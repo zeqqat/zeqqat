@@ -1,16 +1,19 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { SelfHostFlow } from "../../../components/SelfHostFlow";
 import { db } from "../../../db";
-import { instance } from "../../../db/schema";
+import { instance, integration } from "../../../db/schema";
 import { siteHost } from "../../../lib/edition";
-import { publicUrl } from "../../../lib/env";
 import { requireOwner } from "../../../lib/guard";
 import { listConnectedAgents } from "../../../lib/permissions";
 
 export default async function SelfHostPage() {
   const { ws } = await requireOwner();
   const [instances, agents] = await Promise.all([
-    db.select({ id: instance.id, alias: instance.alias }).from(instance).where(eq(instance.workspaceId, ws.workspaceId)),
+    db
+      .select({ id: instance.id, alias: instance.alias })
+      .from(instance)
+      .innerJoin(integration, eq(integration.id, instance.integrationId))
+      .where(and(eq(instance.workspaceId, ws.workspaceId), eq(integration.slug, "dokploy"))),
     listConnectedAgents(ws.workspaceId),
   ]);
 
@@ -23,8 +26,8 @@ export default async function SelfHostPage() {
         Install Zeqqat on your own Dokploy<span className="dot">.</span>
       </h1>
       <p className="zq-sub">
-        Your agent does the install through the connection you already have. Pick where it goes, send it the prompt, and
-        watch each of its calls here. Prefer to do it by hand? Follow{" "}
+        One click, and Zeqqat installs itself on your Dokploy with the key it already has. Prefer to do it by hand?
+        Follow{" "}
         <a className="zq-textlink" href="/docs/self-host">
           the self-hosting guide
         </a>
@@ -40,7 +43,6 @@ export default async function SelfHostPage() {
         <SelfHostFlow
           instances={instances}
           agents={agents.map((a) => a.host)}
-          guideUrl={`${publicUrl()}/docs/self-host`}
           siteHost={siteHost()}
         />
       )}

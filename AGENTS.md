@@ -371,6 +371,21 @@ password into an app's `DATABASE_URL`). `lib/secret-handles.ts` does it:
   (mint, create a database, wire its URL into an app) against a real
   Postgres and a stand-in Dokploy.
 
+## One-button self-host install
+
+`/app/self-host` installs Zeqqat into a workspace's Dokploy with the key
+the instance already holds: no agent, because the steps never change.
+`lib/selfhost-install.ts` is the steps (project, compose service from
+`lib/selfhost-compose.ts`, Dokploy's free sslip.io address, fresh secrets
+straight to Dokploy, deploy, poll, then `checkAddress`);
+`lib/actions/selfhost.ts` wraps them with `requireOwner`; the page runs
+them in order and shows each one. Secrets never reach the browser.
+`deploy/dokploy/docker-compose.yml` (the Dokploy template) must equal
+`SELFHOST_COMPOSE` (a unit test checks), and the template follows `latest`,
+so a release needs no template PR.
+`pnpm exec tsx tests/e2e/selfhost-install-flow.ts` runs the steps against a
+stand-in Dokploy.
+
 ## Reachability check
 
 `zeqqat_check` (`lib/reachability.ts`) answers what an agent's sandbox

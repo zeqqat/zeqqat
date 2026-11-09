@@ -19,6 +19,10 @@ export default function SelfHostGuide() {
           Zeqqat is one app and a Postgres database, shipped as a Docker image. On Dokploy it&rsquo;s a single Docker
           Compose service. It applies its own database migrations when it starts.
         </p>
+        <p className="zq-sub">
+          Already using zeqqat.com with your Dokploy connected? The <b>Self-host</b> page there installs it for you in
+          one click. Otherwise, use the Zeqqat template in Dokploy, or follow the steps below.
+        </p>
 
         <section className="zq-block">
           <h2 className="zq-block-t">1. Create the compose service</h2>
