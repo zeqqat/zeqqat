@@ -2247,6 +2247,41 @@ button.zq-ws-opt:hover,
   color: var(--dim);
 }
 
+/* account menu: dev tools (ZEQQAT_DEV_TOOLS=1 only) */
+.zq-pop-dev-h {
+  display: inline-block;
+  margin: 0 0 8px 8px;
+  padding: 1px 8px;
+  border: 1px dashed var(--line2);
+  border-radius: 999px;
+  color: var(--dim);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.zq-pop-dev-sub {
+  margin: 8px 8px 4px;
+  color: var(--dim);
+  font-size: 12px;
+}
+.zq-pop-act {
+  cursor: pointer;
+  justify-content: flex-start;
+  transition: background 0.15s ease;
+}
+.zq-pop-act:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 6%, var(--panel));
+}
+.zq-pop-act:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.zq-pop-dev-err {
+  margin: 8px 8px 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
 /* headings */
 .zq-kicker {
   font-size: 10.5px;

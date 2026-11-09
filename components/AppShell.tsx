@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/auth-client";
+import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -27,6 +28,7 @@ export type ShellWorkspace = { id: string; slug: string; name: string; role: "ad
 // first paint is already right). null means they never chose: open on wide
 // screens, closed on narrow ones, decided in CSS.
 export type MenuState = "open" | "closed" | null;
+export type ShellDevTools = { pastUsers: { id: string; name: string; username: string | null }[] } | null;
 
 const MENU_COOKIE = "zq_menu";
 
@@ -44,6 +46,7 @@ export function AppShell({
   workspaces,
   currentWorkspace,
   initialMenu,
+  devTools = null,
   children,
 }: {
   user: { name: string; email: string; image: string | null; username: string };
@@ -55,6 +58,7 @@ export function AppShell({
   workspaces: ShellWorkspace[]; // the current org's workspaces this user can open
   currentWorkspace: ShellWorkspace;
   initialMenu: MenuState;
+  devTools?: ShellDevTools;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -179,6 +183,7 @@ export function AppShell({
                       <ThemeToggle />
                     </div>
                   </div>
+                  {devTools && <DevToolsSection devTools={devTools} />}
                   <div className="zq-pop-sec">
                     <button
                       className="zq-pop-row zq-pop-out"
@@ -313,6 +318,72 @@ export function AppShell({
           <div className="zq-body">{children}</div>
         </main>
       </div>
+    </div>
+  );
+}
+
+// Dev installs only. Starting over keeps everything: the signed-in user is
+// set aside (lib/dev-tools.ts) and the next sign-in, with the same Google
+// account or email, is a brand new user. Switching back undoes that.
+function DevToolsSection({ devTools }: { devTools: NonNullable<ShellDevTools> }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  async function run(key: string, action: () => Promise<{ ok: boolean }>) {
+    setBusy(key);
+    setFailed(false);
+    const res = await action();
+    if (!res.ok) {
+      setBusy(null);
+      setFailed(true);
+      return;
+    }
+    await authClient.signOut();
+    // A full load, so nothing from the old user is left in memory.
+    window.location.assign("/signin");
+  }
+
+  return (
+    <div className="zq-pop-sec zq-pop-dev">
+      <div className="zq-pop-dev-h">Dev</div>
+      <button
+        className="zq-pop-row zq-pop-act"
+        role="menuitem"
+        type="button"
+        disabled={busy !== null}
+        onClick={() => run("new", () => startOverAction())}
+      >
+        <span className="zq-pop-row-l">
+          <svg className="zq-pop-ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10" cy="8" r="4" />
+            <path d="M3 21a7 7 0 0 1 14 0M19 8v6M16 11h6" />
+          </svg>
+          {busy === "new" ? "Signing out…" : "Start over as a new user"}
+        </span>
+      </button>
+      {devTools.pastUsers.length > 0 && (
+        <>
+          <div className="zq-pop-dev-sub">Switch back to</div>
+          {devTools.pastUsers.map((p) => (
+            <button
+              key={p.id}
+              className="zq-pop-row zq-pop-act"
+              role="menuitem"
+              type="button"
+              disabled={busy !== null}
+              onClick={() => run(p.id, () => switchToPastUserAction(p.id))}
+            >
+              <span className="zq-pop-row-l">
+                <span className="zq-pop-avatar" aria-hidden="true">
+                  {firstLetter(p.name)}
+                </span>
+                {busy === p.id ? "Signing out…" : p.username ? `@${p.username}` : p.name}
+              </span>
+            </button>
+          ))}
+        </>
+      )}
+      {failed && <p className="zq-pop-dev-err">That didn&apos;t work. Reload and try again.</p>}
     </div>
   );
 }

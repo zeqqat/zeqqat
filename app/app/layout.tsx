@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { AppShell, type MenuState } from "../../components/AppShell";
+import { devToolsEnabled } from "../../lib/dev-tools";
+import { pastUsersOf } from "../../lib/dev-users";
 import { edition, siteHost } from "../../lib/edition";
 import { APP_VERSION } from "../../lib/version";
 import { requireWorkspace } from "../../lib/guard";
@@ -17,6 +19,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const username = personal?.organizationSlug ?? user.email.split("@")[0];
   const menuCookie = (await cookies()).get("zq_menu")?.value;
   const initialMenu: MenuState = menuCookie === "open" || menuCookie === "closed" ? menuCookie : null;
+  // Dev installs only (ZEQQAT_DEV_TOOLS=1, never zeqqat.com): start over as
+  // a new user, or switch back to an earlier one. See lib/dev-tools.ts.
+  const devTools = devToolsEnabled() ? { pastUsers: await pastUsersOf(user) } : null;
 
   return (
     <div className="zq">
@@ -30,6 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         workspaces={inOrg}
         currentWorkspace={{ id: ws.workspaceId, slug: ws.workspaceSlug, name: ws.workspaceName, role: ws.wsRole }}
         initialMenu={initialMenu}
+        devTools={devTools}
       >
         {children}
       </AppShell>

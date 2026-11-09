@@ -27,6 +27,14 @@ integration.
   `pnpm exec tsx tests/e2e/password-flow.ts` runs the password flow.
 - pnpm — this repo enforces it (`preinstall: npx only-allow pnpm`)
 
+- **Dev tools** (`ZEQQAT_DEV_TOOLS=1`, ignored on zeqqat.com,
+  `lib/dev-tools.ts`): the account menu gets "Start over as a new user".
+  It retires the signed-in user instead of deleting it (email and sign-in
+  links rewritten so nothing matches them, originals kept inside), so the
+  next sign-in with the same Google account or email is a brand new user.
+  "Switch back to" restores an earlier one. Nothing is ever deleted. For
+  email sign-in, `you+anything@gmail.com` also gives a new user each time.
+
 ## Commands
 
 ```
