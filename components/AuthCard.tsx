@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { signInProviders } from "../lib/auth-providers";
+import { edition } from "../lib/edition";
 import { hasNoUsers } from "../lib/password-auth";
 import { safeNext } from "../lib/next-path";
 import { getServerSession } from "../lib/session";
@@ -37,7 +38,7 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
             {setup
               ? "Create the first account. It owns this Zeqqat, and everyone else joins with an invite."
               : passwordOnly
-                ? "Sign in. New people join with an invite from an owner."
+                ? "Give AI access to your Dokploy. Minus the risk."
                 : "Sign in, or create your account."}
           </p>
           <SignInButtons
@@ -47,9 +48,13 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
             error={signInErrorText(error)}
             passwordMode={setup ? "setup" : "signin"}
           />
-          <p className="zq-signin-legal">
-            By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy policy</a>.
-          </p>
+          {/* Self-hosters accepted the license when they installed, so the
+              terms line is for zeqqat.com only. */}
+          {edition() === "cloud" && (
+            <p className="zq-signin-legal">
+              By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy policy</a>.
+            </p>
+          )}
         </main>
       </div>
     </div>

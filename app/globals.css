@@ -3823,6 +3823,9 @@ button.zq-look:focus-visible {
   gap: 12px;
   font-size: 12px;
 }
+.zq-email-links .zq-link-end {
+  margin-left: auto;
+}
 .zq-email-links .zq-link:disabled {
   opacity: 0.5;
   cursor: default;

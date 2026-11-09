@@ -389,8 +389,8 @@ function PasswordForm({
           </button>
         )}
         {!creating && (
-          <a className="zq-link" href="/forgot-password">
-            Forgot password?
+          <a className="zq-link zq-link-end" href="/forgot-password">
+            Lost your password?
           </a>
         )}
       </div>
