@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Bricolage_Grotesque, IBM_Plex_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "../components/analytics";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["800"],
+// Fonts are bundled (app/fonts, SIL Open Font License), not fetched from
+// Google at build time: that download failed often enough to break deploys
+// of zeqqat.com, and a self-hoster's build shouldn't need Google either.
+const display = localFont({
+  src: [{ path: "./fonts/bricolage-grotesque-latin-800-normal.woff2", weight: "800", style: "normal" }],
   variable: "--font-display-src",
   display: "swap",
 });
 
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const mono = localFont({
+  src: [
+    { path: "./fonts/ibm-plex-mono-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/ibm-plex-mono-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/ibm-plex-mono-latin-600-normal.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-mono-src",
   display: "swap",
 });

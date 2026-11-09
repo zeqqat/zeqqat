@@ -1,10 +1,14 @@
 import Link from "next/link";
-import { IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./blog.css";
 
-const body = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
+// Bundled, like the root layout's fonts (see app/layout.tsx).
+const body = localFont({
+  src: [
+    { path: "../fonts/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/ibm-plex-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-body",
   display: "swap",
 });
