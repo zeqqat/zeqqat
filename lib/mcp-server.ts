@@ -3,7 +3,7 @@ import { buildContext, type ZeqqatContext } from "./mcp-context";
 import { rateLimit } from "./rate-limit";
 import { normalizeReason, REASON_DESCRIPTION, REASON_MISSING, REASON_REQUIRED, resolveRequest } from "./requests";
 import { builtinAction } from "./tool-names";
-import { TOOL_NAMES, toolDescribe, toolDocs, toolFeedback, toolImport, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
+import { TOOL_NAMES, toolCheck, toolDescribe, toolDocs, toolFeedback, toolImport, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
 import type { ToolResult } from "./executor";
 import { APP_VERSION } from "./version";
 
@@ -221,6 +221,22 @@ export const TOOLS = [
     outputSchema: outputSchema({ type: "object", properties: { suggestion: { type: "string" } }, required: ["suggestion"] }),
   },
   {
+    name: TOOL_NAMES.check,
+    description:
+      "Check from the internet (where Zeqqat runs, not from your sandbox) whether an address loads, or whether a port on a Dokploy server is open. Use it before telling a user something is live, and to explain why it isn't. address returns live, certificate_not_ready (retry in a minute), error_page (wired wrong), unreachable (the cloud firewall blocks it) or not_found. instance plus port (22, 80, 443 or 3000) says open or closed." +
+      CONTEXT_HINT,
+    inputSchema: {
+      type: "object",
+      properties: {
+        address: { type: "string", description: "A hostname or http(s) URL, e.g. zeqqat-abc-1-2-3-4.sslip.io" },
+        instance: { type: "string", description: "With port: a Dokploy instance name from the context" },
+        port: { type: "integer", enum: [22, 80, 443, 3000], description: "With instance: the port to check on that server's public IP" },
+        reason: REASON_OPTIONAL,
+      },
+    },
+    outputSchema: outputSchema({ type: "object" }),
+  },
+  {
     name: TOOL_NAMES.docs,
     description:
       "Answers questions about how Zeqqat works: why a call was denied, permissions, integrations, instances, connections, errors. Pass a question; returns short passages." +
@@ -364,6 +380,9 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
       break;
     case TOOL_NAMES.import:
       result = await toolImport(ctx, args);
+      break;
+    case TOOL_NAMES.check:
+      result = await toolCheck(ctx, args);
       break;
     default:
       // Unknown tool: the caller invoked something that doesn't exist —

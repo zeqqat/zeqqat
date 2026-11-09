@@ -15,6 +15,8 @@ import { builtinToolName } from "./tool-names";
 import { mintGenerated, type GenerateKind } from "./secret-handles";
 import { ImportError, importFromUrl } from "./spec-import";
 import { submitSuggestion } from "./feedback";
+import { CHECKABLE_PORTS, checkAddress, checkPort } from "./reachability";
+import { edition } from "./edition";
 
 // The built-in tools, the only ones in tools/list. Built via
 // builtinToolName so they always pass Claude's client-side name check
@@ -31,6 +33,7 @@ export const TOOL_NAMES = {
   secret: builtinToolName("secret"),
   import: builtinToolName("import"),
   feedback: builtinToolName("feedback"),
+  check: builtinToolName("check"),
 } as const;
 
 type Ctx = McpContext;
@@ -476,4 +479,58 @@ export async function toolFeedback(
         : `Sent to ${sent.value.publisher}, who publishes ${ref}, for review. The summary stays as it is until they accept it. Nothing else to do.`,
     ),
   );
+}
+
+// Checks from where Zeqqat runs (zeqqat.com: the open internet) whether an
+// address loads, or whether a port on a Dokploy server's public IP is open
+// (lib/reachability.ts). The answer an agent can't get from its own
+// sandbox, and the only honest way to say "it's live".
+export async function toolCheck(ctx: Ctx, args: { address?: string; instance?: string; port?: number }): Promise<ToolResult> {
+  const requestArgs = { address: args.address ?? null, instance: args.instance ?? null, port: args.port ?? null };
+  const vantage =
+    edition() === "cloud"
+      ? "Checked from zeqqat.com, on the open internet."
+      : "Checked from this Zeqqat's own server. If Zeqqat runs on the server being checked, an open or live result may not reflect the rest of the internet.";
+
+  if (args.address) {
+    const r = await checkAddress(args.address);
+    if (!r) {
+      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError("address must be a hostname or an http(s) URL on port 80 or 443, e.g. zeqqat.example.org."));
+    }
+    return logged(ctx, TOOL_NAMES.check, requestArgs, toolOk({ ...r, vantage }, `${r.address}: ${r.outcome}${r.status ? ` (HTTP ${r.status})` : ""}. ${r.detail} ${vantage}`));
+  }
+
+  if (args.port !== undefined) {
+    const instances = await reachableInstances(ctx);
+    const inst = instances.find((i) => i.alias === args.instance);
+    if (!inst || inst.integrationSlug !== "dokploy") {
+      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError(`instance must be a Dokploy instance on this connection: ${instanceNames(instances.filter((i) => i.integrationSlug === "dokploy"))}.`));
+    }
+    if (!(CHECKABLE_PORTS as readonly number[]).includes(args.port)) {
+      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError(`port must be one of ${CHECKABLE_PORTS.join(", ")} (SSH, web, Dokploy's dashboard).`));
+    }
+    const ipRes = await runEndpoint(ctx, { endpointName: "server.publicIp", instanceAlias: inst.alias, inputs: {} });
+    const ip = ipRes.ok && typeof ipRes.data === "string" ? ipRes.data.trim() : null;
+    if (!ip) {
+      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError("Couldn't get the server's public IP from Dokploy (server.publicIp), so the port can't be checked."));
+    }
+    let outcome;
+    try {
+      outcome = await checkPort(ip, args.port);
+    } catch {
+      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError(`Dokploy reports ${ip}, which isn't a public address, so it can't be checked from the internet.`));
+    }
+    const what = args.port === 22 ? "SSH" : args.port === 3000 ? "Dokploy's dashboard port" : `port ${args.port}`;
+    return logged(
+      ctx,
+      TOOL_NAMES.check,
+      requestArgs,
+      toolOk(
+        { instance: inst.alias, ip, port: args.port, outcome, vantage },
+        `${what} on ${ip} (${inst.alias}) is ${outcome === "open" ? "open to the internet" : "closed or blocked from the internet"}. ${vantage}`,
+      ),
+    );
+  }
+
+  return logged(ctx, TOOL_NAMES.check, requestArgs, toolError("Pass either address (to see if it loads) or instance plus port (to see if a port is open)."));
 }

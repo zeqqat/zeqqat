@@ -52,16 +52,24 @@ export default function SelfHostGuide() {
             <li>Deploy, then open the address and create the first account. It owns this Zeqqat.</li>
           </ol>
           <p className="zq-note">
-            Prefer your own domain? Use it in place of the generated one; point its DNS at this server first.
+            The generated address points straight at your server, so it only loads if your cloud provider lets
+            ports 80 and 443 in from the internet. If you keep them closed (for example, everything goes through
+            Cloudflare), Zeqqat still installs and runs: add your own domain the way you route your other apps, port{" "}
+            <b>3000</b> on the <b>zeqqat</b> service.
           </p>
           <div className="zq-panel-box" style={{ marginTop: 16 }}>
             <p className="zq-kicker">If you are an agent</p>
             <p className="zq-note" style={{ marginTop: 6 }}>
-              Unless the user gave a domain they own, get the address from Dokploy&rsquo;s <b>domain.generateDomain</b>{" "}
-              with the compose service&rsquo;s <b>appName</b>, then add it with <b>domain.create</b> (serviceName{" "}
-              <b>zeqqat</b>, port <b>3000</b>, HTTPS with Let&rsquo;s Encrypt). Check any address with{" "}
-              <b>domain.validateDomain</b> before deploying, and stop if it doesn&rsquo;t resolve. Never use
-              example.com.
+              Always create the address, unless the user gave a domain: <b>domain.generateDomain</b> with the compose
+              service&rsquo;s <b>appName</b>, then <b>domain.create</b> (serviceName <b>zeqqat</b>, port <b>3000</b>,
+              HTTPS with Let&rsquo;s Encrypt). Deploy. Then check it with <b>zeqqat_check</b> (address), which tests it
+              from the internet; your own sandbox can&rsquo;t tell. <b>live</b>: tell the user it&rsquo;s live and give
+              the link. <b>certificate_not_ready</b>: wait a minute and check again, for up to about three minutes.{" "}
+              <b>error_page</b>: the domain is wired wrong; fix it yourself. <b>unreachable</b>: tell the user Zeqqat is
+              installed and running but the address can&rsquo;t be reached because their cloud firewall blocks ports 80
+              and 443, and that they can open those ports or route their own domain to it (port 3000, service zeqqat).
+              Don&rsquo;t tell them their setup is wrong; it&rsquo;s their call. Never say it&rsquo;s live without a{" "}
+              <b>live</b> check, and never use example.com.
             </p>
           </div>
           <div className="zq-cbox" style={{ marginTop: 16 }}>

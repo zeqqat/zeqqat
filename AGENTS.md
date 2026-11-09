@@ -363,6 +363,20 @@ password into an app's `DATABASE_URL`). `lib/secret-handles.ts` does it:
   (mint, create a database, wire its URL into an app) against a real
   Postgres and a stand-in Dokploy.
 
+## Reachability check
+
+`zeqqat_check` (`lib/reachability.ts`) answers what an agent's sandbox
+can't: does an address load from the internet (`live`,
+`certificate_not_ready`, `error_page`, `unreachable`, `not_found`), or is a
+port open on a Dokploy instance's public IP (from `server.publicIp`; only
+22, 80, 443 and 3000, so it never becomes a port scanner). It returns an
+outcome, never a page body, and never touches private, loopback or
+link-local addresses: the IP is resolved once, checked, and the connection
+pinned to it. On zeqqat.com it's the open internet; on a self-hosted
+install it may be the very server being checked, and the result says so.
+The self-host guide's agent note depends on it: never report "live"
+without a `live` check.
+
 ## Security posture
 
 - Credentials are AES-256-GCM encrypted (`lib/crypto.ts`) before they ever
