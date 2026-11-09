@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { connectAppAction, type ConnectState } from "../lib/actions/instances";
+import { KeyInput, noAutofill } from "./KeyInput";
 
 // An instance of an imported app: where it lives and the key Zeqqat sends.
 export function ConnectAppForm({
@@ -28,7 +29,7 @@ export function ConnectAppForm({
           required
           maxLength={40}
           defaultValue={state.values?.alias ?? "production"}
-          autoComplete="off"
+          {...noAutofill}
         />
         <p className="zq-help">How agents and your activity log refer to this {appName}, for example production.</p>
       </div>
@@ -44,6 +45,7 @@ export function ConnectAppForm({
           required
           placeholder="https://api.example.com"
           defaultValue={state.values?.baseUrl ?? defaultBaseUrl ?? ""}
+          {...noAutofill}
         />
         <p className="zq-help">Where the API answers. Filled in from the spec when it says.</p>
       </div>
@@ -51,14 +53,7 @@ export function ConnectAppForm({
         <label className="zq-label" htmlFor="api_key">
           API key or token
         </label>
-        <input
-          className="zq-input"
-          id="api_key"
-          name="api_key"
-          type="password"
-          autoComplete="off"
-          placeholder="Paste an API key or token"
-        />
+        <KeyInput id="api_key" name="api_key" placeholder="Paste an API key or token" />
         <p className="zq-help">
           Sent the way the spec says (a header, a Bearer token or Basic auth). Encrypted, never shown again. Leave it
           empty for an API that needs no key.

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { connectDokployAction, type ConnectState } from "../lib/actions/instances";
+import { KeyInput, noAutofill } from "./KeyInput";
 
 // "Test and save": the server tests the key against Dokploy first and only
 // stores it if Dokploy accepted it. The trust copy sits next to the key
@@ -24,7 +25,7 @@ export function ConnectDokployForm({ next, defaultAlias }: { next: "onboarding" 
             required
             maxLength={40}
             defaultValue={state.values?.alias ?? defaultAlias}
-            autoComplete="off"
+            {...noAutofill}
           />
           <p className="zq-help">How agents and your activity log refer to this Dokploy, for example production or staging.</p>
         </div>
@@ -40,6 +41,7 @@ export function ConnectDokployForm({ next, defaultAlias }: { next: "onboarding" 
             required
             placeholder="https://dokploy.example.com"
             defaultValue={state.values?.baseUrl}
+            {...noAutofill}
           />
           <p className="zq-help">The address you open your Dokploy dashboard at. Self-hosted or Dokploy Cloud.</p>
         </div>
@@ -47,15 +49,7 @@ export function ConnectDokployForm({ next, defaultAlias }: { next: "onboarding" 
           <label className="zq-label" htmlFor="api_key">
             API key
           </label>
-          <input
-            className="zq-input"
-            id="api_key"
-            name="api_key"
-            type="password"
-            required
-            autoComplete="off"
-            placeholder="Paste a Dokploy API key"
-          />
+          <KeyInput id="api_key" name="api_key" required placeholder="Paste a Dokploy API key" />
           <p className="zq-help">In Dokploy, open Settings, then API Keys, and generate a key for Zeqqat.</p>
         </div>
         {state.error && (

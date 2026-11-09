@@ -4084,3 +4084,14 @@ button.zq-look:focus-visible {
     margin-right: -90px;
   }
 }
+
+/* API key fields: masked without type="password", so browsers don't autofill
+   sign-in details into the form or offer to save the key (KeyInput.tsx) */
+.zq-key-input {
+  -webkit-text-security: disc;
+  text-security: disc;
+  font-family: var(--mono, ui-monospace, monospace);
+}
+.zq-key-input::placeholder {
+  font-family: inherit;
+}

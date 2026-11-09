@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { replaceKeyAction, type ConnectState } from "../lib/actions/instances";
+import { KeyInput } from "./KeyInput";
 
 // Replacing a key runs the same connection test as connecting: the new key
 // is only stored if Dokploy accepts it.
@@ -24,7 +25,7 @@ export function ReplaceKeyForm({ instanceId }: { instanceId: string }) {
         New API key
       </label>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <input className="zq-input" id="new_key" name="api_key" type="password" autoComplete="off" required style={{ flex: "999 1 240px" }} />
+        <KeyInput id="new_key" name="api_key" required style={{ flex: "999 1 240px" }} />
         <button type="submit" className="zq-action zq-action-primary" disabled={pending} style={{ flex: "1 1 auto" }}>
           {pending ? "Testing..." : "Test and replace"}
         </button>
