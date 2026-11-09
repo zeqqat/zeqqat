@@ -179,6 +179,9 @@ async function main() {
     const sentEnv = String(received["/api/application.saveEnvironment"]?.[0]?.env ?? "");
     check("Dokploy received the real DATABASE_URL", sentEnv.includes(`postgresql://zeqqat:${dbPassword}@zeqqat-db-x1:5432/zeqqat`));
     check("saveEnvironment result never shows the value", !saved.all.includes(dbPassword));
+    check("saveEnvironment result says the secret was filled in", saved.all.includes(`Filled in 1 secret before sending (${readHandle})`));
+    const plain = await run("postgres.one", { postgresId: "pg_1" });
+    check("a call without handles says nothing about filling in", !plain.all.includes("Filled in"));
 
     // 5. A handle in a field that could send it elsewhere is refused.
     const before = (received["/api/application.update"] ?? []).length;

@@ -389,7 +389,7 @@ export async function runEndpoint(
     const parsed = safeJson(text);
     const scrubbedParsed = parsed !== undefined ? scrubSecrets(parsed, 0, minter.redact) : undefined;
     await minter.persist(ctx.connectionId, inst.id);
-    const handleNote = minter.count > 0 ? `${HANDLE_NOTE}\n` : "";
+    const handleNote = filledNote(resolved.used) + (minter.count > 0 ? `${HANDLE_NOTE}\n` : "");
 
     await finishCall(callId, {
       outcome: res.ok ? "ok" : "error",
@@ -421,6 +421,16 @@ export async function runEndpoint(
 
 const HANDLE_NOTE =
   "Secrets in this result are replaced by handles like {{zq_secret_...}}. To use one, put the handle in a later zeqqat_run input on this instance, in an env block or a password, token or key field (alone or inside a string), and Zeqqat fills in the value. Handles expire in 30 minutes. Never ask the user for the value.";
+
+// Says which handles were swapped for their values before the request went
+// out, so the agent knows its secrets reached the app as values and not as
+// the literal {{zq_secret_...}} text. (A handle Zeqqat can't fill in stops
+// the call before anything is sent.)
+export function filledNote(used: string[]): string {
+  if (used.length === 0) return "";
+  const n = used.length === 1 ? "1 secret" : `${used.length} secrets`;
+  return `Filled in ${n} before sending (${used.join(", ")}): the app received the real values, not the handles.\n`;
+}
 
 function safeJson(text: string): unknown {
   try {

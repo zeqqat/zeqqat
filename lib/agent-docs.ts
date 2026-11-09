@@ -134,7 +134,7 @@ export const AGENT_DOCS: DocSection[] = [
     title: "Where handles work",
     text:
       "A handle only resolves in fields meant for secrets: an env block (env, previewEnv, buildArgs, buildSecrets) or a field whose name says it holds a secret (password, token, key, secret). Anywhere else, such as a webhook URL, a notification target or a description, the call is refused. " +
-      "A handle works only on the connection it came from, and on one instance: the one its value came from, or for a zeqqat_secret handle, the first instance it is used on. An unknown or expired handle is refused with nothing sent.",
+      "A handle works only on the connection it came from, and on one instance: the one its value came from, or for a zeqqat_secret handle, the first instance it is used on. An unknown or expired handle is refused with nothing sent. When handles were filled in, the result starts with \"Filled in N secrets before sending\", so you know the app got the real values.",
   },
 ];
 
