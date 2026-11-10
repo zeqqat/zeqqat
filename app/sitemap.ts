@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts, SITE_URL } from "@/lib/blog";
 
-// Public pages only: the landing page, integrations and the blog. The
+// Public pages only: the landing page, integrations, releases and the blog. The
 // dashboard needs a sign-in and stays out.
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: `${SITE_URL}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}/integrations`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/releases`, changeFrequency: "weekly", priority: 0.6 },
     {
       url: `${SITE_URL}/blog`,
       lastModified: newest ? new Date(newest) : undefined,

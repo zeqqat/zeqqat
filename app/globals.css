@@ -1362,7 +1362,7 @@ body {
 .zq-panel-foot {
   margin-top: auto;
   padding: 14px 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line2);
   font-size: 11.5px;
   color: var(--faint);
   line-height: 1.6;
@@ -2406,6 +2406,10 @@ button.zq-ws-opt:hover,
   background: color-mix(in srgb, var(--fg) 6%, var(--panel));
   color: var(--dim);
 }
+.zq-rel-tag.is-latest {
+  background: color-mix(in srgb, var(--mint) 14%, var(--panel));
+  color: var(--mint);
+}
 .zq-rel-tag.is-new {
   background: color-mix(in srgb, var(--cobalt) 14%, var(--panel));
   color: var(--cobalt);
@@ -2435,14 +2439,14 @@ button.zq-ws-opt:hover,
 .zq-modal-foot a:hover {
   text-decoration: underline;
 }
-.zq-whatsnew {
+.zq-releases {
   max-width: 680px;
 }
-.zq-whatsnew .zq-rel {
+.zq-releases .zq-rel {
   padding-left: 0;
   padding-right: 0;
 }
-.zq-whatsnew .zq-rel:first-of-type {
+.zq-releases .zq-rel:first-of-type {
   border-top: none;
 }
 

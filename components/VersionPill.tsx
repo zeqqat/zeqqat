@@ -160,12 +160,12 @@ function WhatsNew({
         <div className="zq-modal-list">
           {!status && <p className="zq-modal-note">Loading…</p>}
           {releases.map((r) => (
-            <ReleaseRow key={r.version} r={r} current={version} />
+            <ReleaseRow key={r.version} r={r} current={version} latest={releases[0]?.version} />
           ))}
         </div>
 
         <div className="zq-modal-foot">
-          <Link href="/app/whats-new" onClick={onClose}>
+          <Link href="/app/releases" onClick={onClose}>
             See all changes →
           </Link>
         </div>
@@ -187,13 +187,18 @@ function UpdateLine({ route, phase, error }: { route: UpdateRoute | null; phase:
   return <p className={`zq-modal-note${phase === "failed" ? " is-error" : ""}`}>{text}</p>;
 }
 
-export function ReleaseRow({ r, current }: { r: Release; current: string }) {
-  const isCurrent = r.version === current;
-  const isNew = !isCurrent && newer(r.version, current);
+// One release. Tags, in this order: Latest (the newest release), New
+// (newer than yours but not the newest), Your version. Latest comes first
+// so it sits in the same spot on the public page, which has no Your version.
+export function ReleaseRow({ r, current, latest }: { r: Release; current?: string | null; latest?: string }) {
+  const isLatest = r.version === latest;
+  const isCurrent = !!current && r.version === current;
+  const isNew = !!current && !isCurrent && !isLatest && newer(r.version, current);
   return (
     <section className="zq-rel">
       <div className="zq-rel-h">
         <span className="zq-rel-v">v{r.version}</span>
+        {isLatest && <span className="zq-rel-tag is-latest">Latest</span>}
         {isNew && <span className="zq-rel-tag is-new">New</span>}
         {isCurrent && <span className="zq-rel-tag">Your version</span>}
         <span className="zq-rel-d">{fmtDate(r.date)}</span>

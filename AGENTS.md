@@ -396,7 +396,9 @@ entry becomes the GitHub release notes (`release.yml`).
 The side menu footer shows only `v<version>` and one pill: `Latest`, or
 `Update available` (never the newer number; that's inside the modal).
 `components/VersionPill.tsx` opens the What's new modal (every version,
-newest first, scrolls) with a link to `/app/whats-new`. zeqqat.com serves
+newest first, scrolls) with a link to `/app/releases`. Tags: Latest (the
+newest), New (newer than yours), Your version. The public `/releases` shows
+the same list with no Your version. zeqqat.com serves
 its changelog at `/api/releases`; a self-hosted install fetches it hourly
 (`lib/changelog.ts`, `ZEQQAT_RELEASES_URL` to point elsewhere,
 `ZEQQAT_UPDATE_CHECK=0` to stop) to learn about newer versions. Cloud is
