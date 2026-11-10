@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.31",
+    "date": "2026-11-10",
+    "changes": [
+      "GitHub releases credit merged pull requests and their contributors, with a Full Changelog link"
+    ]
+  },
+  {
     "version": "0.3.30",
     "date": "2026-11-10",
     "changes": [
