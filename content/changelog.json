@@ -1,16 +1,10 @@
 [
   {
-    "version": "0.3.31",
+    "version": "0.3.32",
     "date": "2026-11-10",
     "changes": [
+      "The line under Releases is centered too",
       "GitHub releases credit merged pull requests and their contributors, with a Full Changelog link"
-    ]
-  },
-  {
-    "version": "0.3.30",
-    "date": "2026-11-10",
-    "changes": [
-      "The line under Releases is centered too"
     ]
   },
   {
