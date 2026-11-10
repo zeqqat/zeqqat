@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PublicHeader } from "../../components/PublicHeader";
+import { SiteFooter, SiteHeader } from "../../components/SiteChrome";
 import { ReleaseRow } from "../../components/VersionPill";
 import { releaseStatus } from "../../lib/changelog";
 
@@ -9,15 +9,14 @@ export const metadata: Metadata = {
 };
 
 // The public changelog: every release, newest first, the newest marked
-// Latest. No sign-in, so no Your version tag, and nothing here says which
-// version this install runs.
+// Latest. Same header and footer as the landing page. Each version links to
+// its GitHub release, which release.yml publishes on every version bump.
 export default async function PublicReleases() {
   const { releases } = await releaseStatus();
   return (
     <div className="zq">
-      <PublicHeader />
-      <main className="zq-body zq-releases" style={{ maxWidth: 760 }}>
-        <p className="zq-kicker">Zeqqat</p>
+      <SiteHeader />
+      <main className="zq-body zq-releases">
         <h1 className="zq-h">
           Releases<span className="dot">.</span>
         </h1>
@@ -28,6 +27,7 @@ export default async function PublicReleases() {
           ))}
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

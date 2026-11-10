@@ -10,14 +10,10 @@ export default async function ReleasesPage() {
   const status = await releaseStatus();
   return (
     <div className="zq-releases">
-      <p className="zq-kicker">Zeqqat</p>
       <h1 className="zq-h">
         Releases<span className="dot">.</span>
       </h1>
-      <p className="zq-sub">
-        You&apos;re on v{status.current}
-        {status.updateAvailable ? `. v${status.latest} is out; update from the version at the bottom of the menu.` : ", the latest version."}
-      </p>
+      <p className="zq-sub">What changed in each version, newest first.</p>
       <div style={{ marginTop: 24 }}>
         {status.releases.map((r) => (
           <ReleaseRow key={r.version} r={r} current={status.current} latest={status.releases[0]?.version} />

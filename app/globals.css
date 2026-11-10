@@ -2441,6 +2441,20 @@ button.zq-ws-opt:hover,
 }
 .zq-releases {
   max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.zq-releases > .zq-h,
+.zq-releases > .zq-sub {
+  text-align: center;
+}
+a.zq-rel-v {
+  color: inherit;
+  text-decoration: none;
+}
+a.zq-rel-v:hover {
+  color: var(--cobalt);
+  text-decoration: underline;
 }
 .zq-releases .zq-rel {
   padding-left: 0;

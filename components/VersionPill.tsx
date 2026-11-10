@@ -197,7 +197,15 @@ export function ReleaseRow({ r, current, latest }: { r: Release; current?: strin
   return (
     <section className="zq-rel">
       <div className="zq-rel-h">
-        <span className="zq-rel-v">v{r.version}</span>
+        <a
+          className="zq-rel-v"
+          href={`https://github.com/zeqqat/zeqqat/releases/tag/v${r.version}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View this release on GitHub"
+        >
+          v{r.version}
+        </a>
         {isLatest && <span className="zq-rel-tag is-latest">Latest</span>}
         {isNew && <span className="zq-rel-tag is-new">New</span>}
         {isCurrent && <span className="zq-rel-tag">Your version</span>}

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.29",
+    "date": "2026-11-10",
+    "changes": [
+      "Releases page is centered, with the site header and footer on /releases",
+      "Each version on Releases opens its GitHub release"
+    ]
+  },
+  {
     "version": "0.3.28",
     "date": "2026-11-10",
     "changes": [
