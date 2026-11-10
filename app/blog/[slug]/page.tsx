@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, getPost, getPostSlugs, formatDate, SITE_URL } from "@/lib/blog";
+import { pageMeta } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -15,21 +16,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) return {};
-  const url = `${SITE_URL}/blog/${post.slug}`;
-  return {
-    title: { absolute: post.seoTitle },
+  const path = `/blog/${post.slug}`;
+  const image = { url: `${path}/opengraph-image`, width: 1200, height: 630, alt: post.title };
+  const meta = pageMeta({
+    title: post.seoTitle,
+    absolute: true,
     description: post.description,
+    path,
+    image,
+    type: "article",
+    publishedTime: post.date,
+  });
+  // Search results get the search-shaped title; share cards get the story's own.
+  return {
+    ...meta,
     keywords: post.keywords,
-    alternates: { canonical: `/blog/${post.slug}` },
-    openGraph: {
-      type: "article",
-      url,
-      siteName: "Zeqqat",
-      title: post.title,
-      description: post.description,
-      publishedTime: post.date,
-    },
-    twitter: { card: "summary", title: post.title, description: post.description },
+    openGraph: { ...meta.openGraph, title: post.title },
+    twitter: { ...meta.twitter, title: post.title },
   };
 }
 
@@ -47,6 +50,7 @@ export default async function PostPage({ params }: Props) {
       "@type": "BlogPosting",
       headline: post.title,
       description: post.description,
+      image: `${url}/opengraph-image`,
       datePublished: post.date,
       dateModified: post.date,
       mainEntityOfPage: url,

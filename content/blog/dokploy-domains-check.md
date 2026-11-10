@@ -8,61 +8,50 @@ keywords: "dokploy domain not working, dokploy sslip.io, dokploy domain not load
 
 Dokploy tells you a service deployed. It shows a green "done". It does not tell you whether anyone on the internet can open it.
 
-I have eleven domains spread across six apps and four compose stacks on one Dokploy server. I've never checked them all at once. So this morning I asked Claude to do it: list every domain, then try to load each one from the outside.
+I have eleven domains on one Dokploy server, spread across my apps and compose stacks. I've never checked them all at once. So this morning I asked Claude to do it: list every domain, then try to load each one from the outside.
 
 ## What I did
 
 Claude is connected to my Dokploy through Zeqqat, on a connection that can read, create and edit, but not delete. It only needed to read.
 
-Dokploy has no "list every domain" call. Domains hang off each app or compose service. So Claude listed my projects, then asked for the domains of each service, one call each. Ten calls, eleven domains. One app (pamoja, which is idle) had none.
+Dokploy has no "list every domain" call. Domains hang off each app or compose service. So Claude listed my projects, then asked for the domains of each service, one call each. Ten calls, eleven domains.
 
 Then it checked each address with `zeqqat_check`, which loads the address from zeqqat.com, on the open internet, and says what happened. That matters. Claude's own sandbox can't tell you if your site is reachable from the outside. It's somewhere else on the network with its own rules.
 
-Here's what came back. I've shortened the generated hostnames.
+Here's what came back, grouped by how the domain got there.
 
-| Domain | Service | Result |
-|---|---|---|
-| zeqqat.com | zeqqat-gateway | live (200) |
-| dev.zeqqat.com | zeqqat-lab-dev | live (302) |
-| test.zeqqat.com | zeqqat-registry | live (302) |
-| test2.zeqqat.com | test2-mcp | live (200) |
-| selfhost-test.zeqqat.com | a self-hosted Zeqqat (compose) | live (307) |
-| analytics.zeqqat.com | Umami (compose) | live (200) |
-| compose-reboot-neural-card-…sslip.io | the same self-hosted Zeqqat | **unreachable** |
-| analytics-umami-…sslip.io | Umami | **unreachable** |
-| compose-quantify-optical-…sslip.io | another self-hosted Zeqqat | **unreachable** |
-| zeqqat-template-test-…sslip.io | a template test | **unreachable** |
-| app-input-cross-platform-…sslip.io | ratelimit-test | **unreachable** |
+| Kind of domain | How many | Result |
+| --- | --- | --- |
+| A domain I added myself | 6 | all live |
+| A free sslip.io domain Dokploy generated | 5 | **all unreachable** |
 
-The 302 and 307 are the apps sending a signed-out visitor to their sign-in page. That counts as loading.
+Some of the live ones answered with a redirect to their sign-in page. That counts as loading.
 
 Every domain I typed in myself works. Every domain Dokploy generated for me does not.
 
 ## Why the sslip.io domains never worked
 
-When you create a service from a template, or click Generate on the Domains tab, Dokploy gives you a free hostname on sslip.io. sslip.io is a DNS service that answers with whatever IP is written in the name. Mine all end in my server's public IP, so they point straight at the server.
+When you create a service from a template, or click Generate on the Domains tab, Dokploy gives you a free hostname on sslip.io. sslip.io is a DNS service that answers with whatever IP is written in the name. So a generated domain points straight at your server's public IP.
 
-My server doesn't take traffic that way. All six working domains resolve to Cloudflare, not to my server, and Cloudflare brings the traffic in (analytics.zeqqat.com goes through a Cloudflare Tunnel; I wrote about that setup in [Dokploy behind Cloudflare](/blog/dokploy-behind-cloudflare)). Claude checked the ports to be sure: 80, 443 and 3000 on the server's public IP are all closed from the internet. The `zeqqat_check` result said the same thing in plain words: "Nothing answered from the internet. The server's cloud firewall most likely blocks ports 80 and 443 (common when a server only takes traffic through Cloudflare or a tunnel)."
+My server doesn't take traffic that way. It only takes web traffic through Cloudflare (I wrote about that setup in [Dokploy behind Cloudflare](/blog/dokploy-behind-cloudflare)). All six working domains resolve to Cloudflare, and Cloudflare brings the traffic in. The `zeqqat_check` result said why the others failed, in plain words: "Nothing answered from the internet. The server's cloud firewall most likely blocks ports 80 and 443 (common when a server only takes traffic through Cloudflare or a tunnel)."
 
-So the real domains go through Cloudflare and work. The sslip.io ones skip Cloudflare, hit a closed port, and time out. They were dead the moment Dokploy created them. Dokploy had no way to know.
+So the domains I added go through Cloudflare and work. The sslip.io ones skip Cloudflare, go straight to the server, and time out. They were dead the moment Dokploy created them. Dokploy had no way to know.
 
 ## The part that actually matters
 
-Five dead domains is just clutter. Two of them sit next to a real domain on the same service, so nothing is lost.
+Five dead domains is just clutter. Two of them sit next to a working domain on the same service, so nothing is lost.
 
-The other three are the only domain their service has:
+The other three are the only domain their service has. All three services show "done" in Dokploy. None of them can be opened by anyone.
 
-- **ratelimit-test**, an app I set up for a rate limit test last week.
-- **zeqqat-template-test**, a throwaway test of the Dokploy template.
-- **zeqqat-selfhost**, a self-hosted Zeqqat I installed on November 8 from my own docs.
+Two were throwaway tests, so that's fine. The third one is a little embarrassing: it's a Zeqqat I installed from the Dokploy template, the way my own docs tell people to, and it ended up with an address nobody can reach.
 
-All three show "done" in Dokploy. None of them can be opened by anyone. For the first two that's fine, they were tests. The third one is a little embarrassing: I installed Zeqqat the way my docs tell people to, on my own server, and it ended up with an address nobody can reach. The second install, a day later, got a real domain (selfhost-test.zeqqat.com). But if your Dokploy only takes traffic through Cloudflare, the template's generated domain won't work for you either. You'll need to add your own.
+If your Dokploy only takes traffic through Cloudflare, the same thing will happen to you with any template. The generated domain won't work. You'll need to add your own.
 
 ## What Claude didn't do
 
 It could have added domains. My connection allows create and edit. It didn't, because I asked it to check, and a new hostname needs a DNS record and a tunnel route that only I can set up in Cloudflare. It also didn't touch the dead sslip.io domains. My connection can't delete, and even if it could, cleaning up is my call.
 
-Every call carried the same reason, "Check which of my Dokploy domains actually load", so in Zeqqat's activity log the whole thing reads as one request: a project list, ten domain lookups, twelve address checks and three port checks.
+Every call carried the same reason, "Check which of my Dokploy domains actually load", so in Zeqqat's activity log the whole thing reads as one request: a project list, ten domain lookups and the address checks.
 
 ## What I took from it
 
@@ -82,4 +71,4 @@ An sslip.io domain resolves to the IP written inside it, which is your server's 
 
 ### Do I need Let's Encrypt on a Dokploy domain behind a Cloudflare Tunnel?
 
-No. Cloudflare serves the certificate visitors see, and the hop through the tunnel is already encrypted. Route the tunnel to Traefik at http://localhost:80 and turn HTTPS off on the domain in Dokploy, with the certificate set to None.
+No. Cloudflare serves the certificate visitors see, and the hop through the tunnel is already encrypted. Route the tunnel to Traefik at `http://localhost:80` and turn HTTPS off on the domain in Dokploy, with the certificate set to None.

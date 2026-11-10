@@ -6,6 +6,8 @@ import { findOpenInvite } from "../../../lib/invites";
 import { getServerSession } from "../../../lib/session";
 import { SignOutButton } from "../../../components/SignOutButton";
 
+export const metadata = { title: "Invitation", robots: { index: false, follow: false } };
+
 export default async function InvitePage({
   params,
   searchParams,

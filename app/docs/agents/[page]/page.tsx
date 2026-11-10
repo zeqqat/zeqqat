@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PublicHeader } from "../../../../components/PublicHeader";
 import { DOC_PAGES, sectionsOf } from "../../../../lib/agent-docs";
+import { pageMeta } from "../../../../lib/seo";
 
 type Props = { params: Promise<{ page: string }> };
 
@@ -11,7 +12,9 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { page } = await params;
-  return { title: DOC_PAGES.find((p) => p.id === page)?.title ?? "Docs" };
+  const meta = DOC_PAGES.find((p) => p.id === page);
+  if (!meta) return { title: "Docs" };
+  return pageMeta({ title: meta.title, description: meta.description, path: `/docs/agents/${meta.id}` });
 }
 
 // One docs page: its sections, each with an anchor (#section) that

@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { PublicHeader } from "../../components/PublicHeader";
+import { pageMeta } from "../../lib/seo";
 
-export const metadata: Metadata = { title: "Privacy" };
+export const metadata: Metadata = pageMeta({
+  title: "Privacy",
+  description: "What zeqqat.com stores, what it never shows an AI agent, and what stays on your own server when you self-host Zeqqat.",
+  path: "/privacy",
+});
 
 // Plain-language privacy notice for the hosted zeqqat.com. A self-hosted
 // install keeps everything on its own server and is governed by whoever runs it.

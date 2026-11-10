@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { PublicHeader } from "../../components/PublicHeader";
+import { pageMeta } from "../../lib/seo";
 
-export const metadata: Metadata = { title: "Terms" };
+export const metadata: Metadata = pageMeta({
+  title: "Terms",
+  description: "The terms for the hosted service at zeqqat.com, in plain language. The Zeqqat code itself is open source under Apache 2.0.",
+  path: "/terms",
+});
 
 // Plain-language terms for the hosted zeqqat.com. The code itself is under
 // the Apache License 2.0; these terms cover only the hosted service.

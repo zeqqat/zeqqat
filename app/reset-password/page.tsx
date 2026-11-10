@@ -1,7 +1,8 @@
 import { ResetPasswordForm } from "../../components/PasswordPages";
 import { PublicHeader } from "../../components/PublicHeader";
+import { NOINDEX } from "../../lib/seo";
 
-export const metadata = { title: "Choose a new password" };
+export const metadata = { title: "Choose a new password", robots: NOINDEX };
 
 export default async function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await searchParams;

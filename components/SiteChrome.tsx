@@ -12,6 +12,7 @@ export const SITE_LINKS = {
   docs: "/docs/agents",
   selfHost: "/docs/self-host",
   blog: "/blog",
+  releases: "/releases",
   terms: "/terms",
   privacy: "/privacy",
   // Permanent invite (never expires, no use limit) into #general of the
@@ -80,6 +81,7 @@ export function SiteFooter() {
             <li><a href={SITE_LINKS.docs}>Docs</a></li>
             <li><a href={SITE_LINKS.selfHost}>Self-hosting</a></li>
             <li><a href={SITE_LINKS.blog}>Blog</a></li>
+            <li><a href={SITE_LINKS.releases}>Releases</a></li>
           </ul>
         </nav>
         <nav aria-label="Community">

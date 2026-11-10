@@ -2,8 +2,9 @@ import { ForgotPasswordForm } from "../../components/PasswordPages";
 import { PublicHeader } from "../../components/PublicHeader";
 import { passwordEnabled } from "../../lib/auth-providers";
 import { mailerConfigured } from "../../lib/mailer";
+import { NOINDEX } from "../../lib/seo";
 
-export const metadata = { title: "Forgot password" };
+export const metadata = { title: "Forgot password", robots: NOINDEX };
 
 // With a mailer, the reset link comes by email. Without one (most
 // self-hosted installs), the install's owner makes the link on the Team page.

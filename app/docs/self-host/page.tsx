@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { PublicHeader } from "../../../components/PublicHeader";
+import { pageMeta } from "../../../lib/seo";
 
-export const metadata: Metadata = { title: "Self-host Zeqqat on Dokploy" };
+export const metadata: Metadata = pageMeta({
+  title: "Self-host Zeqqat on Dokploy",
+  description:
+    "Install Zeqqat, the open source MCP gateway, on your own Dokploy: one Docker Compose service and a Postgres database, from the template or step by step.",
+  path: "/docs/self-host",
+});
 
 // The guide the self-host prompt points agents at, and the manual path for
 // people who'd rather do it by hand. Written as numbered steps an agent can

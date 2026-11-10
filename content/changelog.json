@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.3.33",
+    "date": "2026-11-10",
+    "changes": [
+      "Links to zeqqat.com and to blog posts now show a preview card when shared",
+      "Docs, the self-host guide, Terms and Privacy are in the sitemap, each with its own description",
+      "Sign-in pages are kept out of search results",
+      "Releases is linked from the site footer",
+      "Blog: the Dokploy domains post is shorter and easier to follow"
+    ]
+  },
+  {
     "version": "0.3.32",
     "date": "2026-11-10",
     "changes": [

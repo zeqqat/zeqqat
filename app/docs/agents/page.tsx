@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { PublicHeader } from "../../../components/PublicHeader";
 import { DOC_PAGES, sectionsOf } from "../../../lib/agent-docs";
+import { pageMeta } from "../../../lib/seo";
 
-export const metadata: Metadata = { title: "Zeqqat for agents" };
+export const metadata: Metadata = pageMeta({
+  title: "Zeqqat for agents",
+  description:
+    "Docs for AI agents working with Dokploy through Zeqqat: the tools an agent sees, what it may do, how secrets stay hidden, and what each error means.",
+  path: "/docs/agents",
+});
 
 // The docs zeqqat_docs answers from, as pages a person can read. Every
 // passage an agent gets links to its section here.

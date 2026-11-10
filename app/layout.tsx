@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import localFont from "next/font/local";
 import { Analytics } from "../components/analytics";
+import { DEFAULT_OG_IMAGE, SITE_URL } from "../lib/seo";
 import "./globals.css";
 
 // Fonts are bundled (app/fonts, SIL Open Font License), not fetched from
@@ -23,13 +24,20 @@ const mono = localFont({
   display: "swap",
 });
 
+// metadataBase turns every relative canonical and share-image path into a
+// full https://zeqqat.com address. Canonical URLs are set per page, never
+// here, or every page would claim to be the landing page.
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: "Zeqqat",
   title: {
     default: "Zeqqat: the safe MCP for Dokploy",
     template: "%s | Zeqqat",
   },
   description:
     "Give AI access to your Dokploy, self-hosted or Cloud. Your agent deploys, reads logs and fixes your apps, you decide exactly what it may touch, and your API keys, env vars and secrets never reach the LLM.",
+  openGraph: { type: "website", siteName: "Zeqqat", images: [DEFAULT_OG_IMAGE] },
+  twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE.url] },
 };
 
 // Applied before first paint so a dark-mode reader never sees a white flash;

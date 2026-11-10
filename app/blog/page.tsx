@@ -1,21 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAllPosts, formatDate, SITE_URL } from "@/lib/blog";
+import { getAllPosts, formatDate } from "@/lib/blog";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: { absolute: "Zeqqat Blog: Dokploy, Self-Hosting and MCP" },
+export const metadata: Metadata = pageMeta({
+  title: "Zeqqat Blog: Dokploy, Self-Hosting and MCP",
+  absolute: true,
   description:
     "Guides for self-hosters running Dokploy and Coolify, and for anyone connecting AI agents to their own servers with MCP.",
-  alternates: { canonical: "/blog" },
-  openGraph: {
-    type: "website",
-    url: `${SITE_URL}/blog`,
-    siteName: "Zeqqat",
-    title: "Zeqqat Blog: Dokploy, Self-Hosting and MCP",
-    description:
-      "Guides for self-hosters running Dokploy and Coolify, and for anyone connecting AI agents to their own servers with MCP.",
-  },
-};
+  path: "/blog",
+});
 
 export default function BlogIndex() {
   const posts = getAllPosts();

@@ -13,14 +13,49 @@ import { publicUrl } from "./env";
 export type DocSection = { id: string; page: string; title: string; text: string };
 
 // Public docs pages, in order. Each groups the sections with that `page`.
-export const DOC_PAGES: { id: string; title: string }[] = [
-  { id: "overview", title: "How Zeqqat works" },
-  { id: "tools", title: "Using the tools" },
-  { id: "permissions", title: "Permissions and policies" },
-  { id: "integrations", title: "Integrations and instances" },
-  { id: "connections", title: "Connections" },
-  { id: "secrets", title: "Working with secrets" },
-  { id: "errors", title: "Errors" },
+// `description` is the page's line in search results.
+export const DOC_PAGES: { id: string; title: string; description: string }[] = [
+  {
+    id: "overview",
+    title: "How Zeqqat works",
+    description:
+      "How an AI agent reaches your Dokploy through Zeqqat: one connection URL, ten built-in tools, and the context every result carries.",
+  },
+  {
+    id: "tools",
+    title: "Using the tools",
+    description:
+      "How an agent finds, describes and runs a Dokploy tool through Zeqqat, and why every call needs a one-line reason.",
+  },
+  {
+    id: "permissions",
+    title: "Permissions and policies",
+    description:
+      "How Zeqqat decides what an agent may do on your Dokploy: read, create, edit and delete, set per tool by a policy, and why a call was denied.",
+  },
+  {
+    id: "integrations",
+    title: "Integrations and instances",
+    description:
+      "What integrations and instances are in Zeqqat: Dokploy is the integration, and each Dokploy server you add is an instance.",
+  },
+  {
+    id: "connections",
+    title: "Connections",
+    description:
+      "How a Zeqqat connection gives one agent its own URL, its own Dokploy servers and its own permissions, and when it ends.",
+  },
+  {
+    id: "secrets",
+    title: "Working with secrets",
+    description:
+      "How Zeqqat keeps API keys, env vars and passwords away from the LLM: agents see handles, pass them back, and create new secrets unseen.",
+  },
+  {
+    id: "errors",
+    title: "Errors",
+    description: "The errors an agent can get from Zeqqat, what each one means, and what to tell the person it is working for.",
+  },
 ];
 
 export const AGENT_DOCS: DocSection[] = [

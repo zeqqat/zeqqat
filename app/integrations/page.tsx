@@ -7,11 +7,13 @@ import { edition } from "../../lib/edition";
 import { addAppPath, DIRECTORY, type DirectoryApp } from "../../lib/integrations-directory";
 import { getServerSession } from "../../lib/session";
 
+// Unlinked and out of the sitemap while Zeqqat is the MCP for Dokploy, so
+// it is kept out of search results too.
 export const metadata: Metadata = {
-  title: "Integrations | Zeqqat",
+  title: "Integrations",
+  robots: { index: false, follow: true },
   description:
     "Apps you can give AI access to through Zeqqat: Dokploy out of the box, and Coolify, Stripe, GitHub, Resend or any other app from its OpenAPI spec.",
-  alternates: { canonical: "/integrations" },
 };
 
 const nf = new Intl.NumberFormat("en-US");

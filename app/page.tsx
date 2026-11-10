@@ -2,6 +2,42 @@ import { redirect } from "next/navigation";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
 import { SITE_LINKS, SiteFooter, SiteHeader } from "../components/SiteChrome";
+import { pageMeta, SITE_URL } from "../lib/seo";
+
+const DESCRIPTION =
+  "Give AI access to your Dokploy, self-hosted or Cloud. Your agent deploys, reads logs and fixes your apps, you decide exactly what it may touch, and your API keys, env vars and secrets never reach the LLM.";
+
+export const metadata = pageMeta({
+  title: "Zeqqat: the safe MCP for Dokploy",
+  absolute: true,
+  description: DESCRIPTION,
+  path: "/",
+});
+
+// What Zeqqat is, in the form search engines read: a free, open source
+// developer tool, and who publishes it.
+const JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Zeqqat",
+    url: SITE_URL,
+    description: DESCRIPTION,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Any",
+    license: "https://www.apache.org/licenses/LICENSE-2.0",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    codeRepository: "https://github.com/zeqqat/zeqqat",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Zeqqat",
+    url: SITE_URL,
+    logo: `${SITE_URL}/apple-icon.png`,
+    sameAs: ["https://github.com/zeqqat/zeqqat"],
+  },
+];
 
 export default function LandingPage() {
   // The landing page sells zeqqat.com. A self-hosted install opens straight
@@ -10,6 +46,10 @@ export default function LandingPage() {
 
   return (
     <div className="zq">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\\u003c") }}
+      />
       <SiteHeader />
 
       <div className="zq-mid">

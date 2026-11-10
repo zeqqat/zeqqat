@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { SiteFooter, SiteHeader } from "../../components/SiteChrome";
 import { ReleaseRow } from "../../components/VersionPill";
 import { releaseStatus } from "../../lib/changelog";
+import { pageMeta } from "../../lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMeta({
   title: "Releases",
   description: "What changed in each version of Zeqqat, the MCP gateway for Dokploy.",
-};
+  path: "/releases",
+});
 
 // The public changelog: every release, newest first, the newest marked
 // Latest. Same header and footer as the landing page. Each version links to

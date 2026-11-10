@@ -116,6 +116,8 @@ function Scope({
   );
 }
 
+export const metadata = { title: "Connect an agent", robots: { index: false, follow: false } };
+
 export default async function AuthorizePage({
   searchParams,
 }: {
