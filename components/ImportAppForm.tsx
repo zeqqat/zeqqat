@@ -10,7 +10,7 @@ export function ImportAppForm({
   prefill,
 }: {
   account: string;
-  // From /integrations: "Add to Zeqqat" on a listed app fills the form in.
+  // A link can fill the form in (?add=app&spec=...).
   prefill?: { specUrl?: string; docsUrl?: string; name?: string };
 }) {
   const [state, action, pending] = useActionState<ImportState, FormData>(importAppAction, {});

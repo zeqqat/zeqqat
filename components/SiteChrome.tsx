@@ -1,13 +1,12 @@
 import { getServerSession } from "../lib/session";
 import { ThemeToggle } from "./ThemeToggle";
 
-// Header and footer for zeqqat.com's public pages (landing, integrations).
+// Header and footer for zeqqat.com's public pages (landing, releases).
 // Every link here must resolve: add a page before linking to it.
 export const SITE_LINKS = {
   signin: "/signin",
   signup: "/signup",
   app: "/app",
-  integrations: "/integrations",
   github: "https://github.com/zeqqat/zeqqat",
   docs: "/docs/agents",
   selfHost: "/docs/self-host",
@@ -34,8 +33,7 @@ function Brand() {
 
 // Signed-in visitors get "Dashboard" where others get "Sign in", so coming
 // back to zeqqat.com is one click from their work.
-// `current` is still accepted so /integrations renders, but the page is no longer linked.
-export async function SiteHeader(_props: { current?: "integrations" } = {}) {
+export async function SiteHeader() {
   const session = await getServerSession();
   return (
     <header className="zq-top">

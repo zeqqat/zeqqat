@@ -246,13 +246,18 @@ in the app.
 `pnpm exec tsx tests/e2e/telemetry-flow.ts` runs the ping loop end to end.
 
 **Public site** (cloud edition only; self-hosted redirects into `/app`):
-`/` and `/integrations` share `components/SiteChrome.tsx`. The apps listed
-on `/integrations` and in the landing page's "Works with" row come from
-`lib/integrations-directory.ts`. Only list a spec app after running its
-spec through the importer: specs over 15 MB (Cloudflare's), Swagger 2 files
-and GraphQL-only APIs don't import. "Add" links go to
-`/app/integrations?add=app&spec=...` (the import form, filled in), through
+`/` and `/releases` share `components/SiteChrome.tsx`. There is no public
+integrations page: Zeqqat is the MCP for Dokploy, and the list of apps lives
+only in the dashboard (`/app/integrations`). A link can still fill the
+import form in (`/app/integrations?add=app&spec=...`), through
 `/signup?next=...` when signed out (`lib/next-path.ts` keeps `next` on-site).
+
+**SEO:** every public page gets its title, description, canonical URL and
+share card from `pageMeta()` in `lib/seo.ts`, and is listed in
+`app/sitemap.ts`. Share images come from `lib/og-image.tsx` (one for the
+site, one per blog post). Sign-in, password, invite and consent pages are
+noindex. Blog posts never name the author's own hostnames, projects or
+databases.
 
 **Agent docs** live in `lib/agent-docs.ts`: `zeqqat_docs` ranks them with
 Postgres full-text search, and they're public at `/docs/agents/<page>`

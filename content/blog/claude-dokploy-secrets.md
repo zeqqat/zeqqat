@@ -12,19 +12,19 @@ One thing stopped me. When an agent lists your applications through the Dokploy 
 
 And once a secret is in the model's context, it's out of your hands. It can end up in a log, a summary, a commit message. You don't get it back.
 
-So I built Zeqqat to sit between the agent and Dokploy. Today I tested it on my own dev app.
+So I built Zeqqat to sit between the agent and Dokploy. Today I tested it on one of my own apps.
 
 ## What I did
 
-I connected Claude to my Dokploy through Zeqqat and asked it to look at the app behind dev.zeqqat.com. Claude listed my projects, found the app and pulled its full config.
+I connected Claude to my Dokploy through Zeqqat and asked it to look at one of my apps. Claude listed my projects, found the app and pulled its full config.
 
-This is the env block Claude got back (I shortened the hostnames):
+This is the env block Claude got back (I changed the hostnames):
 
 ```
 NODE_ENV=production
 PORT=3000
-DATABASE_URL=postgresql://postgres:{{zq_secret_ectc2gtuqax8cem2}}@my-db:5432/zeqqat
-ZEQQAT_PUBLIC_URL=https://dev.zeqqat.com
+DATABASE_URL=postgresql://postgres:{{zq_secret_ectc2gtuqax8cem2}}@my-db:5432/app
+ZEQQAT_PUBLIC_URL=https://app.example.com
 GOOGLE_CLIENT_ID=...apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET={{zq_secret_e1iscp9ziygtdg2q}}
 BETTER_AUTH_SECRET={{zq_secret_gp53vs4pxdnhyxb4}}

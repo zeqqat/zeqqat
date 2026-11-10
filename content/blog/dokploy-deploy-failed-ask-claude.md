@@ -18,11 +18,11 @@ Claude searched for deployment tools, found one that lists recent deployments ac
 
 Here's the first thing I learned. Every one of those three records had `errorMessage: null`. Dokploy knows the deploy failed, but the deployment record doesn't say why. The only place the reason lives is the build log.
 
-So Claude read the last lines of each log. Three failures, three completely different causes.
+So Claude read the last lines of each log. Three failures, three completely different causes. (I changed the repo name in the logs below.)
 
 ## Failure 1: Node 18 couldn't load sharp
 
-My `pamoja-app` is a Next.js 15 app built with Nixpacks. The build compiled fine, passed type checking, then died while collecting page data:
+One of my apps is a Next.js 15 app built with Nixpacks. The build compiled fine, passed type checking, then died while collecting page data:
 
 ```
 Error: Could not load the "sharp" module using the linux-x64 runtime
@@ -52,13 +52,13 @@ Look at that second line. Nix says the failure "usually happens due to networkin
 
 ## Failure 3: the repo was gone
 
-The third one, on `test2-mcp`, failed in two seconds:
+The third one, on a test app, failed in two seconds:
 
 ```
-Cloning Repo Custom git@github.com:zeqqat/test2-mcp.git ... ✅
+Cloning Repo Custom git@github.com:my-org/my-app.git ... ✅
 ERROR: Repository not found.
 fatal: Could not read from remote repository.
-❌ [ERROR] Fail to clone the repository git@github.com:zeqqat/test2-mcp.git
+❌ [ERROR] Fail to clone the repository git@github.com:my-org/my-app.git
 ```
 
 Note the green tick on the clone line, right before the clone fails. Dokploy prints the step, then git says the repo doesn't exist (or the deploy key can't see it). Nothing was ever built.

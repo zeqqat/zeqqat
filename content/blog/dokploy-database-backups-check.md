@@ -23,19 +23,17 @@ Here's what came back.
 | Database | Backup | Last 11 nights |
 |---|---|---|
 | Dokploy itself | daily, keep 3 | all done |
-| zeqqat-registry-db | daily, keep 7 | all done |
-| zeqqat-lab-dev-db | daily, keep 7 | all done |
-| pgtest-source, pgtest-target | daily, keep 7 | all done |
-| pamoja-db | daily, keep 7 | **5 done, then 6 errors** |
-| zeqqat-db | **none** | |
+| Four app and test databases | daily, keep 7 | all done |
+| An old project's database | daily, keep 7 | **5 done, then 6 errors** |
+| My newest app database | **none** | |
 | Umami's Postgres (compose) | **none** | |
 | Self-hosted Zeqqat's Postgres (compose) | **none** | |
 
 Two of those surprised me.
 
-## Surprise 1: pamoja-db has failed every night since November 4
+## Surprise 1: one backup has failed every night since November 4
 
-Every run from October 30 to November 3 was fine. Every run from November 4 on is an error, and each one fails in under a second.
+This is the database of an old project I no longer run. Every run from October 30 to November 3 was fine. Every run from November 4 on is an error, and each one fails in under a second.
 
 The run records don't say why. Every one has `errorMessage: null`. So Claude read the log of last night's run:
 
@@ -48,13 +46,13 @@ Initializing backup
 
 There's no container to back up. In Dokploy the database shows as `idle`, and so does the app that uses it. Nothing is running, but the schedule kept going, failing quietly at midnight every night. Nobody told me. Claude checked that too: I have zero notification channels set up in Dokploy, so a failed backup goes nowhere.
 
-Then Claude checked the bucket. The seven newest files for pamoja-db are from October 28 to November 3. A failed run uploads nothing, so it also prunes nothing, and the last good copies are still there. That's the good news.
+Then Claude checked the bucket. The seven newest files for that database are from October 28 to November 3. A failed run uploads nothing, so it also prunes nothing, and the last good copies are still there. That's the good news.
 
-The less good news: each file is about 390 bytes. That's a gzipped dump with almost nothing in it. Compare the registry database, whose nightly dumps are about 45 KB each. So these backups "worked", they just backed up a nearly empty database. For pamoja that's fine. For a database that matters, a size check is the only way you'd notice.
+The less good news: each file is about 390 bytes. That's a gzipped dump with almost nothing in it. Compare one of my active databases, whose nightly dumps are about 45 KB each. So these backups "worked", they just backed up a nearly empty database. For an old project that's fine. For a database that matters, a size check is the only way you'd notice.
 
-## Surprise 2: the database behind zeqqat.com has no backup
+## Surprise 2: my newest database has no backup
 
-`zeqqat-db` is the Postgres for zeqqat.com itself. I created it on November 4, after I'd set up backups for everything else. I never went back and added one.
+It's the Postgres behind an app I launched this month. I created it on November 4, after I'd set up backups for everything else. I never went back and added one.
 
 The two compose stacks are the same story. Umami (my site analytics) and a self-hosted Zeqqat I installed yesterday both run Postgres inside a compose file. Dokploy can back up a database inside a compose service, but you set it up per service, and I hadn't.
 

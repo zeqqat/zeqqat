@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.34",
+    "date": "2026-11-10",
+    "changes": [
+      "Removed the public Integrations page: Zeqqat is the MCP for Dokploy",
+      "Blog: three posts tidied so examples use placeholder names"
+    ]
+  },
+  {
     "version": "0.3.33",
     "date": "2026-11-10",
     "changes": [

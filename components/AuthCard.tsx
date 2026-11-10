@@ -11,8 +11,7 @@ import { PublicHeader } from "./PublicHeader";
 
 // Sign in and sign up are the same page: signing in with a new account
 // creates it. The landing page explains the product, so this card carries
-// no pitch, only the ways in. ?next= is where to land afterwards (a link to
-// add an app from /integrations, for example).
+// no pitch, only the ways in. ?next= is where to land afterwards.
 export async function AuthCard({ error, next }: { error?: string; next?: string | string[] }) {
   const target = safeNext(next);
   const session = await getServerSession();
