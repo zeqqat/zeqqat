@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { AppShell, type MenuState } from "../../components/AppShell";
 import { devToolsEnabled } from "../../lib/dev-tools";
 import { pastUsersOf } from "../../lib/dev-users";
-import { edition, siteHost } from "../../lib/edition";
+import { edition } from "../../lib/edition";
 import { APP_VERSION } from "../../lib/version";
 import { requireWorkspace } from "../../lib/guard";
 import { listUserWorkspaces, orgsOf } from "../../lib/workspace";
@@ -29,7 +29,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         user={{ name: user.name, email: user.email, image: user.image ?? null, username }}
         edition={edition()}
         version={APP_VERSION}
-        siteHost={siteHost()}
         orgs={orgs}
         currentOrg={{ id: ws.organizationId, slug: ws.organizationSlug, name: ws.organizationName }}
         workspaces={inOrg}

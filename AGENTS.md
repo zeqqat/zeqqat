@@ -386,6 +386,32 @@ so a release needs no template PR.
 `pnpm exec tsx tests/e2e/selfhost-install-flow.ts` runs the steps against a
 stand-in Dokploy.
 
+## Versions, What's new and in-app updates
+
+**Every version bump adds an entry on top of `content/changelog.json`**
+(version, date, a few plain lines of what changed, no em dashes). A unit
+test fails while the top entry isn't `package.json`'s version. The same
+entry becomes the GitHub release notes (`release.yml`).
+
+The side menu footer shows only `v<version>` and one pill: `Latest`, or
+`Update available` (never the newer number; that's inside the modal).
+`components/VersionPill.tsx` opens the What's new modal (every version,
+newest first, scrolls) with a link to `/app/whats-new`. zeqqat.com serves
+its changelog at `/api/releases`; a self-hosted install fetches it hourly
+(`lib/changelog.ts`, `ZEQQAT_RELEASES_URL` to point elsewhere,
+`ZEQQAT_UPDATE_CHECK=0` to stop) to learn about newer versions. Cloud is
+always Latest.
+
+Update now (self-hosted, workspace admins): `lib/self-update.ts` looks
+through the admin's Dokploy instances for the compose whose
+`ZEQQAT_PUBLIC_URL` or domain is this install's own host, then
+`compose.deploy`s it; the image is `latest` with `pull_policy: always`, so
+that is the update. A compose pinned with `ZEQQAT_VERSION` is reported, not
+deployed. The modal then polls `/api/health` (which returns `version`)
+until the new version answers and reloads. Only forward to latest: no
+version picker, because an older build can break on a database a newer one
+already migrated.
+
 ## Reachability check
 
 `zeqqat_check` (`lib/reachability.ts`) answers what an agent's sandbox

@@ -6,6 +6,7 @@ import { authClient } from "../lib/auth-client";
 import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
 import { ThemeToggle } from "./ThemeToggle";
+import { VersionPill } from "./VersionPill";
 
 type Pane = "overview" | "connections" | "integrations" | "tools" | "policies" | "activity" | "members" | "settings";
 
@@ -40,7 +41,6 @@ export function AppShell({
   user,
   edition,
   version,
-  siteHost,
   orgs,
   currentOrg,
   workspaces,
@@ -52,7 +52,6 @@ export function AppShell({
   user: { name: string; email: string; image: string | null; username: string };
   edition: "cloud" | "self-hosted";
   version: string;
-  siteHost: string;
   orgs: ShellOrg[];
   currentOrg: ShellOrg;
   workspaces: ShellWorkspace[]; // the current org's workspaces this user can open
@@ -307,9 +306,7 @@ export function AppShell({
               })}
             </nav>
             <div className="zq-panel-foot">
-              <span className="zq-panel-ver">
-                v{version} {edition === "cloud" ? "Beta" : `· Self-hosted · ${siteHost}`}
-              </span>
+              <VersionPill version={version} edition={edition} />
             </div>
           </div>
         </aside>

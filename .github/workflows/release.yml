@@ -2,7 +2,7 @@ name: Release
 
 # Releasing is just bumping "version" in package.json and pushing to main.
 # When main has a version with no v<version> tag yet, this tags the commit,
-# publishes a GitHub release with generated notes, and builds the image to
+# publishes a GitHub release with its content/changelog.json notes, and builds the image to
 # ghcr.io/zeqqat/zeqqat as <version>, <major>.<minor> and latest. A
 # pre-release version like 0.3.0-rc.1 publishes only its own tag, never
 # latest. Pushing a v*.*.* tag by hand still builds that version.
@@ -43,7 +43,11 @@ jobs:
           fi
           prerelease=""
           [[ "$version" == *-* ]] && prerelease="--prerelease"
-          gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" --generate-notes $prerelease
+          # The notes are this version's entry in content/changelog.json, the
+          # same text the in-app What's new modal shows.
+          node -e 'const v=process.argv[1];const e=require("./content/changelog.json").find(r=>r.version===v);process.stdout.write(e?e.changes.map(c=>"- "+c).join("\n"):"")' "$version" > notes.md
+          if [ -s notes.md ]; then notes=(--notes-file notes.md); else notes=(--generate-notes); fi
+          gh release create "v$version" --target "$GITHUB_SHA" --title "v$version" "${notes[@]}" $prerelease
           echo "release=true" >> "$GITHUB_OUTPUT"
 
   # Each platform builds natively on its own runner, side by side (arm64 on
