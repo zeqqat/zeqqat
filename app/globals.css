@@ -2447,6 +2447,8 @@ button.zq-ws-opt:hover,
 .zq-releases > .zq-h,
 .zq-releases > .zq-sub {
   text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 a.zq-rel-v {
   color: inherit;

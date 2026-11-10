@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.30",
+    "date": "2026-11-10",
+    "changes": [
+      "The line under Releases is centered too"
+    ]
+  },
+  {
     "version": "0.3.29",
     "date": "2026-11-10",
     "changes": [
