@@ -1,5 +1,10 @@
 [
   {
+    "version": "0.3.27",
+    "date": "2026-11-10",
+    "changes": ["Blog: I asked Claude which of my Dokploy domains actually load"]
+  },
+  {
     "version": "0.3.26",
     "date": "2026-11-10",
     "changes": [
