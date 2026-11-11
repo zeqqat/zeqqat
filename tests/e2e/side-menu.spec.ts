@@ -82,13 +82,15 @@ test("opening the menu is animated", async ({ page }) => {
 });
 
 test("the menu stays the way you left it across pages", async ({ page }) => {
+  // The test user has no Dokploy yet, so Releases and the overview are the
+  // only pages that open (tests/e2e/connect-first.spec.ts).
   const menu = page.getByRole("complementary", { name: "Menu" });
-  await menu.getByRole("link", { name: "Connections" }).click();
-  await expect(page).toHaveURL(/\/app\/connections/);
+  await page.goto("/app/releases");
+  await expect(page).toHaveURL(/\/app\/releases/);
   await expect(menu).toBeVisible();
 
   await page.locator(BURGER).click();
   await expect(menu).toBeHidden();
-  await page.goto("/app/tools");
+  await page.goto("/app");
   await expect(page.getByRole("complementary", { name: "Menu" })).toBeHidden();
 });

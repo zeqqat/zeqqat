@@ -2439,6 +2439,40 @@ button.zq-ws-opt:hover,
 .zq-modal-foot a:hover {
   text-decoration: underline;
 }
+/* "Connect your Dokploy first": shown when a page is held back until the
+   workspace has a Dokploy (lib/setup-gate.ts). */
+.zq-gate {
+  max-width: 380px;
+}
+.zq-gate .zq-modal-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.zq-gate-note {
+  padding: 0 20px;
+  flex: none;
+}
+.zq-gate-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px 18px;
+}
+.zq-h.is-shaking {
+  animation: zq-shake 0.45s ease;
+}
+@keyframes zq-shake {
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zq-h.is-shaking {
+    animation: none;
+  }
+}
 .zq-releases {
   max-width: 680px;
   margin-left: auto;

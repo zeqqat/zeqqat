@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
+import { openWithoutDokploy } from "../lib/setup-gate";
+import { DokployMark } from "./Marks";
 import { ThemeToggle } from "./ThemeToggle";
 import { VersionPill } from "./VersionPill";
 
@@ -47,6 +49,7 @@ export function AppShell({
   currentWorkspace,
   initialMenu,
   devTools = null,
+  needsDokploy = false,
   children,
 }: {
   user: { name: string; email: string; image: string | null; username: string };
@@ -58,6 +61,9 @@ export function AppShell({
   currentWorkspace: ShellWorkspace;
   initialMenu: MenuState;
   devTools?: ShellDevTools;
+  // The workspace has no Dokploy yet and this person is the one to connect
+  // it: every page but the overview and Releases asks for that first.
+  needsDokploy?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -67,6 +73,40 @@ export function AppShell({
   const [switchOpen, setSwitchOpen] = useState(false);
   const switchRef = useRef<HTMLDivElement>(null);
   const multiWs = workspaces.length > 1;
+  const [gateOpen, setGateOpen] = useState(false);
+  // A held-back page opened by its address (a bookmark, a typed URL): show
+  // nothing of it, go to the connect screen and say why.
+  const held = needsDokploy && !openWithoutDokploy(pathname);
+  useEffect(() => {
+    if (!held) return;
+    setGateOpen(true);
+    router.replace("/app");
+  }, [held, router]);
+
+  // Menu links to held-back pages don't navigate; they open the modal.
+  function holdBack(e: React.MouseEvent, href: string) {
+    if (!needsDokploy || openWithoutDokploy(href.split(/[?#]/)[0])) return;
+    e.preventDefault();
+    setSwitchOpen(false);
+    setGateOpen(true);
+  }
+
+  // Close the modal and point at the form: the heading shakes once and the
+  // first empty field takes focus.
+  function goConnect() {
+    setGateOpen(false);
+    if (pathname !== "/app") {
+      router.push("/app");
+      return;
+    }
+    const h = document.getElementById("zq-connect-dokploy");
+    if (h) {
+      h.classList.remove("is-shaking");
+      void h.offsetWidth; // restart the animation if it already ran
+      h.classList.add("is-shaking");
+    }
+    document.querySelector<HTMLInputElement>("#base_url")?.focus();
+  }
 
   // The menu is open right now, whatever produced that (choice or default).
   function isOpenNow() {
@@ -98,6 +138,7 @@ export function AppShell({
       if (e.key !== "Escape") return;
       setPopOpen(false);
       setSwitchOpen(false);
+      setGateOpen(false);
     }
     function onDown(e: MouseEvent) {
       if (switchOpen && switchRef.current && !switchRef.current.contains(e.target as Node)) setSwitchOpen(false);
@@ -280,7 +321,7 @@ export function AppShell({
                       ))}
                     </>
                   )}
-                  <a className="zq-switch-new" href="/app/settings#new">
+                  <a className="zq-switch-new" href="/app/settings#new" onClick={(e) => holdBack(e, "/app/settings")}>
                     + New workspace or org
                   </a>
                 </div>
@@ -293,12 +334,15 @@ export function AppShell({
                   item.pane === "overview"
                     ? pathname === "/app"
                     : [item.href, ...(item.also ?? [])].some((h) => pathname.startsWith(h));
+                const locked = needsDokploy && !openWithoutDokploy(item.href);
                 return (
                   <a
                     key={item.pane}
                     href={item.href}
-                    className={`zq-menu-i${isActive ? " is-active" : ""}`}
+                    className={`zq-menu-i${isActive ? " is-active" : ""}${locked ? " is-locked" : ""}`}
                     aria-current={isActive ? "page" : undefined}
+                    aria-haspopup={locked ? "dialog" : undefined}
+                    onClick={(e) => holdBack(e, item.href)}
                   >
                     {item.label}
                   </a>
@@ -312,9 +356,38 @@ export function AppShell({
         </aside>
 
         <main className="zq-main">
-          <div className="zq-body">{children}</div>
+          <div className="zq-body">{held ? null : children}</div>
         </main>
       </div>
+
+      {gateOpen && (
+        <div className="zq-modal-back" onClick={() => setGateOpen(false)}>
+          <div
+            className="zq-modal zq-gate"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="zq-gate-t"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="zq-modal-head">
+              <h2 id="zq-gate-t">
+                Connect your <DokployMark size={16} /> Dokploy first
+              </h2>
+              <button type="button" className="zq-modal-x" aria-label="Close" onClick={() => setGateOpen(false)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <p className="zq-modal-note zq-gate-note">The rest of Zeqqat opens once it&rsquo;s connected.</p>
+            <div className="zq-gate-foot">
+              <button type="button" className="zq-modal-btn" autoFocus onClick={goConnect}>
+                Connect Dokploy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

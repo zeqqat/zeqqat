@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.36",
+    "date": "2026-11-11",
+    "changes": [
+      "Until a workspace has its first Dokploy, the side menu pages ask you to connect it first. The overview and Releases stay open"
+    ]
+  },
+  {
     "version": "0.3.35",
     "date": "2026-11-11",
     "changes": [

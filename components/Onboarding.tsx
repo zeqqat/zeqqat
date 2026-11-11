@@ -15,7 +15,9 @@ export function OnboardConnectDokploy() {
         ]}
       />
       <p className="zq-kicker">Step 2 of 3</p>
-      <h1 className="zq-h">
+      {/* The id is how the side menu's "connect first" modal finds this
+          heading to shake it (components/AppShell.tsx). */}
+      <h1 className="zq-h" id="zq-connect-dokploy">
         Connect your <DokployMark size={22} /> Dokploy<span className="dot">.</span>
       </h1>
       <p className="zq-sub">

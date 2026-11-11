@@ -120,6 +120,15 @@ app or database inside a project, so the word is ambiguous to users and
 agents. The Integrations page (`/app/integrations`) groups instances under
 their integration; instance pages stay at `/app/instances/<id>`.
 
+**Connect Dokploy first.** Until a workspace has its first instance, its
+admin can open only the overview (the connect screen) and Releases
+(`lib/setup-gate.ts`). `app/app/layout.tsx` decides who is held back,
+`components/AppShell.tsx` applies it: a menu click opens the "Connect your
+Dokploy first" modal instead of navigating, and a held-back page opened by
+its address goes to `/app` with the same modal. Members are never held
+back. It is a nudge, not access control: the server actions keep their own
+checks. `tests/e2e/connect-first.spec.ts` covers it.
+
 **Org → workspace → connection** is the access model:
 
 - **`organization`** owns members (`membership`, `owner` | `member`) and
