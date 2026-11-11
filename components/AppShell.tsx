@@ -206,13 +206,16 @@ export function AppShell({
                 <button className="zq-pop-scrim" type="button" aria-label="Close account menu" tabIndex={-1} onClick={() => setPopOpen(false)} />
                 <div className="zq-pop" role="menu">
                   <div className="zq-pop-sec">
-                    <div className="zq-pop-user" style={{ marginBottom: 0 }}>
+                    <a className="zq-pop-user" href="/app/account" role="menuitem" title="Edit your profile" onClick={() => setPopOpen(false)}>
                       <span className="zq-pop-avatar" aria-hidden="true">
                         {user.image ? <img src={user.image} alt="" referrerPolicy="no-referrer" /> : initial}
                       </span>
-                      <b>{user.name || user.email}</b>
-                      <span>@{user.username}</span>
-                    </div>
+                      {/* One line: the username gives way first, then the name. */}
+                      <span className="zq-pop-id">
+                        <b>{user.name || user.username}</b>
+                        <span>@{user.username}</span>
+                      </span>
+                    </a>
                   </div>
                   <div className="zq-pop-sec">
                     <div className="zq-pop-row" role="menuitem">
@@ -355,6 +358,7 @@ export function AppShell({
             <div className="zq-panel-foot">
               <VersionPill version={version} edition={edition} />
             </div>
+            <div className="zq-side-pattern" aria-hidden="true" />
           </div>
         </aside>
 

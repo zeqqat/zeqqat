@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray, isNull, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, type SQL } from "drizzle-orm";
 import { db } from "../db";
-import { apiEndpoint, integration, organization } from "../db/schema";
+import { apiEndpoint, integration, organization, usernameAlias } from "../db/schema";
 import { parseToolRef, toCanonical, toolPagePath } from "./tool-names";
 
 // Catalog lookups by tool name. Agents pass the raw operationId
@@ -43,7 +43,13 @@ export function endpointRefCondition(ref: string, integrationIds: string[]): SQL
       scope,
       eq(apiEndpoint.action, parsed.action),
       eq(integration.slug, parsed.target),
-      parsed.org ? eq(organization.slug, parsed.org) : undefined,
+      // An old username still names the same account's tools.
+      parsed.org
+        ? or(
+            eq(organization.slug, parsed.org),
+            inArray(organization.id, db.select({ id: usernameAlias.organizationId }).from(usernameAlias).where(eq(usernameAlias.slug, parsed.org))),
+          )
+        : undefined,
     );
   }
   return and(scope, eq(apiEndpoint.name, trimmed));

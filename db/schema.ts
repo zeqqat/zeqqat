@@ -513,6 +513,18 @@ export const connectionAlias = pgTable("connection_alias", {
   unique("connection_alias_org_name_short_id_unique").on(t.organizationId, t.name, t.shortId),
 ]);
 
+// A username an account used to have. Renaming keeps the old one pointing at
+// the account: old connection URLs keep working (with a notice telling the
+// agent to update), old public pages redirect, and nobody else can take the
+// old name. Renaming back to it removes the row.
+export const usernameAlias = pgTable("username_alias", {
+  slug: text("slug").primaryKey(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ---------- Policies (project doc mcp-context-and-policy-v1, section 5) ----------
 // A policy is owned by a namespace (personal or team), written for one
 // integration's spec, and attached to an instance inside a connection

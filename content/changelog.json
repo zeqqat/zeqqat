@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.3.40",
+    "date": "2026-11-11",
+    "changes": [
+      "Click your name in the account menu to change your picture, name and username",
+      "Old usernames keep working: old connection URLs and links lead to the new one, and nobody else can take them",
+      "Account menu shows your name and username on one line",
+      "A small pattern under the version in the side menu"
+    ]
+  },
+  {
     "version": "0.3.39",
     "date": "2026-11-11",
     "changes": [

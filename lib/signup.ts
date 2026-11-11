@@ -3,6 +3,7 @@ import { db } from "../db";
 import { newId } from "./id";
 import * as schema from "../db/schema";
 import { deriveUsername, isReserved } from "./username";
+import { heldByOldUsername } from "./username-alias";
 
 const MAX_SUFFIX_ATTEMPTS = 50;
 
@@ -26,7 +27,7 @@ export async function runSignupTransaction(userId: string, name: string, email: 
         const existing = await tx.query.organization.findFirst({
           where: eq(schema.organization.slug, candidate),
         });
-        if (!existing) {
+        if (!existing && !(await heldByOldUsername(candidate, tx))) {
           slug = candidate;
           break;
         }

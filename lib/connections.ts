@@ -5,6 +5,7 @@ import { connection, connectionAlias, connectionGrant, instance, integration, oa
 import { CONNECTION_PATH, parseConnectionPath } from "./connection-paths";
 import { publicUrl } from "./env";
 import { newId } from "./id";
+import { renamedTo } from "./username-alias";
 import type { WsRole } from "./workspace";
 
 export type Perm = { read: boolean; create: boolean; edit: boolean; delete: boolean };
@@ -115,7 +116,14 @@ export async function findConnectionByPath(orgSlug: string, name: string, shortI
       ),
     )
     .limit(1);
-  if (!moved) return null;
+  if (!moved) {
+    // An old URL from before the account changed its username.
+    const renamed = await renamedTo(orgSlug);
+    if (!renamed || renamed.slug === orgSlug) return null;
+    const now = await findConnectionByPath(renamed.slug, name, shortId);
+    if (!now) return null;
+    return { ...now, url: connectionUrl(orgSlug, name, shortId), movedTo: now.movedTo ?? now.url };
+  }
   const current = await getConnectionById(moved.c.id);
   // orgSlug is the namespace the connection belongs to now; url is the old
   // URL that was asked for.

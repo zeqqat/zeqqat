@@ -1,6 +1,6 @@
 import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PublicHeader } from "../../components/PublicHeader";
 import { db } from "../../db";
 import { apiEndpoint, integration, organization } from "../../db/schema";
@@ -8,6 +8,7 @@ import { listPublicPolicies } from "../../lib/policies";
 import { getServerSession } from "../../lib/session";
 import { policyPagePath, toCanonical, toolPagePath } from "../../lib/tool-names";
 import { isValidOrgSlug } from "../../lib/username";
+import { renamedTo } from "../../lib/username-alias";
 import { listUserWorkspaces } from "../../lib/workspace";
 
 type Props = {
@@ -27,7 +28,12 @@ export default async function OrgPage({ params, searchParams }: Props) {
   const { org: slug } = await params;
   if (!isValidOrgSlug(slug)) notFound();
   const org = await db.query.organization.findFirst({ where: eq(organization.slug, slug) });
-  if (!org) notFound();
+  if (!org) {
+    // An old username: send the link to the account's current one.
+    const renamed = await renamedTo(slug);
+    if (renamed) redirect(`/${renamed.slug}`);
+    notFound();
+  }
 
   const q = typeof (await searchParams).q === "string" ? ((await searchParams).q as string).trim().slice(0, 80) : "";
   const like = `%${q}%`;

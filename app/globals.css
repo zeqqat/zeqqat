@@ -1367,6 +1367,17 @@ body {
   color: var(--faint);
   line-height: 1.6;
 }
+/* 10px under the version: a strip of small Zs (the logo's zigzag) so the
+   space reads as a finish, not a gap. Drawn as a mask so it takes the
+   theme's line colour. */
+.zq-side-pattern {
+  flex: 0 0 10px;
+  height: 10px;
+  margin: 0 18px;
+  background: var(--line2);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10'%3E%3Cpath d='M0 8.5 6 1.5 12 8.5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E") left bottom / 12px 10px repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10'%3E%3Cpath d='M0 8.5 6 1.5 12 8.5' fill='none' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E") left bottom / 12px 10px repeat-x;
+}
 
 /* connect wizard */
 .zq-cta {
@@ -2031,21 +2042,41 @@ a.zq-kpi:hover {
 .zq-pop-user {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin: -6px -8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
 }
-.zq-pop-user b {
+.zq-pop-user:hover,
+.zq-pop-user:focus-visible {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+/* Name and username read as one line. The username shrinks first (huge
+   shrink weight), the name only once the username is gone. */
+.zq-pop-id {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.zq-pop-id b {
   color: var(--fg);
   font-size: 15px;
   font-weight: 600;
-  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.zq-pop-user span {
+.zq-pop-id span {
   color: var(--dim);
   font-size: 13px;
-  white-space: nowrap;
+  min-width: 0;
+  flex: 0 1000 auto;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -2700,6 +2731,70 @@ a.zq-rel-v:hover {
   color: var(--faint);
   line-height: 1.6;
   margin: 6px 0 0;
+}
+/* account page */
+.zq-account {
+  display: grid;
+  gap: 18px;
+  max-width: 440px;
+  margin-top: 24px;
+}
+.zq-account-pic {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.zq-account-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: linear-gradient(90deg, #ec4899, #f97316);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.zq-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.zq-account-pic-act {
+  display: flex;
+  gap: 14px;
+}
+.zq-linkbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cobalt);
+  cursor: pointer;
+}
+.zq-linkbtn-dim {
+  color: var(--dim);
+}
+.zq-input-at {
+  position: relative;
+}
+.zq-input-at > span {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--faint);
+  pointer-events: none;
+}
+.zq-input-at .zq-input {
+  padding-left: 26px;
 }
 .zq-ok-box,
 .zq-warn-box {

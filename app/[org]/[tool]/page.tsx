@@ -10,6 +10,7 @@ import { PolicyPublic } from "../../../components/PolicyPublic";
 import { findPolicyByPage } from "../../../lib/policies";
 import { parseDotted, parsePolicyDotted } from "../../../lib/tool-names";
 import { isValidOrgSlug } from "../../../lib/username";
+import { renamedTo } from "../../../lib/username-alias";
 
 type Props = { params: Promise<{ org: string; tool: string }> };
 
@@ -36,6 +37,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ToolPage({ params }: Props) {
   const { org: orgSlug, tool } = await params;
   if (!isValidOrgSlug(orgSlug)) notFound();
+  // An old username: send the link to the account's current one.
+  if (!(await db.query.organization.findFirst({ where: eq(organization.slug, orgSlug) }))) {
+    const renamed = await renamedTo(orgSlug);
+    if (renamed) redirect(`/${renamed.slug}/${tool}`);
+    notFound();
+  }
   // Policies share the URL scheme: /<namespace>/<integration>.policy.<name>.
   const pol = parsePolicyDotted(decode(tool));
   if (pol) {

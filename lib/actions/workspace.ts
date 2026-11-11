@@ -12,6 +12,7 @@ import { newId } from "../id";
 import { deleteInstances } from "../instance-ops";
 import { transferWorkspace } from "../transfer";
 import { isReserved, isValidOrgSlug, normalizeSlug } from "../username";
+import { heldByOldUsername } from "../username-alias";
 import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, listUserWorkspaces } from "../workspace";
 
 async function setCurrent(organizationId: string, workspaceId: string) {
@@ -95,6 +96,7 @@ export async function createOrgAction(_prev: FormState, formData: FormData): Pro
   if (!name) return { error: "Give the org a name." };
   if (!isValidOrgSlug(slug)) return { error: "Use lowercase letters, numbers and underscores for the handle, for example acme_corp." };
   if (isReserved(slug)) return { error: `"${slug}" is reserved. Pick another handle.` };
+  if (await heldByOldUsername(slug)) return { error: `The handle @${slug} is taken.` };
 
   const orgId = newId();
   const wsId = newId();
