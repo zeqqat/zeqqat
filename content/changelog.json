@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.41",
+    "date": "2026-11-11",
+    "changes": [
+      "Agent setup steps for Claude, Claude Code, Cursor, ChatGPT and VS Code match each app's current menus",
+      "The connect Dokploy and connect agent screens drop the side panels"
+    ]
+  },
+  {
     "version": "0.3.40",
     "date": "2026-11-11",
     "changes": [

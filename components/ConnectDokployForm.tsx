@@ -5,14 +5,14 @@ import { connectDokployAction, type ConnectState } from "../lib/actions/instance
 import { KeyInput, noAutofill } from "./KeyInput";
 
 // "Test and save": the server tests the key against Dokploy first and only
-// stores it if Dokploy accepted it. The trust copy sits next to the key
-// field on purpose, it's the moment people decide whether to paste a key.
+// stores it if Dokploy accepted it. No sales copy beside the form: the person
+// is already signed in and connecting, so the form stands alone.
 export function ConnectDokployForm({ next, defaultAlias }: { next: "onboarding" | "integrations"; defaultAlias: string }) {
   const [state, action, pending] = useActionState<ConnectState, FormData>(connectDokployAction, {});
 
   return (
     <div className="zq-split">
-      <form className="a zq-panel-box" action={action}>
+      <form className="a zq-panel-box" action={action} style={{ maxWidth: 640 }}>
         <input type="hidden" name="next" value={next} />
         <div className="zq-field">
           <label className="zq-label" htmlFor="alias">
@@ -66,38 +66,6 @@ export function ConnectDokployForm({ next, defaultAlias }: { next: "onboarding" 
           </button>
         </div>
       </form>
-      <aside className="b">
-        <ul className="zq-trust" aria-label="How your key is handled">
-          <li>
-            <span className="ic" aria-hidden="true">
-              ✓
-            </span>
-            <span>
-              <b>Encrypted, never shown again.</b> After saving, nobody can view the key, you included.
-            </span>
-          </li>
-          <li>
-            <span className="ic" aria-hidden="true">
-              ✓
-            </span>
-            <span>
-              <b>Revoke or delete it any time.</b> Remove it here, or revoke it in Dokploy.
-            </span>
-          </li>
-          <li>
-            <span className="ic" aria-hidden="true">
-              ✓
-            </span>
-            <span>
-              <b>Secrets stay away from agents.</b> Env vars, database URLs and tokens in Dokploy responses are
-              redacted before any agent sees them.
-            </span>
-          </li>
-        </ul>
-        <p className="zq-note">
-          Agents never get this key. They call Zeqqat, and Zeqqat calls Dokploy with only the permissions you allow.
-        </p>
-      </aside>
     </div>
   );
 }

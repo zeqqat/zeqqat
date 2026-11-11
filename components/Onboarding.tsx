@@ -44,45 +44,15 @@ export function OnboardConnectAgent({ mcpUrl, alias }: { mcpUrl: string; alias: 
         Connect your agent<span className="dot">.</span>
       </h1>
       <p className="zq-sub">
-        Add this one URL to any MCP client. The first time it connects, it asks you to sign in and approve it, and
-        then it can reach the Dokploy instances you allow. This page moves on once it has.
+        Add this one URL to your MCP client. The first time it connects, it asks you to sign in and approve it.
       </p>
       <div className="zq-split">
-        <section className="a">
+        <section className="a" style={{ maxWidth: 720 }}>
           <AgentTabs mcpUrl={mcpUrl} />
-        </section>
-        <aside className="b">
-          <ul className="zq-trust" aria-label="What a new agent can do">
-            <li>
-              <span className="ic" aria-hidden="true">
-                ✓
-              </span>
-              <span>
-                <b>Read, create and edit</b> by default.
-              </span>
-            </li>
-            <li>
-              <span className="ic no" aria-hidden="true">
-                ✕
-              </span>
-              <span>
-                <b>Delete is off</b> until you turn it on for that agent.
-              </span>
-            </li>
-            <li>
-              <span className="ic" aria-hidden="true">
-                ✓
-              </span>
-              <span>You can change this per agent, per instance, any time in Permissions.</span>
-            </li>
-          </ul>
-          <p className="zq-note">
-            Agents can&rsquo;t see your API keys, add instances or change their own permissions.
-          </p>
           <p className="zq-note">
             Already approved it? <a className="zq-textlink" href="/app">Refresh this page</a>
           </p>
-        </aside>
+        </section>
       </div>
     </div>
   );

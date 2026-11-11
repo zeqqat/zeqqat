@@ -9,15 +9,14 @@ const cursorConfig = (mcpUrl: string) => `{
   }
 }`;
 
-const vscodeConfig = (mcpUrl: string) => `{
-  "servers": {
-    "zeqqat": {
-      "type": "http",
-      "url": "${mcpUrl}"
-    }
-  }
-}`;
-
+// Steps checked against each vendor's own docs on 2026-11-11. These menus
+// move often, so when one changes, check the source again and update the date:
+//   Claude      https://claude.com/docs/connectors/custom/remote-mcp
+//   Claude Code https://code.claude.com/docs/en/mcp
+//   Cursor      https://cursor.com/docs/context/mcp
+//   ChatGPT     https://help.openai.com/en/articles/12584461
+//   VS Code     https://code.visualstudio.com/docs/agents/reference/mcp-configuration
+//
 // The "Add to Claude" desktop deep link from the prototype is dropped here:
 // its format is unverified third-party knowledge (spec section 6 says test
 // it opens the dialog before shipping, or drop it rather than ship a dead
@@ -38,16 +37,22 @@ export function AgentPanel({ agent, mcpUrl }: { agent: AgentKey; mcpUrl: string 
           </div>
           <ol className="zq-steps">
             <li>
-              Open <b>Settings → Connectors → Add custom connector</b> and paste the URL
+              In Claude, open{" "}
+              <a className="zq-textlink" href="https://claude.ai/customize/connectors/yours" target="_blank" rel="noreferrer">
+                <b>Customize → Connectors</b>
+              </a>{" "}
+              and click <b>Add custom connector</b>
             </li>
             <li>
-              Review the URL and click <b>Add</b>
+              Paste the URL and click <b>Add</b>
             </li>
-            <li>Sign in when the browser opens</li>
+            <li>
+              Click <b>Connect</b> and sign in
+            </li>
           </ol>
           <p className="zq-note">
-            On Team and Enterprise plans, an Owner adds Zeqqat once under{" "}
-            <b>Organization settings → Connectors</b>. Members then connect to it individually.
+            On Team and Enterprise plans, an Owner adds it once under <b>Organization settings → Connectors</b>, then
+            each member clicks <b>Connect</b> under <b>Customize → Connectors</b>.
           </p>
         </div>
       );
@@ -70,7 +75,7 @@ export function AgentPanel({ agent, mcpUrl }: { agent: AgentKey; mcpUrl: string 
               Start a session and run <code>/mcp</code>
             </li>
             <li>
-              Select <b>zeqqat</b>, choose <b>Authenticate</b>, and sign in
+              Select <b>zeqqat</b> and sign in when the browser opens
             </li>
           </ol>
           <p className="zq-note">
@@ -95,11 +100,12 @@ export function AgentPanel({ agent, mcpUrl }: { agent: AgentKey; mcpUrl: string 
           </div>
           <ol className="zq-steps">
             <li>
-              Add the block to <code>~/.cursor/mcp.json</code>, or use{" "}
-              <b>Settings → MCP → Add new MCP server</b>
+              Add the block to <code>~/.cursor/mcp.json</code> and save
             </li>
-            <li>Open MCP settings and authorize when prompted</li>
-            <li>A green dot means the tools are live in Agent mode</li>
+            <li>
+              Open <b>Customize</b> in Cursor&rsquo;s sidebar, find <b>zeqqat</b> and sign in when asked
+            </li>
+            <li>The tools then show up in Agent mode</li>
           </ol>
           <p className="zq-note">
             Use <code>.cursor/mcp.json</code> in a project instead to share it with your team.
@@ -121,44 +127,43 @@ export function AgentPanel({ agent, mcpUrl }: { agent: AgentKey; mcpUrl: string 
           </div>
           <ol className="zq-steps">
             <li>
-              Open <b>Settings → Apps &amp; Connectors → Advanced</b> and turn on{" "}
-              <b>Developer Mode</b>
+              Open <b>Settings → Apps → Advanced settings</b> and turn on <b>Developer mode</b>
             </li>
             <li>
-              Back in Apps &amp; Connectors, click <b>Create</b> and paste the URL
+              Back in <b>Apps</b>, click <b>Create app</b> and paste the URL
             </li>
             <li>
-              Leave authentication on <b>OAuth</b> and sign in
+              Set authentication to <b>OAuth</b>, click <b>Create</b> and sign in
             </li>
           </ol>
           <p className="zq-note">
-            Custom connectors need a paid plan. Developer Mode is a one-time switch per account.
+            Needs a paid plan. On Business and Enterprise, an admin may have to allow developer mode first.
           </p>
         </div>
       );
-    case "vscode": {
-      const config = vscodeConfig(mcpUrl);
+    case "vscode":
       return (
         <div>
           <div className="zq-cbox">
             <div className="zq-cbox-top">
-              <span className="zq-cbox-label">.vscode/mcp.json</span>
-              <CopyButton text={config} />
+              <span className="zq-cbox-label">MCP server URL</span>
             </div>
-            <pre className="zq-cbox-block">
-              <code>{config}</code>
-            </pre>
+            <div className="zq-cbox-row">
+              <code>{mcpUrl}</code>
+              <CopyButton text={mcpUrl} />
+            </div>
           </div>
           <ol className="zq-steps">
             <li>
-              Create <code>.vscode/mcp.json</code> and add the block
+              Open the Command Palette and run <b>MCP: Add Server</b>
             </li>
-            <li>Start the server from the editor and authorize when prompted</li>
-            <li>The tools appear in Agent mode</li>
+            <li>
+              Choose <b>HTTP</b>, paste the URL and name it <code>zeqqat</code>
+            </li>
+            <li>Sign in when asked, then use the tools in Copilot&rsquo;s agent mode</li>
           </ol>
         </div>
       );
-    }
     case "other":
       return (
         <div>
