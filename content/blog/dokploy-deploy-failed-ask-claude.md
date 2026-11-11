@@ -77,7 +77,7 @@ Each call Claude made carried the same one-line reason, "Find out why my last Do
 
 The answer to "why did my deploy fail" is almost never on the last line. It's somewhere in the last 50, and sometimes the tool even points you the wrong way. Reading those lines is tedious for me and easy for an agent. With delete off, it can do all of the looking and none of the damage.
 
-Zeqqat is free and open source. Self-host it or use [zeqqat.com](https://zeqqat.com). It works with Dokploy today, and more apps are coming. The code is on [GitHub](https://github.com/zeqqat/zeqqat).
+Zeqqat is a free and open source MCP gateway for Dokploy. Self-host it or use [zeqqat.com](https://zeqqat.com). The code is on [GitHub](https://github.com/zeqqat/zeqqat).
 
 ## FAQ
 

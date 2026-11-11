@@ -57,7 +57,7 @@ Every call carried the same reason, "Check which of my Dokploy domains actually 
 
 "Deployed" and "reachable" are two different facts, and Dokploy only shows you the first one. The second one depends on DNS, Cloudflare, a tunnel and a firewall that Dokploy can't see. Checking it means actually loading the address from somewhere outside, for every domain. That's tedious by hand and quick for an agent.
 
-Zeqqat is free and open source. Self-host it or use [zeqqat.com](https://zeqqat.com). It works with Dokploy today, and more apps are coming. The code is on [GitHub](https://github.com/zeqqat/zeqqat).
+Zeqqat is a free and open source MCP gateway for Dokploy. Self-host it or use [zeqqat.com](https://zeqqat.com). The code is on [GitHub](https://github.com/zeqqat/zeqqat).
 
 ## FAQ
 

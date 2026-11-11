@@ -70,7 +70,7 @@ Every call carried the same reason, "Check which of my Dokploy databases have ba
 
 "Backups are set up" is three separate claims. A schedule exists. The runs succeed. The files contain your data. I had the first one for most databases and assumed the other two. An agent can check all three across every database in a minute, which is a check I was never going to do by hand on a Monday morning.
 
-Zeqqat is free and open source. Self-host it or use [zeqqat.com](https://zeqqat.com). It works with Dokploy today, and more apps are coming. The code is on [GitHub](https://github.com/zeqqat/zeqqat).
+Zeqqat is a free and open source MCP gateway for Dokploy. Self-host it or use [zeqqat.com](https://zeqqat.com). The code is on [GitHub](https://github.com/zeqqat/zeqqat).
 
 ## FAQ
 

@@ -57,7 +57,7 @@ It also couldn't say which image is the big one. Dokploy gives the totals per ty
 
 When a Dokploy disk fills up, pruning is the first thing everyone says. On my server, with cleanup already on, pruning would have freed 5%. The space was in images that running containers need, and the fix is stopping what I don't use anymore. An agent can show you that in four calls. Deciding what to stop is still my job, and I'd rather it stays that way.
 
-Zeqqat is free and open source. Self-host it or use [zeqqat.com](https://zeqqat.com). It works with Dokploy today, and more apps are coming. The code is on [GitHub](https://github.com/zeqqat/zeqqat).
+Zeqqat is a free and open source MCP gateway for Dokploy. Self-host it or use [zeqqat.com](https://zeqqat.com). The code is on [GitHub](https://github.com/zeqqat/zeqqat).
 
 ## FAQ
 

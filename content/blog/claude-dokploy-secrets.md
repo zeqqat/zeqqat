@@ -55,7 +55,7 @@ Every call also carries a reason. When I open the activity log, I see what Claud
 
 I don't want to choose between giving my agent access and keeping my secrets. Now I don't have to. The agent sees the shape of my infrastructure and does the work. The secrets stay where they belong.
 
-Zeqqat is free and open source. Self-host it or use [zeqqat.com](https://zeqqat.com). It works with Dokploy today, and more apps are coming. The code is on [GitHub](https://github.com/zeqqat/zeqqat).
+Zeqqat is a free and open source MCP gateway for Dokploy. Self-host it or use [zeqqat.com](https://zeqqat.com). The code is on [GitHub](https://github.com/zeqqat/zeqqat).
 
 ## FAQ
 
