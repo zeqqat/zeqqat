@@ -1,6 +1,6 @@
 {
   "name": "zeqqat",
-  "version": "0.3.37",
+  "version": "0.3.38",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
@@ -16,7 +16,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx db/seed.ts"
+    "db:seed": "tsx db/seed.ts",
+    "bump": "node scripts/bump.mjs"
   },
   "dependencies": {
     "better-auth": "^1.2.7",

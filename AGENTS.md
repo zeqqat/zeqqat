@@ -402,10 +402,14 @@ stand-in Dokploy.
 
 ## Versions, What's new and in-app updates
 
-**Every version bump adds an entry on top of `content/changelog.json`**
-(version, date, a few plain lines of what changed, no em dashes). A unit
-test fails while the top entry isn't `package.json`'s version. The same
-entry becomes the GitHub release notes (`release.yml`).
+**Bump with `pnpm bump "What changed" ["Another line"]`** (`--minor` or
+`--major` for those). It sets the new version in every file that holds it
+(`package.json`, `plugin/plugin.json`, `server.json`) and adds the entry on
+top of `content/changelog.json` (version, date, your lines). It refuses to
+run without a changelog line or with an em dash, and warns about any other
+file still naming the old version. Never bump by hand or with `npm version`.
+A unit test fails while the top changelog entry isn't `package.json`'s
+version. The same entry becomes the GitHub release notes (`release.yml`).
 
 The side menu footer shows only `v<version>` and one pill: `Latest`, or
 `Update available` (never the newer number; that's inside the modal).

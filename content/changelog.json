@@ -1,5 +1,19 @@
 [
   {
+    "version": "0.3.38",
+    "date": "2026-11-11",
+    "changes": [
+      "Bump with one command: pnpm bump updates every version file and adds the changelog entry"
+    ]
+  },
+  {
+    "version": "0.3.37",
+    "date": "2026-11-11",
+    "changes": [
+      "Blog: posts now end by saying what Zeqqat is today, a free and open source MCP gateway for Dokploy"
+    ]
+  },
+  {
     "version": "0.3.36",
     "date": "2026-11-11",
     "changes": [
