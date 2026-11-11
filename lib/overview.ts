@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "../db";
-import { apiEndpoint, callLog, instance, membership, oauthClient, oauthGrant, user, workspaceMember } from "../db/schema";
+import { apiEndpoint, callLog, instance, membership, oauthClient, organization, oauthGrant, user, workspaceMember } from "../db/schema";
 
 export const REDACTED_MARK = "[redacted by zeqqat]";
 
@@ -84,6 +84,37 @@ export async function listWorkspacePeople(organizationId: string, workspaceId: s
     if (!seen.has(p.id)) seen.set(p.id, { name: p.name, image: p.image ?? null });
   }
   return [...seen.values()];
+}
+
+// The person a member should ask to connect Dokploy: the first org owner
+// (owners are admins of every workspace), else the first workspace admin.
+// The username is their personal account's, as shown everywhere else.
+export async function firstAdminOf(organizationId: string, workspaceId: string): Promise<{ name: string; username: string | null } | null> {
+  const [owners, admins] = await Promise.all([
+    db
+      .select({ id: user.id, name: user.name, at: membership.createdAt })
+      .from(membership)
+      .innerJoin(user, eq(user.id, membership.userId))
+      .where(and(eq(membership.organizationId, organizationId), eq(membership.role, "owner")))
+      .orderBy(membership.createdAt)
+      .limit(1),
+    db
+      .select({ id: user.id, name: user.name, at: workspaceMember.createdAt })
+      .from(workspaceMember)
+      .innerJoin(user, eq(user.id, workspaceMember.userId))
+      .where(and(eq(workspaceMember.workspaceId, workspaceId), eq(workspaceMember.role, "admin")))
+      .orderBy(workspaceMember.createdAt)
+      .limit(1),
+  ]);
+  const admin = owners[0] ?? admins[0];
+  if (!admin) return null;
+  const [personal] = await db
+    .select({ slug: organization.slug })
+    .from(membership)
+    .innerJoin(organization, eq(organization.id, membership.organizationId))
+    .where(and(eq(membership.userId, admin.id), eq(membership.role, "owner"), eq(organization.kind, "personal")))
+    .limit(1);
+  return { name: admin.name, username: personal?.slug ?? null };
 }
 
 export const CALL_SELECT = {

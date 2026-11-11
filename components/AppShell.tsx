@@ -50,6 +50,7 @@ export function AppShell({
   initialMenu,
   devTools = null,
   needsDokploy = false,
+  askAdmin = null,
   children,
 }: {
   user: { name: string; email: string; image: string | null; username: string };
@@ -64,6 +65,8 @@ export function AppShell({
   // The workspace has no Dokploy yet and this person is the one to connect
   // it: every page but the overview and Releases asks for that first.
   needsDokploy?: boolean;
+  // Set when this person can't connect Dokploy themselves: the admin to ask.
+  askAdmin?: { name: string; username: string | null } | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -371,7 +374,15 @@ export function AppShell({
           >
             <div className="zq-modal-head">
               <h2 id="zq-gate-t">
-                Connect your <DokployMark size={16} /> Dokploy first
+                {askAdmin ? (
+                  <>
+                    <DokployMark size={16} /> Dokploy isn&rsquo;t connected yet
+                  </>
+                ) : (
+                  <>
+                    Connect your <DokployMark size={16} /> Dokploy first
+                  </>
+                )}
               </h2>
               <button type="button" className="zq-modal-x" aria-label="Close" onClick={() => setGateOpen(false)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -379,11 +390,33 @@ export function AppShell({
                 </svg>
               </button>
             </div>
-            <p className="zq-modal-note zq-gate-note">The rest of Zeqqat opens once it&rsquo;s connected.</p>
+            <p className="zq-modal-note zq-gate-note">
+              {askAdmin && (
+                <>
+                  Ask{" "}
+                  {askAdmin.name || askAdmin.username ? (
+                    <b className="zq-gate-who">
+                      {askAdmin.name}
+                      {askAdmin.username ? ` @${askAdmin.username}` : ""}
+                    </b>
+                  ) : (
+                    "an admin"
+                  )}{" "}
+                  to connect an instance.{" "}
+                </>
+              )}
+              The rest of Zeqqat opens once it&rsquo;s connected.
+            </p>
             <div className="zq-gate-foot">
-              <button type="button" className="zq-modal-btn" autoFocus onClick={goConnect}>
-                Connect Dokploy
-              </button>
+              {askAdmin ? (
+                <button type="button" className="zq-modal-btn" autoFocus onClick={() => setGateOpen(false)}>
+                  OK
+                </button>
+              ) : (
+                <button type="button" className="zq-modal-btn" autoFocus onClick={goConnect}>
+                  Connect Dokploy
+                </button>
+              )}
             </div>
           </div>
         </div>

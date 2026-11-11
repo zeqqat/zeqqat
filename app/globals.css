@@ -2454,6 +2454,10 @@ button.zq-ws-opt:hover,
   padding: 0 20px;
   flex: none;
 }
+.zq-gate-who {
+  color: var(--fg);
+  font-weight: 600;
+}
 .zq-gate-foot {
   display: flex;
   justify-content: flex-end;

@@ -8,6 +8,7 @@ import { pastUsersOf } from "../../lib/dev-users";
 import { edition } from "../../lib/edition";
 import { APP_VERSION } from "../../lib/version";
 import { requireWorkspace } from "../../lib/guard";
+import { firstAdminOf } from "../../lib/overview";
 import { listUserWorkspaces, orgsOf } from "../../lib/workspace";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -24,11 +25,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const initialMenu: MenuState = menuCookie === "open" || menuCookie === "closed" ? menuCookie : null;
   // Dev installs only (ZEQQAT_DEV_TOOLS=1, never zeqqat.com): start over as
   // a new user, or switch back to an earlier one. See lib/dev-tools.ts.
-  // A workspace admin with no Dokploy yet sees only the connect screen and
-  // Releases (lib/setup-gate.ts). Members never connect Dokploy themselves,
-  // so they are not held back.
+  // A workspace with no Dokploy yet opens only the overview and Releases
+  // (lib/setup-gate.ts). An admin is told to connect it; anyone else can't,
+  // so they are told who to ask.
   const [{ n: instanceCount }] = await db.select({ n: count() }).from(instance).where(eq(instance.workspaceId, ws.workspaceId));
-  const needsDokploy = ws.role === "owner" && instanceCount === 0;
+  const needsDokploy = instanceCount === 0;
+  const askAdmin = needsDokploy && ws.role !== "owner" ? ((await firstAdminOf(ws.organizationId, ws.workspaceId)) ?? { name: "", username: null }) : null;
   const devTools = devToolsEnabled() ? { pastUsers: await pastUsersOf(user) } : null;
 
   return (
@@ -44,6 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         initialMenu={initialMenu}
         devTools={devTools}
         needsDokploy={needsDokploy}
+        askAdmin={askAdmin}
       >
         {children}
       </AppShell>

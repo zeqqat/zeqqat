@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.39",
+    "date": "2026-11-11",
+    "changes": [
+      "With no Dokploy connected, members are held back too, and the message names the admin to ask"
+    ]
+  },
+  {
     "version": "0.3.38",
     "date": "2026-11-11",
     "changes": [

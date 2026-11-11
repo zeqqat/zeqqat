@@ -1,6 +1,6 @@
 {
   "name": "zeqqat",
-  "version": "0.3.38",
+  "version": "0.3.39",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
