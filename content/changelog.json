@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.35",
+    "date": "2026-11-11",
+    "changes": [
+      "Blog: what's filling a Dokploy server's disk, and why cleanup frees so little"
+    ]
+  },
+  {
     "version": "0.3.34",
     "date": "2026-11-10",
     "changes": [
