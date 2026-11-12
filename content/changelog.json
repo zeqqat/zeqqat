@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.44",
+    "date": "2026-11-12",
+    "changes": [
+      "Every MCP tool has a title and read-only or destructive hints; zeqqat_run is marked destructive only on connections that can delete"
+    ]
+  },
+  {
     "version": "0.3.43",
     "date": "2026-11-12",
     "changes": [

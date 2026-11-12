@@ -176,3 +176,30 @@ export async function buildContext(ctx: McpContext, opts: { full?: boolean } = {
   const stats = await catalogStats([...new Set(instances.map((i) => i.integrationId))]);
   return contextFrom(ctx, instances, { ...opts, stats });
 }
+
+// Whether anything this connection reaches lets this caller delete. Used
+// for zeqqat_run's destructiveHint in tools/list, so a connection that can
+// only read, create and edit doesn't present zeqqat_run as destructive.
+// The executor still checks every call; this only sets the label.
+export async function mayDelete(instances: ReachableInstance[]): Promise<boolean> {
+  for (const i of instances) {
+    if (i.access.mode === "kinds" && i.access.perm.delete) return true;
+  }
+  for (const i of instances) {
+    if (i.access.mode !== "policy" || !i.access.roleCap.delete || i.access.policy.allow.length === 0) continue;
+    const hit = await db
+      .select({ name: apiEndpoint.name })
+      .from(apiEndpoint)
+      .where(
+        and(
+          eq(apiEndpoint.integrationId, i.integrationId),
+          inArray(apiEndpoint.name, i.access.policy.allow),
+          eq(apiEndpoint.kind, "delete"),
+          isNull(apiEndpoint.removedAt),
+        ),
+      )
+      .limit(1);
+    if (hit.length > 0) return true;
+  }
+  return false;
+}

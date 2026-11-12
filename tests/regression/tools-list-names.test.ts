@@ -25,6 +25,13 @@ vi.mock("../../lib/connections", async (importOriginal) => ({
   sunsetNotice: async () => ({ state: "live", text: "", replacementUrl: null }),
 }));
 
+// No database here: the connection reaches nothing, so zeqqat_run's
+// destructiveHint comes out false.
+vi.mock("../../lib/mcp-context", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/mcp-context")>()),
+  reachableInstances: async () => [],
+}));
+
 vi.mock("../../lib/mcp-auth", () => ({
   accountType: (kind: string) => (kind === "personal" ? "personal" : "organization"),
   resolveBearerToken: async () => ({
@@ -40,7 +47,9 @@ vi.mock("../../lib/mcp-auth", () => ({
   }),
 }));
 
-async function listToolNames(): Promise<string[]> {
+type ListedTool = { name: string; title?: string; annotations?: Record<string, unknown> };
+
+async function listTools(): Promise<ListedTool[]> {
   const { POST } = await import("../../app/mcp-internal/[org]/[name]/[id]/route");
   const response = await POST(
     new Request("http://localhost/mcp-internal/test/deployment/a39f", {
@@ -51,11 +60,12 @@ async function listToolNames(): Promise<string[]> {
     { params: Promise.resolve({ org: "test", name: "deployment", id: "a39f" }) },
   );
   const body = await response.json();
-  return body.result.tools.map((t: { name: string }) => t.name);
+  return body.result.tools;
 }
 
 describe("tools/list names", async () => {
-  const names = await listToolNames();
+  const tools = await listTools();
+  const names = tools.map((t) => t.name);
 
   it("returns at least one tool", () => {
     expect(names.length).toBeGreaterThan(0);
@@ -67,5 +77,24 @@ describe("tools/list names", async () => {
     expect(`mcp__${"c".repeat(20)}__${name}`).toMatch(CLAUDE_CLIENT_NAME);
     expect(name.length).toBeLessThanOrEqual(MAX_BUILTIN_NAME_LENGTH);
     expect(isBuiltinToolName(name)).toBe(true);
+  });
+});
+
+// Claude's Connectors Directory requires a title and readOnlyHint or
+// destructiveHint on every tool.
+describe("tools/list annotations", async () => {
+  const tools = await listTools();
+
+  it.each(tools.map((t) => [t.name, t] as const))("%s has a title and a read-only or destructive hint", (_, tool) => {
+    expect(tool.title).toBeTruthy();
+    expect(tool.annotations?.title).toBe(tool.title);
+    const a = tool.annotations ?? {};
+    expect(typeof a.readOnlyHint === "boolean" || typeof a.destructiveHint === "boolean").toBe(true);
+  });
+
+  it("labels zeqqat_run destructive only when the connection can delete", () => {
+    const run = tools.find((t) => t.name === "zeqqat_run");
+    expect(run?.annotations?.readOnlyHint).toBe(false);
+    expect(run?.annotations?.destructiveHint).toBe(false);
   });
 });

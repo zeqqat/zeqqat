@@ -1,9 +1,21 @@
 import type { McpContext } from "./mcp-auth";
-import { buildContext, type ZeqqatContext } from "./mcp-context";
+import { buildContext, mayDelete, reachableInstances, type ZeqqatContext } from "./mcp-context";
 import { rateLimit } from "./rate-limit";
 import { normalizeReason, REASON_DESCRIPTION, REASON_MISSING, REASON_REQUIRED, resolveRequest } from "./requests";
 import { builtinAction } from "./tool-names";
-import { TOOL_NAMES, toolCheck, toolDescribe, toolDocs, toolFeedback, toolImport, toolPolicy, toolRun, toolSearch, toolSecret, toolWhoami } from "./mcp-tools";
+import {
+  TOOL_NAMES,
+  toolCheck,
+  toolDescribe,
+  toolDocs,
+  toolFeedback,
+  toolImport,
+  toolPolicy,
+  toolRun,
+  toolSearch,
+  toolSecret,
+  toolWhoami,
+} from "./mcp-tools";
 import type { ToolResult } from "./executor";
 import { APP_VERSION } from "./version";
 
@@ -31,7 +43,8 @@ const CONTEXT_HINT = " If you haven't seen the Zeqqat context in this conversati
 const REASON = { type: "string", description: REASON_DESCRIPTION } as const;
 const REASON_OPTIONAL = {
   type: "string",
-  description: "Optional. The same one-line reason you used on this request's other calls, so this call shows with them.",
+  description:
+    "Optional. The same one-line reason you used on this request's other calls, so this call shows with them.",
 } as const;
 
 // The context object's shape, declared in every tool's outputSchema.
@@ -85,6 +98,13 @@ function outputSchema(result: Record<string, unknown>) {
   return { type: "object", properties: { context: CONTEXT_SCHEMA, result }, required: ["context"] };
 }
 
+// zeqqat_run's annotations are the only ones that change per connection:
+// destructiveHint is set in tools/list from what the connection may do
+// (see runTool below). This is the safe default, before that is known.
+const RUN_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true };
+
+// Every tool has a title and readOnlyHint or destructiveHint, which
+// Claude's Connectors Directory requires.
 // Every name here must pass lib/tool-names.ts's rules;
 // tests/regression/tools-list-names.test.ts checks what tools/list serves.
 // Descriptions are front-loaded: the first sentence says when to use the
@@ -92,13 +112,15 @@ function outputSchema(result: Record<string, unknown>) {
 export const TOOLS = [
   {
     name: TOOL_NAMES.search,
+    title: "Search tools",
+    annotations: { title: "Search tools", readOnlyHint: true, openWorldHint: false },
     description:
       "Find tools across every integration this connection reaches (deploys, logs, apps, projects...). Always search before deciding a task can't be done. Returns operationIds to pass to zeqqat_run, with the instances each may run on." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string", description: "e.g. \"deploy\", \"logs\", \"stop\"" },
+        query: { type: "string", description: 'e.g. "deploy", "logs", "stop"' },
         limit: { type: "integer", minimum: 1, maximum: 25 },
         reason: REASON,
       },
@@ -108,6 +130,8 @@ export const TOOLS = [
   },
   {
     name: TOOL_NAMES.describe,
+    title: "Describe a tool",
+    annotations: { title: "Describe a tool", readOnlyHint: true, openWorldHint: false },
     description:
       "Inputs, outputs and permissions of one tool found with zeqqat_search. Pass its operationId, plus an instance if two integrations share the name." +
       CONTEXT_HINT,
@@ -124,6 +148,8 @@ export const TOOLS = [
   },
   {
     name: TOOL_NAMES.run,
+    title: "Run a tool",
+    annotations: { title: "Run a tool", ...RUN_ANNOTATIONS },
     description:
       "Run one tool on one instance. name is the operationId from zeqqat_search, instance is an instance name from the context, inputs match the tool's input schema (see zeqqat_describe)." +
       CONTEXT_HINT,
@@ -146,6 +172,8 @@ export const TOOLS = [
   },
   {
     name: TOOL_NAMES.whoami,
+    title: "Show context",
+    annotations: { title: "Show context", readOnlyHint: true, openWorldHint: false },
     description:
       "Call first: returns the Zeqqat context. Which integrations and instances this connection reaches, and what you may do on each.",
     inputSchema: { type: "object", properties: { reason: REASON_OPTIONAL } },
@@ -153,17 +181,27 @@ export const TOOLS = [
   },
   {
     name: TOOL_NAMES.policy,
+    title: "Show permissions",
+    annotations: { title: "Show permissions", readOnlyHint: true, openWorldHint: false },
     description:
       "What you may do on each instance: the policy attached to it (its full allow list of tools) or the kinds allowed. Use it before telling the user something can't be done." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
-      properties: { instance: { type: "string", description: "Optional instance name from the context" }, reason: REASON_OPTIONAL },
+      properties: {
+        instance: { type: "string", description: "Optional instance name from the context" },
+        reason: REASON_OPTIONAL,
+      },
     },
     outputSchema: outputSchema({ type: "object", properties: { policies: { type: "array" } }, required: ["policies"] }),
   },
   {
     name: TOOL_NAMES.secret,
+    title: "Create a secret",
+    annotations: {
+      title: "Create a secret",
+      ...{ readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
     description:
       "Create a random secret (a database password, a signing key) without ever seeing it. Returns a handle like {{zq_secret_...}} to put in zeqqat_run inputs, where Zeqqat fills in the value. Use it whenever a task needs a new password or key." +
       CONTEXT_HINT,
@@ -173,7 +211,8 @@ export const TOOLS = [
         kind: {
           type: "string",
           enum: ["password", "base64", "hex"],
-          description: "password: letters and digits, length in characters (default). base64 or hex: length in random bytes",
+          description:
+            "password: letters and digits, length in characters (default). base64 or hex: length in random bytes",
         },
         length: { type: "integer", minimum: 16, maximum: 128, description: "Default 32" },
         reason: REASON,
@@ -184,23 +223,40 @@ export const TOOLS = [
   },
   {
     name: TOOL_NAMES.import,
+    title: "Import an app's API",
+    annotations: {
+      title: "Import an app's API",
+      ...{ readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    },
     description:
       "Add an app (an API) to this account from a link to its OpenAPI spec, JSON or YAML, plus optionally its docs. Zeqqat turns every endpoint into a tool under @<account>/<app>. Running it again with the same link updates the app. Workspace admins only." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
       properties: {
-        spec_url: { type: "string", description: "Link to the raw OpenAPI 3 spec file, e.g. https://example.com/openapi.json" },
+        spec_url: {
+          type: "string",
+          description: "Link to the raw OpenAPI 3 spec file, e.g. https://example.com/openapi.json",
+        },
         docs_url: { type: "string", description: "Optional link to the app's API docs" },
         name: { type: "string", description: "Optional display name; defaults to the spec's title" },
         reason: REASON,
       },
       required: ["spec_url", "reason"],
     },
-    outputSchema: outputSchema({ type: "object", properties: { integration: { type: "string" } }, required: ["integration"] }),
+    outputSchema: outputSchema({
+      type: "object",
+      properties: { integration: { type: "string" } },
+      required: ["integration"],
+    }),
   },
   {
     name: TOOL_NAMES.feedback,
+    title: "Suggest a tool summary",
+    annotations: {
+      title: "Suggest a tool summary",
+      ...{ readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
     description:
       "Suggest a better one-line summary for a tool, after finishing the user's task, when its summary made it hard to find or pick: a search missed it, or you took a long way. The integration's publisher reviews it; nothing changes until they accept." +
       CONTEXT_HINT,
@@ -211,17 +267,24 @@ export const TOOLS = [
         instance: { type: "string", description: "Optional instance name, if two integrations share the operationId" },
         summary: {
           type: "string",
-          description: "The summary you would have wanted: one line of plain text, 10 to 120 characters, saying what the tool answers",
+          description:
+            "The summary you would have wanted: one line of plain text, 10 to 120 characters, saying what the tool answers",
         },
         note: { type: "string", description: "Optional: what you searched for or tried first" },
         reason: REASON,
       },
       required: ["name", "summary", "reason"],
     },
-    outputSchema: outputSchema({ type: "object", properties: { suggestion: { type: "string" } }, required: ["suggestion"] }),
+    outputSchema: outputSchema({
+      type: "object",
+      properties: { suggestion: { type: "string" } },
+      required: ["suggestion"],
+    }),
   },
   {
     name: TOOL_NAMES.check,
+    title: "Check an address",
+    annotations: { title: "Check an address", readOnlyHint: true, openWorldHint: true },
     description:
       "Check from the internet (where Zeqqat runs, not from your sandbox) whether an address loads, or whether a port on a Dokploy server is open. Use it before telling a user something is live, and to explain why it isn't. address returns live, certificate_not_ready (retry in a minute), error_page (wired wrong), unreachable (the cloud firewall blocks it) or not_found. instance plus port (22, 80, 443 or 3000) says open or closed." +
       CONTEXT_HINT,
@@ -230,7 +293,11 @@ export const TOOLS = [
       properties: {
         address: { type: "string", description: "A hostname or http(s) URL, e.g. zeqqat-abc-1-2-3-4.sslip.io" },
         instance: { type: "string", description: "With port: a Dokploy instance name from the context" },
-        port: { type: "integer", enum: [22, 80, 443, 3000], description: "With instance: the port to check on that server's public IP" },
+        port: {
+          type: "integer",
+          enum: [22, 80, 443, 3000],
+          description: "With instance: the port to check on that server's public IP",
+        },
         reason: REASON_OPTIONAL,
       },
     },
@@ -238,13 +305,15 @@ export const TOOLS = [
   },
   {
     name: TOOL_NAMES.docs,
+    title: "Read Zeqqat docs",
+    annotations: { title: "Read Zeqqat docs", readOnlyHint: true, openWorldHint: false },
     description:
       "Answers questions about how Zeqqat works: why a call was denied, permissions, integrations, instances, connections, errors. Pass a question; returns short passages." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
       properties: {
-        question: { type: "string", description: "e.g. \"why was my call denied\"" },
+        question: { type: "string", description: 'e.g. "why was my call denied"' },
         section: { type: "string", description: "Optional section id from a previous answer" },
         reason: REASON_OPTIONAL,
       },
@@ -303,7 +372,10 @@ function withoutInstances(context: ZeqqatContext): ZeqqatContext {
 function instructionsText(context: ZeqqatContext, callerRole: McpContext["callerRole"]): string {
   const reach = context.integrations.length
     ? context.integrations
-        .map((g) => `${g.name}, ${g.toolCount} tools (${g.instances.map((i) => i.name).join(", ") || "instances listed by zeqqat_whoami"})`)
+        .map(
+          (g) =>
+            `${g.name}, ${g.toolCount} tools (${g.instances.map((i) => i.name).join(", ") || "instances listed by zeqqat_whoami"})`,
+        )
         .join("; ")
     : "nothing yet";
   const who = callerRole === "public" ? " Public connection: read only." : "";
@@ -347,9 +419,15 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
     return jsonRpcResult(id, shapeResult(await buildContext(base), { ok: false, text: REASON_MISSING }));
   }
   const known = (Object.values(TOOL_NAMES) as string[]).includes(name);
-  const requestId = reason && known
-    ? await resolveRequest({ userId: base.userId, oauthClientId: base.oauthClientId, connectionId: base.connectionId, reason })
-    : null;
+  const requestId =
+    reason && known
+      ? await resolveRequest({
+          userId: base.userId,
+          oauthClientId: base.oauthClientId,
+          connectionId: base.connectionId,
+          reason,
+        })
+      : null;
   const ctx: McpContext = { ...base, reason, requestId };
 
   let result: ToolResult;
@@ -486,13 +564,20 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
         instructions: await buildInstructions(ctx),
       });
 
-    case "tools/list":
+    case "tools/list": {
+      // zeqqat_run is labeled destructive only where this connection can
+      // delete something for this caller.
+      const destructive = await mayDelete(await reachableInstances(ctx));
+      const tools = TOOLS.map((t) =>
+        t.name === TOOL_NAMES.run ? { ...t, annotations: { ...t.annotations, destructiveHint: destructive } } : t,
+      );
       return jsonRpcResult(id, {
-        tools: TOOLS,
+        tools,
         // Tenant-specific catalog, never cached publicly.
         ttlMs: 60_000,
         cacheScope: "private",
       });
+    }
 
     case "tools/call": {
       if (isNotification) return new Response(null, { status: 204 });
