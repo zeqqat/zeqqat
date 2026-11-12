@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.49",
+    "date": "2026-11-12",
+    "changes": [
+      "Side menu: the zigzag strip under the version is twice as tall and runs the full width of the menu, edge to edge"
+    ]
+  },
+  {
     "version": "0.3.48",
     "date": "2026-11-12",
     "changes": [
