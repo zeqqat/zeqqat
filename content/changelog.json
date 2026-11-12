@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.45",
+    "date": "2026-11-12",
+    "changes": [
+      "Blog: I Asked Claude Which of My Dokploy Apps I Could Roll Back. None of Them Could Be"
+    ]
+  },
+  {
     "version": "0.3.44",
     "date": "2026-11-12",
     "changes": [
