@@ -169,7 +169,7 @@ export function SetupChoice({ siteHost, agentHost }: { siteHost: string; agentHo
           <ul className="zq-choice-list">
             <li>Zeqqat runs on your server, so your Dokploy key never leaves it.</li>
             <li>Free and open source.</li>
-            <li>Your agent does the install for you.</li>
+            <li>One click installs it on your Dokploy.</li>
             <li>You get your own MCP URL to add to your agents.</li>
           </ul>
           <form action={completeSetupAction}>

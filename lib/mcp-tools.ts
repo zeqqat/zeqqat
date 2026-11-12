@@ -17,6 +17,9 @@ import { ImportError, importFromUrl } from "./spec-import";
 import { submitSuggestion } from "./feedback";
 import { CHECKABLE_PORTS, checkAddress, checkPort } from "./reachability";
 import { edition } from "./edition";
+import { getRequest, listRequests, type ActivityCall, type RequestCard } from "./activity";
+import { listUserWorkspaces } from "./workspace";
+import { publicUrl } from "./env";
 
 // The built-in tools, the only ones in tools/list. Built via
 // builtinToolName so they always pass Claude's client-side name check
@@ -34,6 +37,7 @@ export const TOOL_NAMES = {
   import: builtinToolName("import"),
   feedback: builtinToolName("feedback"),
   check: builtinToolName("check"),
+  activity: builtinToolName("activity"),
 } as const;
 
 type Ctx = McpContext;
@@ -533,4 +537,77 @@ export async function toolCheck(ctx: Ctx, args: { address?: string; instance?: s
   }
 
   return logged(ctx, TOOL_NAMES.check, requestArgs, toolError("Pass either address (to see if it loads) or instance plus port (to see if a port is open)."));
+}
+
+// ---------- zeqqat_activity ----------
+// The audit log, read-only: what agents did through Zeqqat in this
+// connection's workspace, the same requests the Activity page shows to the
+// person behind the connection. Lets a user ask their agent "what did you
+// do?" instead of opening the dashboard.
+
+function activityPerson(c: RequestCard) {
+  return c.person ? (c.person.username ? `@${c.person.username}` : c.person.name) : "a public connection";
+}
+
+function activityCard(c: RequestCard, base: string) {
+  const count = (s: string) => c.states.filter((x) => x === s).length;
+  return {
+    id: c.id,
+    reason: c.reason,
+    by: activityPerson(c),
+    agent: c.agent.host,
+    startedAt: c.startedAt,
+    lastAt: c.lastAt,
+    calls: c.states.length,
+    blocked: count("blocked"),
+    failed: count("error"),
+    instances: c.instances.map((i) => i.alias),
+    note: c.note?.text ?? null,
+    link: `${base}${c.href}`,
+  };
+}
+
+function activityCall(c: ActivityCall) {
+  return {
+    at: c.at,
+    tool: c.op ?? c.toolName,
+    integration: c.integrationRef,
+    instance: c.instanceAlias,
+    state: c.state,
+    httpStatus: c.httpStatus,
+    error: c.errorMessage,
+    secretsHidden: c.redactions,
+  };
+}
+
+export async function toolActivity(ctx: Ctx, args: { limit?: number; request?: string }): Promise<ToolResult> {
+  const requestArgs = { limit: args.limit ?? null, request: args.request ?? null };
+  const fail = (msg: string) => logged(ctx, TOOL_NAMES.activity, requestArgs, toolError(msg));
+  if (!ctx.userId) return fail("Activity needs a connection that belongs to a person. Open Activity in the Zeqqat dashboard instead.");
+  const ws = (await listUserWorkspaces(ctx.userId)).find((w) => w.workspaceId === ctx.workspaceId);
+  if (!ws) return fail("This connection's workspace isn't visible to you.");
+  const viewer = { userId: ctx.userId, ws };
+  const base = publicUrl().replace(/\/$/, "");
+
+  if (args.request) {
+    const found = await getRequest(viewer, args.request);
+    if (!found) return fail(`No request "${args.request}" that you can see. Call zeqqat_activity without request to list recent ones.`);
+    const request = activityCard(found.card, base);
+    const calls = found.calls.filter((c) => !c.lookup).map(activityCall);
+    const lines = calls.map((c) => `${c.at} ${c.tool} on ${c.instance ?? "?"}: ${c.state}${c.error ? ` (${c.error})` : ""}`);
+    const text = `"${request.reason}" by ${request.by} via ${request.agent}. ${calls.length} call(s).\n${lines.join("\n")}\nOpen it: ${request.link}`;
+    return logged(ctx, TOOL_NAMES.activity, requestArgs, toolOk({ request, calls }, text));
+  }
+
+  const limit = Math.min(50, Math.max(1, Math.floor(Number(args.limit) || 10)));
+  // A since filter narrows listRequests to the current workspace; the epoch
+  // keeps every call in it.
+  const cards = await listRequests(viewer, { limit, since: new Date(0) });
+  const requests = cards.map((c) => activityCard(c, base));
+  const text = requests.length
+    ? requests
+        .map((r) => `${r.lastAt} "${r.reason}" by ${r.by} via ${r.agent}: ${r.calls} call(s)${r.blocked ? `, ${r.blocked} blocked` : ""}${r.failed ? `, ${r.failed} failed` : ""}. id ${r.id}`)
+        .join("\n") + `\nAll activity: ${base}/app/activity`
+    : `No activity in this workspace yet. All activity: ${base}/app/activity`;
+  return logged(ctx, TOOL_NAMES.activity, requestArgs, toolOk({ requests, link: `${base}/app/activity` }, text));
 }

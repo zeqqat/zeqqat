@@ -95,6 +95,8 @@ export function lookupText(action: string, args: unknown): string {
       return str(a.question) ? `Read the Zeqqat docs: “${a.question}”` : "Read the Zeqqat docs";
     case "run":
       return "Tried to run a tool";
+    case "activity":
+      return str(a.request) ? "Read one request in the activity log" : "Read the activity log";
     default:
       return `Used ${action}`;
   }

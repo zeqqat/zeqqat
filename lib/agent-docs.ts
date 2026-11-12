@@ -19,7 +19,7 @@ export const DOC_PAGES: { id: string; title: string; description: string }[] = [
     id: "overview",
     title: "How Zeqqat works",
     description:
-      "How an AI agent reaches your Dokploy through Zeqqat: one connection URL, ten built-in tools, and the context every result carries.",
+      "How an AI agent reaches your Dokploy through Zeqqat: one connection URL, eleven built-in tools, and the context every result carries.",
   },
   {
     id: "tools",
@@ -65,7 +65,7 @@ export const AGENT_DOCS: DocSection[] = [
     title: "How Zeqqat works",
     text:
       "Zeqqat is an MCP gateway. One connection URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
-      "The agent sees ten built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat, zeqqat_feedback suggests a better summary for a tool, zeqqat_check tests from the internet whether an address loads or a Dokploy server's port (22, 80, 443, 3000) is open. " +
+      "The agent sees eleven built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat, zeqqat_feedback suggests a better summary for a tool, zeqqat_check tests from the internet whether an address loads or a Dokploy server's port (22, 80, 443, 3000) is open, zeqqat_activity reads the activity log (what agents did, what was blocked). " +
       "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
       "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the connection. A call without a reason is refused.",
   },

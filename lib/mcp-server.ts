@@ -6,6 +6,7 @@ import { builtinAction } from "./tool-names";
 import {
   TOOL_NAMES,
   toolCheck,
+  toolActivity,
   toolDescribe,
   toolDocs,
   toolFeedback,
@@ -304,6 +305,23 @@ export const TOOLS = [
     outputSchema: outputSchema({ type: "object" }),
   },
   {
+    name: TOOL_NAMES.activity,
+    title: "Show activity",
+    annotations: { title: "Show activity", readOnlyHint: true, openWorldHint: false },
+    description:
+      "The audit log: what agents did through Zeqqat in this workspace. Without request, lists recent requests (who asked, which agent, how many calls, what was blocked or failed). With request (an id from that list), lists that request's calls. Use it when the user asks what you or another agent did, or wants to see the audit log." +
+      CONTEXT_HINT,
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", minimum: 1, maximum: 50, description: "How many recent requests to list (default 10)" },
+        request: { type: "string", description: "A request id from an earlier zeqqat_activity result, to see its calls" },
+        reason: REASON_OPTIONAL,
+      },
+    },
+    outputSchema: outputSchema({ type: "object" }),
+  },
+  {
     name: TOOL_NAMES.docs,
     title: "Read Zeqqat docs",
     annotations: { title: "Read Zeqqat docs", readOnlyHint: true, openWorldHint: false },
@@ -461,6 +479,9 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
       break;
     case TOOL_NAMES.check:
       result = await toolCheck(ctx, args);
+      break;
+    case TOOL_NAMES.activity:
+      result = await toolActivity(ctx, args);
       break;
     default:
       // Unknown tool: the caller invoked something that doesn't exist —

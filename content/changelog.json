@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.51",
+    "date": "2026-11-12",
+    "changes": [
+      "New agent tool zeqqat_activity: ask your agent what it did, and it reads the activity log (who asked, which agent, what ran, what was blocked)",
+      "Setup: the self-host choice now says one click installs Zeqqat on your Dokploy (it no longer says your agent does it)"
+    ]
+  },
+  {
     "version": "0.3.50",
     "date": "2026-11-12",
     "changes": [

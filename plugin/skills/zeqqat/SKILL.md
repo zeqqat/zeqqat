@@ -44,4 +44,5 @@ Each instance either has a policy (an explicit allow list of tools) or allows wh
 - `zeqqat_import` adds an app from a link to its OpenAPI spec.
 - `zeqqat_feedback` suggests a better one-line summary for a tool when its summary made it hard to find. Call it after the task; the publisher reviews it.
 - `zeqqat_check` tests from the internet whether an address loads (live, certificate_not_ready, error_page, unreachable) or a Dokploy server's port 22, 80, 443 or 3000 is open. Your sandbox can't tell; never say something is live without a `live` check.
+- `zeqqat_activity` reads the audit log: recent requests in this workspace (who asked, which agent, what ran, what was blocked), or one request's calls with `request`. Use it when the user asks what you or another agent did.
 - Agent docs: https://zeqqat.com/docs/agents
