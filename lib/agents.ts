@@ -1,6 +1,8 @@
-export type AgentKey = "claude" | "claudecode" | "chatgpt" | "cursor" | "vscode" | "other";
+export type AgentKey = "claude" | "claudecode" | "chatgpt" | "cursor" | "grok" | "muse" | "other";
 
-// Order is deliberate: Claude, Claude Code, ChatGPT, Cursor, then the rest.
+// Order is deliberate: Claude, Claude Code, ChatGPT, Cursor, Grok, Muse.
+// VS Code is left out on purpose (few people use it as their agent now);
+// "Another MCP client" covers it.
 export const AGENTS: {
   key: AgentKey;
   label: string;
@@ -26,15 +28,16 @@ export const AGENTS: {
     logo: "/logos/cursor.svg",
     mono: true,
   },
-  { key: "vscode", label: "VS Code", logo: "/logos/copilot.svg", mono: true },
+  { key: "grok", label: "Grok", logo: "/logos/grok.svg", mono: true },
+  { key: "muse", label: "Muse", logo: "/logos/muse.png", mono: false },
   { key: "other", label: "Another MCP client", logo: null, mono: true },
 ];
 
 // Install links. Only the ones the vendor documents:
 //   Claude  https://claude.com/docs/connectors/building/directory-vs-custom
 //   Cursor  https://cursor.com/docs/mcp/install-links
-// ChatGPT and VS Code have no documented link that fills in a server URL
-// (checked 2026-11-12), so those stay copy and paste.
+// ChatGPT, Grok and Muse have no link that fills in a server URL (checked
+// 2026-11-12), so those stay copy and paste.
 export function claudeInstallLink(mcpUrl: string, admin = false): string {
   const base = admin ? "https://claude.ai/admin-settings/connectors" : "https://claude.ai/customize/connectors";
   return `${base}?modal=add-custom-connector&connectorName=Zeqqat&connectorUrl=${encodeURIComponent(mcpUrl)}`;
@@ -47,3 +50,5 @@ export function cursorInstallLink(mcpUrl: string): string {
 }
 
 export const CHATGPT_PLUGINS_URL = "https://chatgpt.com/plugins";
+
+export const GROK_CONNECTORS_URL = "https://grok.com/connectors";

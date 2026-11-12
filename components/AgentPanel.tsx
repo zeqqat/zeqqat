@@ -1,5 +1,5 @@
 import { CopyButton } from "./CopyButton";
-import { CHATGPT_PLUGINS_URL, claudeInstallLink, type AgentKey } from "../lib/agents";
+import { CHATGPT_PLUGINS_URL, GROK_CONNECTORS_URL, claudeInstallLink, type AgentKey } from "../lib/agents";
 
 const cursorConfig = (mcpUrl: string) => `{
   "mcpServers": {
@@ -8,6 +8,21 @@ const cursorConfig = (mcpUrl: string) => `{
     }
   }
 }`;
+
+// A copyable block of several lines, e.g. a chat message to send an agent.
+function TextBox({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="zq-cbox">
+      <div className="zq-cbox-top">
+        <span className="zq-cbox-label">{label}</span>
+        <CopyButton text={text} />
+      </div>
+      <pre className="zq-cbox-block is-wrap">
+        <code>{text}</code>
+      </pre>
+    </div>
+  );
+}
 
 function UrlBox({ label, text }: { label: string; text: string }) {
   return (
@@ -29,7 +44,9 @@ function UrlBox({ label, text }: { label: string; text: string }) {
 //   Claude Code https://code.claude.com/docs/en/mcp
 //   ChatGPT     https://help.openai.com/en/articles/12584461 (renamed Apps to Plugins, mid 2026)
 //   Cursor      https://cursor.com/docs/mcp/install-links
-//   VS Code     https://code.visualstudio.com/docs/agent-customization/mcp-servers
+//   Grok        https://docs.x.ai/grok/connectors
+//   Grok Bot    https://composio.dev/content/how-to-add-mcp-servers-to-grok-bot (no xAI doc yet)
+//   Muse        https://anythingmcp.com/guides/clients/muse (no Meta doc found)
 //
 // Claude and Cursor open from their buttons (AgentPicker); their panels say
 // what to click once the app is open.
@@ -121,25 +138,50 @@ export function AgentPanel({ agent, mcpUrl }: { agent: AgentKey; mcpUrl: string 
         </div>
       );
     }
-    case "vscode":
+    case "grok":
       return (
         <div>
           <UrlBox label="MCP server URL" text={mcpUrl} />
           <ol className="zq-steps">
             <li>
-              Run <b>MCP: Add Server</b> from the Command Palette
+              Open{" "}
+              <a className="zq-textlink" href={GROK_CONNECTORS_URL} target="_blank" rel="noreferrer">
+                <b>grok.com/connectors</b>
+              </a>{" "}
+              and click <b>New Connector</b>, then <b>Custom</b>
             </li>
-            <li>
-              Choose <b>HTTP</b>, paste the URL, name it <code>zeqqat</code> and sign in when asked
-            </li>
+            <li>Paste the URL and sign in</li>
           </ol>
+          <p className="zq-note">
+            Using Grok Bot? Send it this message, click <b>Add it</b>, then <b>Authorize</b>.
+          </p>
+          <TextBox label="Message" text={`Add a custom MCP server called zeqqat at ${mcpUrl}`} />
+        </div>
+      );
+    case "muse":
+      return (
+        <div>
+          <TextBox
+            label="Message"
+            text={`Create a Custom Connector for a new remote MCP server, then connect to it:\nName: Zeqqat\nTransport: remote streamable HTTP\nURL: ${mcpUrl}\nAuth: OAuth`}
+          />
+          <ol className="zq-steps">
+            <li>Send this to Muse, on the web, in the app or in WhatsApp</li>
+            <li>Sign in when Muse opens the sign-in page</li>
+          </ol>
+          <p className="zq-note">
+            Or add it under <b>Settings → Connectors → Add custom connector</b>. Muse is available in the US and Canada.
+          </p>
         </div>
       );
     case "other":
       return (
         <div>
           <UrlBox label="MCP server URL" text={mcpUrl} />
-          <p className="zq-note">Add it as a streamable HTTP server and sign in when asked.</p>
+          <p className="zq-note">
+            Add it as a streamable HTTP server and sign in when asked. In VS Code, run <b>MCP: Add Server</b>, choose{" "}
+            <b>HTTP</b> and paste it.
+          </p>
         </div>
       );
   }

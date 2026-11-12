@@ -4507,3 +4507,9 @@ button.zq-look:focus-visible {
 .zq-agent-more .zq-steps {
   margin-top: 12px;
 }
+
+/* Copyable messages wrap; code and config blocks keep their lines. */
+.zq-cbox-block.is-wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

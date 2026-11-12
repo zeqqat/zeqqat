@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.43",
+    "date": "2026-11-12",
+    "changes": [
+      "Grok and Muse join the agent buttons, with a ready-made message to send Grok Bot or Muse; VS Code moves under Another MCP client"
+    ]
+  },
+  {
     "version": "0.3.42",
     "date": "2026-11-12",
     "changes": [
