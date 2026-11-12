@@ -18,6 +18,7 @@ import {
   toolWhoami,
 } from "./mcp-tools";
 import type { ToolResult } from "./executor";
+import { publicUrl } from "./env";
 import { APP_VERSION } from "./version";
 
 // The MCP JSON-RPC handler behind every connection URL
@@ -26,7 +27,23 @@ import { APP_VERSION } from "./version";
 
 // `version` is the Zeqqat release (package.json), not the protocol
 // version, so a self-hoster's bug report says which release they run.
-const SERVER_INFO = { name: "zeqqat", version: APP_VERSION };
+// icons (MCP 2025-11-25+) let clients show the Zeqqat logo next to the
+// connector and each tool call. Served from this install's own URL so a
+// self-hosted server needs nothing from zeqqat.com.
+// No public URL configured means no icons, never a failed call.
+function mcpIcons() {
+  let base: string;
+  try {
+    base = publicUrl().replace(/\/$/, "");
+  } catch {
+    return [];
+  }
+  return [
+    { src: `${base}/zeqqat.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+    { src: `${base}/zeqqat-256.png`, mimeType: "image/png", sizes: ["256x256"] },
+  ];
+}
+const serverInfo = () => ({ name: "zeqqat", version: APP_VERSION, icons: mcpIcons() });
 const SUPPORTED_MODERN_VERSIONS = ["2026-07-28"];
 const SUPPORTED_LEGACY_VERSIONS = ["2025-11-25"];
 
@@ -348,7 +365,7 @@ function jsonRpcResult(id: unknown, result: Record<string, unknown>) {
   return Response.json({
     jsonrpc: "2.0",
     id,
-    result: { resultType: "complete", ...result, _meta: { "io.modelcontextprotocol/serverInfo": SERVER_INFO } },
+    result: { resultType: "complete", ...result, _meta: { "io.modelcontextprotocol/serverInfo": serverInfo() } },
   });
 }
 
@@ -530,7 +547,7 @@ export async function serveSunset(request: Request, message: string) {
       result: {
         protocolVersion: SUPPORTED_LEGACY_VERSIONS[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: SERVER_INFO,
+        serverInfo: serverInfo(),
         instructions: message.slice(0, 500),
       },
     });
@@ -566,7 +583,7 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
         result: {
           protocolVersion: version,
           capabilities: { tools: { listChanged: false } },
-          serverInfo: SERVER_INFO,
+          serverInfo: serverInfo(),
           instructions: await buildInstructions(ctx),
         },
       });
@@ -581,7 +598,7 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
       return jsonRpcResult(id, {
         supportedVersions: SUPPORTED_MODERN_VERSIONS,
         capabilities: { tools: { listChanged: false } },
-        serverInfo: SERVER_INFO,
+        serverInfo: serverInfo(),
         instructions: await buildInstructions(ctx),
       });
 
@@ -589,9 +606,12 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
       // zeqqat_run is labeled destructive only where this connection can
       // delete something for this caller.
       const destructive = await mayDelete(await reachableInstances(ctx));
-      const tools = TOOLS.map((t) =>
-        t.name === TOOL_NAMES.run ? { ...t, annotations: { ...t.annotations, destructiveHint: destructive } } : t,
-      );
+      const icons = mcpIcons();
+      const tools = TOOLS.map((t) => ({
+        ...t,
+        icons,
+        ...(t.name === TOOL_NAMES.run ? { annotations: { ...t.annotations, destructiveHint: destructive } } : {}),
+      }));
       return jsonRpcResult(id, {
         tools,
         // Tenant-specific catalog, never cached publicly.

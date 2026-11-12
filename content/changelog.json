@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.53",
+    "date": "2026-11-12",
+    "changes": [
+      "The Zeqqat connector and its tools now carry the Zeqqat logo, so clients that show MCP icons display it next to Zeqqat's calls"
+    ]
+  },
+  {
     "version": "0.3.52",
     "date": "2026-11-12",
     "changes": [
