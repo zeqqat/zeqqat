@@ -40,7 +40,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
 
   if (!alias || !baseUrlRaw || !apiKey) return { error: "Fill in the name, the URL and the API key.", values };
   if (!ALIAS.test(alias)) {
-    return { error: "Use lowercase letters, numbers, dashes or underscores for the name, for example my-agency.", values };
+    return { error: "Use lowercase letters, numbers, dashes or underscores for the name, for example my-dokploy.", values };
   }
 
   const findDokploy = () =>
@@ -109,7 +109,7 @@ export async function connectAppAction(_prev: ConnectState, formData: FormData):
   }
   if (!alias || !baseUrlRaw) return { error: "Fill in the name and the URL.", values };
   if (!ALIAS.test(alias)) {
-    return { error: "Use lowercase letters, numbers, dashes or underscores for the name, for example my-agency.", values };
+    return { error: "Use lowercase letters, numbers, dashes or underscores for the name, for example my-dokploy.", values };
   }
 
   const result = await testAppConnection(baseUrlRaw);

@@ -38,7 +38,7 @@ export function ConnectDokployForm({
           defaultValue={state.values?.alias ?? defaultAlias}
           {...noAutofill}
         />
-        <p className="zq-help">For example client-one, my-agency or personal.</p>
+        <p className="zq-help">For example client-one, my-dokploy or personal.</p>
       </div>
       <div className="zq-field">
         <label className="zq-label" htmlFor="base_url">
