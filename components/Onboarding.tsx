@@ -21,7 +21,7 @@ export function OnboardConnectDokploy() {
         <span className="dot">.</span>
       </h1>
       <div className="zq-ob-col">
-        <ConnectDokployForm next="onboarding" defaultAlias="production" />
+        <ConnectDokployForm next="onboarding" defaultAlias="my-dokploy" />
       </div>
     </div>
   );

@@ -148,7 +148,7 @@ export default async function IntegrationsPage({
       {adding && isOwner && (
         <section className="zq-block">
           <h2 className="zq-block-t">{dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}</h2>
-          <ConnectDokployForm next="integrations" defaultAlias={dokployCount ? "staging" : "production"} />
+          <ConnectDokployForm next="integrations" defaultAlias={dokployCount ? `my-dokploy-${dokployCount + 1}` : "my-dokploy"} />
         </section>
       )}
 

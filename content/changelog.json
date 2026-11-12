@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.46",
+    "date": "2026-11-12",
+    "changes": [
+      "A new Dokploy is named my-dokploy by default, and the example now reads company A, company B"
+    ]
+  },
+  {
     "version": "0.3.45",
     "date": "2026-11-12",
     "changes": [

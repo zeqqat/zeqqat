@@ -38,7 +38,7 @@ export function ConnectDokployForm({
           defaultValue={state.values?.alias ?? defaultAlias}
           {...noAutofill}
         />
-        <p className="zq-help">For example production or staging.</p>
+        <p className="zq-help">For example company A, company B, etc.</p>
       </div>
       <div className="zq-field">
         <label className="zq-label" htmlFor="base_url">
