@@ -1,3 +1,5 @@
+import { parseConnectionPath } from "./connection-paths";
+
 export type AgentKey = "claude" | "claudecode" | "chatgpt" | "cursor" | "grok" | "muse" | "other";
 
 // Order is deliberate: Claude, Claude Code, ChatGPT, Cursor, Grok, Muse.
@@ -40,7 +42,34 @@ export const AGENTS: {
 // 2026-11-12), so those stay copy and paste.
 export function claudeInstallLink(mcpUrl: string, admin = false): string {
   const base = admin ? "https://claude.ai/admin-settings/connectors" : "https://claude.ai/customize/connectors";
-  return `${base}?modal=add-custom-connector&connectorName=Zeqqat&connectorUrl=${encodeURIComponent(mcpUrl)}`;
+  const name = claudeConnectorName(mcpUrl);
+  return `${base}?modal=add-custom-connector&connectorName=${encodeURIComponent(name)}&connectorUrl=${encodeURIComponent(mcpUrl)}`;
+}
+
+// Claude calls our tools as mcp__<connector name>__<tool> and drops any
+// tool whose full name is over 64 characters (the connector then shows zero
+// tools). mcp__ (5) + __ (2) + our longest built-in (16) leaves 41.
+export const MAX_CONNECTOR_NAME_LENGTH = 41;
+
+// The name Claude's connector list shows: "Zeqqat | deployment (@gaita)".
+// Connection first (it tells a person's connectors apart and survives
+// truncation), owner in parentheses like "Name @username" elsewhere. No
+// workspace: a connection can move between workspaces and Zeqqat can't
+// rename a connector after it is added. Too long for the tool-name budget,
+// the owner goes, then the connection.
+export function claudeConnectorName(mcpUrl: string): string {
+  let path = mcpUrl;
+  try {
+    path = new URL(mcpUrl).pathname;
+  } catch {
+    // Not a full URL; try it as a path.
+  }
+  const p = parseConnectionPath(path);
+  if (!p) return "Zeqqat";
+  const full = `Zeqqat | ${p.name} (@${p.org})`;
+  if (full.length <= MAX_CONNECTOR_NAME_LENGTH) return full;
+  const short = `Zeqqat | ${p.name}`;
+  return short.length <= MAX_CONNECTOR_NAME_LENGTH ? short : "Zeqqat";
 }
 
 export function cursorInstallLink(mcpUrl: string): string {
