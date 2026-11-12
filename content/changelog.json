@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.50",
+    "date": "2026-11-12",
+    "changes": [
+      "Side menu: the zigzag strip is back to 10px tall and still runs the full width, edge to edge"
+    ]
+  },
+  {
     "version": "0.3.49",
     "date": "2026-11-12",
     "changes": [
