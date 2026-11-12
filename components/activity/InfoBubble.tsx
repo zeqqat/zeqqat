@@ -2,8 +2,17 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-// An ⓘ in a box's top-right corner that opens a short explanation.
-export function InfoBubble({ title, children }: { title: string; children: React.ReactNode }) {
+// An ⓘ that opens a short explanation. By default it sits in a box's
+// top-right corner; `inline` puts it in the flow, e.g. beside a form label.
+export function InfoBubble({
+  title,
+  children,
+  inline = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  inline?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const ref = useRef<HTMLSpanElement>(null);
@@ -23,7 +32,7 @@ export function InfoBubble({ title, children }: { title: string; children: React
   }, [open]);
 
   return (
-    <span ref={ref}>
+    <span ref={ref} className={inline ? "zq-info-inline" : undefined}>
       <button
         type="button"
         className="zq-info"

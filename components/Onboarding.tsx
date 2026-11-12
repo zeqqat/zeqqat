@@ -1,58 +1,56 @@
 import { completeSetupAction } from "../lib/actions/workspace";
-import { AgentTabs } from "./AgentTabs";
+import { AgentPicker } from "./AgentPicker";
 import { ConnectDokployForm } from "./ConnectDokployForm";
 import { DokployMark } from "./Marks";
 import { Stepper } from "./Stepper";
 
 export function OnboardConnectDokploy() {
   return (
-    <div>
+    <div className="zq-ob">
       <Stepper
         steps={[
-          { label: "Signed in", state: "done" },
           { label: "Connect Dokploy", state: "now" },
           { label: "Connect an agent", state: "todo" },
         ]}
       />
-      <p className="zq-kicker">Step 2 of 3</p>
+      <p className="zq-kicker">Step 1 of 2</p>
       {/* The id is how the side menu's "connect first" modal finds this
           heading to shake it (components/AppShell.tsx). */}
       <h1 className="zq-h" id="zq-connect-dokploy">
-        Connect your <DokployMark size={22} /> Dokploy<span className="dot">.</span>
+        Connect your <DokployMark size={22} /> Dokploy
+        <span className="dot">.</span>
       </h1>
-      <p className="zq-sub">
-        Self-hosted or Dokploy Cloud, both work. You can connect more instances later, for example staging and
-        production, each with its own permissions.
-      </p>
-      <ConnectDokployForm next="onboarding" defaultAlias="production" />
+      <div className="zq-ob-col">
+        <ConnectDokployForm next="onboarding" defaultAlias="production" />
+      </div>
     </div>
   );
 }
 
 export function OnboardConnectAgent({ mcpUrl, alias }: { mcpUrl: string; alias: string | null }) {
   return (
-    <div>
+    <div className="zq-ob">
       <Stepper
         steps={[
-          { label: "Signed in", state: "done" },
-          { label: alias ? `Dokploy: ${alias}` : "Dokploy connected", state: "done" },
+          {
+            label: alias ? `Dokploy: ${alias}` : "Dokploy connected",
+            state: "done",
+          },
           { label: "Connect an agent", state: "now" },
         ]}
       />
-      <p className="zq-kicker">Step 3 of 3</p>
+      <p className="zq-kicker">Step 2 of 2</p>
       <h1 className="zq-h">
         Connect your agent<span className="dot">.</span>
       </h1>
-      <p className="zq-sub">
-        Add this one URL to your MCP client. The first time it connects, it asks you to sign in and approve it.
-      </p>
-      <div className="zq-split">
-        <section className="a" style={{ maxWidth: 720 }}>
-          <AgentTabs mcpUrl={mcpUrl} />
-          <p className="zq-note">
-            Already approved it? <a className="zq-textlink" href="/app">Refresh this page</a>
-          </p>
-        </section>
+      <div className="zq-ob-col">
+        <AgentPicker mcpUrl={mcpUrl} />
+        <p className="zq-note zq-ob-refresh">
+          Already approved it?{" "}
+          <a className="zq-textlink" href="/app">
+            Refresh this page
+          </a>
+        </p>
       </div>
     </div>
   );
@@ -74,7 +72,10 @@ export function MemberStart({
       <Stepper
         steps={[
           { label: `Joined ${workspace}`, state: "done" },
-          { label: "Dokploy connected by your team", state: instances.length ? "done" : "todo" },
+          {
+            label: "Dokploy connected by your team",
+            state: instances.length ? "done" : "todo",
+          },
           { label: "Connect your agent", state: "now" },
         ]}
       />
@@ -88,7 +89,7 @@ export function MemberStart({
       </p>
       <div className="zq-split">
         <section className="a">
-          <AgentTabs mcpUrl={mcpUrl} />
+          <AgentPicker mcpUrl={mcpUrl} />
           <p className="zq-note">
             On the approval screen, pick the <b>{workspace}</b> workspace.
           </p>
@@ -129,9 +130,12 @@ export function SetupChoice({ siteHost, agentHost }: { siteHost: string; agentHo
         {agentHost ? `${agentHost} is connected` : "Your agent is connected"}
       </span>
       <h1 className="zq-h" style={{ marginTop: 18 }}>
-        You&rsquo;re set up. Where should Zeqqat run<span className="dot">?</span>
+        You&rsquo;re set up. Where should Zeqqat run
+        <span className="dot">?</span>
       </h1>
-      <p className="zq-sub">Both work the same way for your agents. Pick whichever suits you, and switch later if you like.</p>
+      <p className="zq-sub">
+        Both work the same way for your agents. Pick whichever suits you, and switch later if you like.
+      </p>
       <div className="zq-choice">
         <section className="zq-choice-card" aria-labelledby="choice-hosted">
           <span className="zq-where" style={{ alignSelf: "flex-start" }}>

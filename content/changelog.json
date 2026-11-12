@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.42",
+    "date": "2026-11-12",
+    "changes": [
+      "Connect your agent is now one button per app: Add to Claude and Add to Cursor open the app with Zeqqat filled in; Claude Code, ChatGPT and VS Code show the URL or command to copy",
+      "First-run setup is two centered steps, Connect Dokploy and Connect an agent",
+      "The Dokploy form's Name field is now Instance name, with an info bubble explaining it"
+    ]
+  },
+  {
     "version": "0.3.41",
     "date": "2026-11-11",
     "changes": [

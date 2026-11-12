@@ -4372,3 +4372,138 @@ button.zq-look:focus-visible {
   font-size: 12.5px;
   margin-top: 2px;
 }
+
+
+/* First-run setup: centered column (components/Onboarding.tsx) */
+.zq-ob {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.zq-ob .zq-stepper {
+  justify-content: center;
+}
+.zq-ob-col {
+  width: 100%;
+  max-width: 460px;
+  margin-top: 28px;
+  text-align: left;
+}
+.zq-ob-refresh {
+  text-align: center;
+  margin-top: 14px;
+}
+.zq-connect-form {
+  max-width: 640px;
+  margin-top: 24px;
+}
+.zq-ob-col .zq-connect-form {
+  max-width: none;
+  margin-top: 0;
+}
+
+/* Instance name label with its ⓘ */
+.zq-label-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.zq-label-row .zq-label {
+  margin-bottom: 0;
+}
+.zq-info-inline {
+  position: relative;
+  display: inline-flex;
+}
+.zq-info-inline .zq-info {
+  position: static;
+  width: 22px;
+  height: 22px;
+}
+.zq-info-inline .zq-info svg {
+  width: 14px;
+  height: 14px;
+}
+.zq-info-inline .zq-bubble {
+  top: 28px;
+  left: -10px;
+  right: auto;
+  width: 240px;
+}
+.zq-info-inline .zq-bubble::before {
+  left: 16px;
+  right: auto;
+}
+
+/* Agent buttons, one per app, like "Continue with Google" (AgentPicker) */
+.zq-agents {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.zq-agent-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 16px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.zq-agent-btn:hover {
+  border-color: var(--fg);
+}
+.zq-agent-btn:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+.zq-agent-btn.is-open {
+  border-color: var(--cobalt);
+}
+.zq-agent-label {
+  flex: 1;
+}
+.zq-agent-logo {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+.zq-agent-logo.is-mono {
+  background: currentColor;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+.zq-agent-logo.is-plus {
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  color: var(--dim);
+}
+.zq-agent-go {
+  color: var(--faint);
+}
+.zq-agent-btn.is-open .zq-agent-go {
+  transform: rotate(180deg);
+}
+.zq-agent-more {
+  padding: 2px 4px 10px;
+}
+.zq-agent-more .zq-steps {
+  margin-top: 12px;
+}

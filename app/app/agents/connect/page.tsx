@@ -1,4 +1,4 @@
-import { AgentTabs } from "../../../../components/AgentTabs";
+import { AgentPicker } from "../../../../components/AgentPicker";
 import { primaryConnection } from "../../../../lib/connections";
 import { requireWorkspace } from "../../../../lib/guard";
 
@@ -18,7 +18,7 @@ export default async function ConnectAgentPage() {
         Agents.
       </p>
       <div className="zq-block">
-        <AgentTabs mcpUrl={conn.url} />
+        <AgentPicker mcpUrl={conn.url} />
       </div>
     </div>
   );
