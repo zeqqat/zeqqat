@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.56",
+    "date": "2026-11-13",
+    "changes": [
+      "Overview: the calls, blocked and redacted boxes count only calls to your Dokploy, not Zeqqat's own tools like whoami, so they match Recent activity"
+    ]
+  },
+  {
     "version": "0.3.55",
     "date": "2026-11-13",
     "changes": [

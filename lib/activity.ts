@@ -16,6 +16,7 @@ import {
 import { callState, lookupText, policyShortName, type CallState } from "./activity-format";
 import { connectionUrl } from "./connections";
 import { agentHost } from "./permissions";
+import { appCallsOnly } from "./overview";
 import { builtinAction, builtinToolName } from "./tool-names";
 import { listUserWorkspaces, type UserWorkspace } from "./workspace";
 
@@ -290,7 +291,10 @@ export async function listRequests(
   const narrowed = Boolean(opts.since || opts.show);
   const wsIds = narrowed ? [v.ws.workspaceId] : await visibleWorkspaceIds(v);
   const inView = inArray(callLog.workspaceId, wsIds);
+  // Narrowed by a tile: match the tile's count, which leaves out Zeqqat's
+  // own tools, so a request made only of lookups doesn't show up here.
   const callFilter = and(
+    narrowed ? appCallsOnly : undefined,
     opts.since ? gte(callLog.createdAt, opts.since) : undefined,
     opts.show === "blocked" ? eq(callLog.outcome, "blocked") : undefined,
     opts.show === "redacted" ? sql`position(${REDACTED_MARK} in ${callLog.responseBody}::text) > 0` : undefined,

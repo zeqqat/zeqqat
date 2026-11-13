@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, notLike, sql } from "drizzle-orm";
 import { db } from "../db";
 import { apiEndpoint, callLog, instance, membership, oauthClient, organization, oauthGrant, user, workspaceMember } from "../db/schema";
 
@@ -19,9 +19,15 @@ const redactedCount = sql<number>`coalesce(sum(
   / length(${REDACTED_MARK})
 ), 0)`;
 
+// The tiles count calls to the user's apps only. Zeqqat's own tools
+// (whoami, search, describe, docs...) are the agent getting its bearings,
+// and Activity shows them as lookups that don't count, so the tiles skip
+// them too.
+export const appCallsOnly = and(notLike(callLog.toolName, "zeqqat\\_%"), notLike(callLog.toolName, "zeqqat-%"));
+
 export async function getOverviewStats(workspaceId: string) {
   const today = startOfToday();
-  const inWs = eq(callLog.workspaceId, workspaceId);
+  const inWs = and(eq(callLog.workspaceId, workspaceId), appCallsOnly);
 
   const [agentsRows, instancesRows, callsRows, hourRows] = await Promise.all([
     db
