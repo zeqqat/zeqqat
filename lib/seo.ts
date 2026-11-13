@@ -27,7 +27,8 @@ export function pageMeta(p: PageMeta): Metadata {
   return {
     title: p.absolute ? { absolute: p.title } : p.title,
     description: p.description,
-    alternates: { canonical: p.path },
+    // Every public page points feed readers (and crawlers) at the blog feed.
+    alternates: { canonical: p.path, types: { "application/rss+xml": [{ url: "/rss.xml", title: "Zeqqat blog" }] } },
     openGraph: {
       type: p.type ?? "website",
       url: `${SITE_URL}${p.path === "/" ? "" : p.path}`,

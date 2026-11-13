@@ -12,6 +12,8 @@ export type PostMeta = {
   seoTitle: string;
   description: string;
   date: string;
+  // Set in frontmatter when a post is meaningfully revised; the sitemap uses it.
+  updated?: string;
   keywords: string[];
 };
 
@@ -106,6 +108,7 @@ export function getPost(slug: string): Post | null {
     seoTitle: data.seoTitle ?? data.title ?? slug,
     description: data.description ?? "",
     date: data.date ?? "",
+    updated: data.updated || undefined,
     keywords: (data.keywords ?? "").split(",").map((k) => k.trim()).filter(Boolean),
     html: renderMarkdown(body),
     faqs: extractFaqs(body),

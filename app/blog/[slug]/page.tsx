@@ -52,7 +52,7 @@ export default async function PostPage({ params }: Props) {
       description: post.description,
       image: `${url}/opengraph-image`,
       datePublished: post.date,
-      dateModified: post.date,
+      dateModified: post.updated ?? post.date,
       mainEntityOfPage: url,
       url,
       keywords: post.keywords.join(", "),

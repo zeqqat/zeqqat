@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.59",
+    "date": "2026-11-13",
+    "changes": [
+      "SEO: sitemap dates now show when each page really changed, not the last release",
+      "Blog: RSS feed at /rss.xml",
+      "Docs: zeqqat.com/docs is now a docs index instead of a 404"
+    ]
+  },
+  {
     "version": "0.3.58",
     "date": "2026-11-13",
     "changes": [

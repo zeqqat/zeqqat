@@ -1,0 +1,54 @@
+{
+  "/": {
+    "hash": "19d8943e73475f2c",
+    "date": "2026-11-10"
+  },
+  "/docs": {
+    "hash": "0fef91578788d82d",
+    "date": "2026-11-13"
+  },
+  "/docs/self-host": {
+    "hash": "d5d395e8c2db4f80",
+    "date": "2026-11-10"
+  },
+  "/docs/agents": {
+    "hash": "9a986b1bc7fcba5d",
+    "date": "2026-11-12"
+  },
+  "/terms": {
+    "hash": "d0e84eb90c861178",
+    "date": "2026-11-10"
+  },
+  "/privacy": {
+    "hash": "94021a656598ca6f",
+    "date": "2026-11-10"
+  },
+  "/docs/agents/overview": {
+    "hash": "b1e7a4a1a66d6840",
+    "date": "2026-11-13"
+  },
+  "/docs/agents/tools": {
+    "hash": "c61264ff8812e698",
+    "date": "2026-11-10"
+  },
+  "/docs/agents/permissions": {
+    "hash": "2bd70e5ed3026479",
+    "date": "2026-11-10"
+  },
+  "/docs/agents/integrations": {
+    "hash": "3f833b7284a4a331",
+    "date": "2026-11-10"
+  },
+  "/docs/agents/connections": {
+    "hash": "bbd7805382378e9c",
+    "date": "2026-11-10"
+  },
+  "/docs/agents/secrets": {
+    "hash": "a9f0b9cb42a660f8",
+    "date": "2026-11-10"
+  },
+  "/docs/agents/errors": {
+    "hash": "79fdb24023f18ca1",
+    "date": "2026-11-10"
+  }
+}

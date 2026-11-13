@@ -51,6 +51,9 @@ const date = new Date().toISOString().slice(0, 10);
 changelog.unshift({ version: next, date, changes });
 writeFileSync(changelogPath, JSON.stringify(changelog, null, 2) + "\n");
 
+// Pages that changed get today's date in the sitemap (content/lastmod.json).
+execSync("pnpm exec tsx scripts/lastmod.ts", { stdio: "inherit" });
+
 // Catch any other file still holding the old version.
 let leftovers = "";
 try {

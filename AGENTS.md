@@ -279,7 +279,11 @@ import form in (`/app/integrations?add=app&spec=...`), through
 
 **SEO:** every public page gets its title, description, canonical URL and
 share card from `pageMeta()` in `lib/seo.ts`, and is listed in
-`app/sitemap.ts`. Share images come from `lib/og-image.tsx` (one for the
+`app/sitemap.ts`. A sitemap date is when the page itself last changed:
+posts use `date` (or `updated` in frontmatter), other pages
+`content/lastmod.json` (`lib/lastmod.ts`, refreshed by `pnpm bump`; a
+unit test fails while it is stale). `/rss.xml` is the blog feed, also
+listed in robots.txt as a sitemap. Share images come from `lib/og-image.tsx` (one for the
 site, one per blog post). Sign-in, password, invite and consent pages are
 noindex. Blog posts never name the author's own hostnames, projects or
 databases.
