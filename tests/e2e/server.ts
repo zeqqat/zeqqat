@@ -50,6 +50,8 @@ async function main() {
     ENABLED_AUTH_PROVIDERS: "google",
     GOOGLE_CLIENT_ID: "e2e",
     GOOGLE_CLIENT_SECRET: "e2e",
+    // Test runs are not installs: never ping zeqqat.com from CI.
+    ZEQQAT_TELEMETRY: "0",
   };
   Object.assign(process.env, env);
 

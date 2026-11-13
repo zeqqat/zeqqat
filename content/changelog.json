@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.54",
+    "date": "2026-11-13",
+    "changes": [
+      "Test runs no longer send install pings, so the install count only shows real self-hosted installs"
+    ]
+  },
+  {
     "version": "0.3.53",
     "date": "2026-11-12",
     "changes": [
