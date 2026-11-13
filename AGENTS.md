@@ -25,6 +25,21 @@ integration.
   **Verified email is a zeqqat.com rule only:** cloud refuses accounts and
   sessions without one; self-hosted installs don't check.
   `pnpm exec tsx tests/e2e/password-flow.ts` runs the password flow.
+- **http or https, sign-in works.** A self-hosted install is often served
+  over plain http while `ZEQQAT_PUBLIC_URL` says https (Dokploy's template
+  creates the domain with no certificate). `lib/auth.ts` builds the Better
+  Auth setup per base URL and `authForRequest` picks the flipped-scheme
+  one when a request reaches the install's own host on the other scheme
+  (`lib/auth-scheme.ts`, from `X-Forwarded-Proto`). Anything reading the
+  session goes through `getServerSession` or `authForRequest`, never
+  `auth.api` directly. `pnpm exec tsx tests/e2e/http-https-signin.ts`.
+- **Turn on HTTPS.** Over http on a self-hosted install, the app shows a
+  banner (`components/HttpsBanner.tsx`): agents like Claude need https. A
+  workspace admin whose Dokploy runs the install gets a button
+  (`lib/actions/https.ts`, `lib/self-https.ts`): Let's Encrypt on the
+  domain, `ZEQQAT_PUBLIC_URL` to https, redeploy, then the page waits for
+  https and moves there. `lib/admin-targets.ts` (decrypted Dokploy keys)
+  must stay out of "use server" files.
 - pnpm — this repo enforces it (`preinstall: npx only-allow pnpm`)
 
 - **Dev tools** (`ZEQQAT_DEV_TOOLS=1`, ignored on zeqqat.com,

@@ -12,7 +12,7 @@ That doesn't mean you shouldn't do it. Letting Claude, Cursor or Claude Code dep
 
 ## What a Dokploy API key can do
 
-When you create a key in Dokploy (Settings, then API Keys), you pick an organization and get a token that's shown once. Requests send it in the `x-api-key` header.
+When you create a key in Dokploy (Settings, then Profile), you pick an organization and get a token that's shown once. Requests send it in the `x-api-key` header.
 
 Two details matter most:
 
@@ -112,7 +112,7 @@ For local MCP servers, the key usually goes in an environment variable in the cl
 
 ### Do Dokploy API keys expire?
 
-Treat them as long-lived and rotate them yourself, especially after removing an agent or teammate. Revoke a key from Settings, then API Keys, as soon as it's no longer needed.
+Treat them as long-lived and rotate them yourself, especially after removing an agent or teammate. Revoke a key from Settings, then Profile, as soon as it's no longer needed.
 
 ### Is it safer to use Dokploy Cloud with an AI agent?
 

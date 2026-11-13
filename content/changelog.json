@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.58",
+    "date": "2026-11-13",
+    "changes": [
+      "Sign-in works whether your self-hosted Zeqqat is opened over http or https, so installs from the Dokploy template can sign up",
+      "Over http, a banner says agents like Claude need HTTPS, with a Turn on HTTPS button for admins that sets it up through your Dokploy",
+      "The Dokploy form now says API keys are under Settings, then Profile"
+    ]
+  },
+  {
     "version": "0.3.57",
     "date": "2026-11-13",
     "changes": [

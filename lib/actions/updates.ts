@@ -1,15 +1,11 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
-import { db } from "../../db";
-import { instance, integration } from "../../db/schema";
+import { adminTargets } from "../admin-targets";
 import { forgetRemote, releaseStatus, type ReleaseStatus } from "../changelog";
-import { decryptCredential } from "../crypto";
-import { normalizeBaseUrl } from "../dokploy-check";
 import { edition, siteHost } from "../edition";
 import { requireWorkspace } from "../guard";
 import { deploySelf, findSelfCompose, type SelfCompose } from "../self-update";
-import { InstallError, type Target } from "../selfhost-install";
+import { InstallError } from "../selfhost-install";
 import { listUserWorkspaces } from "../workspace";
 
 // The footer's version pill and its What's new modal. Anyone signed in can
@@ -28,26 +24,6 @@ export type UpdateRoute =
   | { kind: "no_dokploy" } // no Dokploy instance here runs this install
   | { kind: "pinned"; version: string };
 
-async function adminTargets(userId: string): Promise<Target[]> {
-  const admin = (await listUserWorkspaces(userId)).filter((w) => w.wsRole === "admin").map((w) => w.workspaceId);
-  if (!admin.length) return [];
-  const rows = await db
-    .select({ baseUrl: instance.baseUrl, credential: instance.credential })
-    .from(instance)
-    .innerJoin(integration, eq(integration.id, instance.integrationId))
-    .where(and(inArray(instance.workspaceId, admin), eq(integration.slug, "dokploy")));
-  const out: Target[] = [];
-  for (const r of rows) {
-    const baseUrl = normalizeBaseUrl(r.baseUrl);
-    if (!baseUrl) continue;
-    try {
-      out.push({ baseUrl, apiKey: decryptCredential(r.credential) });
-    } catch {
-      // A key that no longer decrypts can't be the way in; skip it.
-    }
-  }
-  return out;
-}
 
 async function locate(): Promise<{ route: UpdateRoute; self?: SelfCompose }> {
   if (edition() === "cloud") return { route: { kind: "cloud" } };

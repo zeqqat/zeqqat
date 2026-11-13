@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { user as userTable } from "../db/schema";
 import { emailEnabled, enabledProviders, passwordEnabled } from "./auth-providers";
+import { flippedUrl, usesFlippedScheme } from "./auth-scheme";
 import { edition } from "./edition";
 import { newId } from "./id";
 import { mailerConfigured, passwordResetMail, sendMail, signInCodeMail } from "./mailer";
@@ -20,10 +21,13 @@ export { signInProviders } from "./auth-providers";
 // invites), so it doesn't check.
 const requireVerifiedEmail = edition() === "cloud";
 
-export const auth = betterAuth({
-  baseURL: process.env.ZEQQAT_PUBLIC_URL,
+// The whole Better Auth setup for one base URL. Built once for
+// ZEQQAT_PUBLIC_URL and, on first need, once more for the same host with
+// the other scheme (lib/auth-scheme.ts explains why).
+const authFor = (baseURL: string | undefined) => betterAuth({
+  baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
-  trustedOrigins: process.env.ZEQQAT_PUBLIC_URL ? [process.env.ZEQQAT_PUBLIC_URL] : [],
+  trustedOrigins: baseURL ? [baseURL] : [],
   database: drizzleAdapter(db, { provider: "pg" }),
   // Same email through Google or GitHub lands in the same account instead
   // of creating a second one. Only Google is trusted outright (every Google
@@ -158,3 +162,18 @@ export const auth = betterAuth({
     },
   },
 });
+
+export const auth = authFor(process.env.ZEQQAT_PUBLIC_URL);
+
+let flippedAuth: typeof auth | null = null;
+
+// The setup to use for this request: the flipped one only when the request
+// came to this install's own host on the other scheme.
+export function authForRequest(h: Headers): typeof auth {
+  const publicUrl = process.env.ZEQQAT_PUBLIC_URL;
+  if (!usesFlippedScheme(publicUrl, h)) return auth;
+  const flipped = flippedUrl(publicUrl);
+  if (!flipped) return auth;
+  flippedAuth ??= authFor(flipped);
+  return flippedAuth;
+}

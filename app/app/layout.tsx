@@ -1,11 +1,14 @@
 import { count, eq } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { AppShell, type MenuState } from "../../components/AppShell";
+import { HttpsBanner, type HttpsBannerMode } from "../../components/HttpsBanner";
 import { db } from "../../db";
 import { instance } from "../../db/schema";
 import { devToolsEnabled } from "../../lib/dev-tools";
 import { pastUsersOf } from "../../lib/dev-users";
-import { edition } from "../../lib/edition";
+import { servedWithoutHttps } from "../../lib/auth-scheme";
+import { edition, siteHost } from "../../lib/edition";
+import { canGetCertificate } from "../../lib/self-https";
 import { APP_VERSION } from "../../lib/version";
 import { requireWorkspace } from "../../lib/guard";
 import { firstAdminOf } from "../../lib/overview";
@@ -32,6 +35,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const needsDokploy = instanceCount === 0;
   const askAdmin = needsDokploy && ws.role !== "owner" ? ((await firstAdminOf(ws.organizationId, ws.workspaceId)) ?? { name: "", username: null }) : null;
   const devTools = devToolsEnabled() ? { pastUsers: await pastUsersOf(user) } : null;
+  // Self-hosted and reached over plain http: sign-in works, but agents like
+  // Claude need https, so say so (components/HttpsBanner.tsx).
+  let httpsMode: HttpsBannerMode | null = null;
+  if (edition() !== "cloud" && servedWithoutHttps(await headers())) {
+    const isAdmin = ws.wsRole === "admin";
+    httpsMode = !canGetCertificate(siteHost()) ? "no-cert" : !isAdmin ? "ask" : needsDokploy ? "connect" : "fix";
+  }
 
   return (
     <div className="zq">
@@ -48,6 +58,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         needsDokploy={needsDokploy}
         askAdmin={askAdmin}
       >
+        {httpsMode && <HttpsBanner mode={httpsMode} />}
         {children}
       </AppShell>
     </div>

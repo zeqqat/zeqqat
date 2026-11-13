@@ -61,7 +61,7 @@ export function ConnectDokployForm({
           API key
         </label>
         <KeyInput id="api_key" name="api_key" required placeholder="Paste a Dokploy API key" />
-        <p className="zq-help">In Dokploy, open Settings, then API Keys, and generate a key for Zeqqat.</p>
+        <p className="zq-help">In Dokploy, open Settings, then Profile, and generate an API key for Zeqqat.</p>
       </div>
       {state.error && (
         <div className="zq-warn-box" role="alert">
