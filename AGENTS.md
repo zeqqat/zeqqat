@@ -338,7 +338,8 @@ that owns the connection), workspace, connection, integrations as
 result, and in `structuredContent.context`. Every tool description points
 to `zeqqat_whoami`, whose result is the full context: every instance, plus
 each integration's `categories` (distinct first spec tag of its live
-endpoints). Other results and `instructions` leave categories out to stay
+endpoints). It also leads with `zeqqat` (`version`, `latest`,
+`updateAvailable`, from `releaseStatus` in `lib/changelog.ts`). Other results and `instructions` leave categories out to stay
 small. Every built-in declares an `outputSchema`
 (`{ context, result }`; `zeqqat_run`'s result is any JSON). JSON keys the
 agent sees are camelCase; Postgres columns stay snake_case.

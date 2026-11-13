@@ -2,6 +2,7 @@ import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
 import { apiEndpoint, connectionGrant, instance, integration, organization } from "../db/schema";
 import { integrationRef } from "./catalog";
+import { releaseStatus } from "./changelog";
 import type { McpContext } from "./mcp-auth";
 import { accessFor, accessSummary, type InstanceAccess } from "./policies";
 
@@ -41,7 +42,17 @@ export type ContextAccount = {
   type: "personal" | "organization";
 };
 
+// The Zeqqat build answering, so an agent can tell which version an
+// install runs and whether an update is out. Only in the full context
+// (zeqqat_whoami).
+export type ContextZeqqat = {
+  version: string;
+  latest: string;
+  updateAvailable: boolean;
+};
+
 export type ZeqqatContext = {
+  zeqqat?: ContextZeqqat;
   account: ContextAccount;
   workspace: string;
   connection: string | null;
@@ -174,7 +185,10 @@ export function contextFrom(
 export async function buildContext(ctx: McpContext, opts: { full?: boolean } = {}): Promise<ZeqqatContext> {
   const instances = await reachableInstances(ctx);
   const stats = await catalogStats([...new Set(instances.map((i) => i.integrationId))]);
-  return contextFrom(ctx, instances, { ...opts, stats });
+  const context = contextFrom(ctx, instances, { ...opts, stats });
+  if (!opts.full) return context;
+  const r = await releaseStatus();
+  return { zeqqat: { version: r.current, latest: r.latest, updateAvailable: r.updateAvailable }, ...context };
 }
 
 // Whether anything this connection reaches lets this caller delete. Used

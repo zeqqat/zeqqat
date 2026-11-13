@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.57",
+    "date": "2026-11-13",
+    "changes": [
+      "zeqqat_whoami now says which Zeqqat version is answering, the latest release, and whether an update is available"
+    ]
+  },
+  {
     "version": "0.3.56",
     "date": "2026-11-13",
     "changes": [

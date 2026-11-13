@@ -84,7 +84,7 @@ export const AGENT_DOCS: DocSection[] = [
     text:
       "Every tool result starts with a context object: account (the account that owns this connection), workspace, connection name, the integrations this connection reaches with their instances, and a notice. " +
       "account has a username and a type: personal (one person, the only owner) or organization (owned by a group with owners). It is the owner of the connection, not necessarily the person calling. " +
-      "Each integration is named @author/slug, which tells you whose tool set it is, and carries toolCount, how many tools it has. zeqqat_whoami also lists its categories, the kinds of tools it has (for example application, docker, project); search a category to see its tools. " +
+      "Each integration is named @author/slug, which tells you whose tool set it is, and carries toolCount, how many tools it has. zeqqat_whoami also lists its categories, the kinds of tools it has (for example application, docker, project); search a category to see its tools. zeqqat_whoami also carries zeqqat: the version of Zeqqat answering, the latest release, and updateAvailable, so you can tell the user when their install is behind. " +
       "Instance names are chosen by the user, for example prod or staging. " +
       "An integration that is not listed is not connected: tell the user, they can add it in the Zeqqat dashboard.",
   },

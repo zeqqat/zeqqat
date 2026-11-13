@@ -77,6 +77,11 @@ const CONTEXT_SCHEMA = {
       },
       required: ["username", "type"],
     },
+    zeqqat: {
+      type: "object",
+      properties: { version: { type: "string" }, latest: { type: "string" }, updateAvailable: { type: "boolean" } },
+      required: ["version"],
+    },
     workspace: { type: "string" },
     connection: { type: ["string", "null"] },
     integrations: {
