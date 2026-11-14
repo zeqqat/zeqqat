@@ -28,7 +28,7 @@ export default function DocsIndex() {
             <Link className="zq-item" href="/docs/self-host">
               <span className="zq-item-main">
                 <span className="zq-item-t">Self-host Zeqqat on Dokploy</span>
-                <span className="zq-item-s">Set it up from Zeqqat Cloud, or install the Zeqqat template in Dokploy</span>
+                <span className="zq-item-s">Set it up from Zeqqat Cloud, or install the Dokploy template</span>
               </span>
             </Link>
             <Link className="zq-item" href="/docs/agents">

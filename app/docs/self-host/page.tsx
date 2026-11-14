@@ -5,7 +5,7 @@ import { pageMeta } from "../../../lib/seo";
 export const metadata: Metadata = pageMeta({
   title: "Self-host Zeqqat on Dokploy",
   description:
-    "Run Zeqqat, the open source MCP for Dokploy, on your own Dokploy: set it up from Zeqqat Cloud in one click, or install the Zeqqat template in Dokploy.",
+    "Run Zeqqat, the open source MCP for Dokploy, on your own Dokploy: set it up from Zeqqat Cloud in one click, or install the Dokploy template.",
   path: "/docs/self-host",
 });
 
@@ -14,6 +14,8 @@ export const metadata: Metadata = pageMeta({
 // template in Dokploy. Flip TEMPLATE_IS_LATEST once Dokploy's template
 // follows `latest` (deploy/dokploy is ready for that PR).
 const TEMPLATE_IS_LATEST = false;
+const TEMPLATE_PINNED = "0.1.0";
+const DOKPLOY_TEMPLATE = "https://dokploy.com/templates/zeqqat";
 
 export default function SelfHostPage() {
   return (
@@ -34,9 +36,9 @@ export default function SelfHostPage() {
                 Get started <span aria-hidden="true">&rarr;</span>
               </span>
             </a>
-            <div className="zq-way">
+            <a className="zq-way" href={DOKPLOY_TEMPLATE} rel="noreferrer noopener">
               <h2 className="zq-way-t">
-                Install the Zeqqat template
+                Install the Dokploy template
                 {TEMPLATE_IS_LATEST ? (
                   <span className="zq-badge zq-badge-ok">Latest</span>
                 ) : (
@@ -44,14 +46,14 @@ export default function SelfHostPage() {
                 )}
               </h2>
               <p className="zq-way-p">
-                In your Dokploy, create a service from a template and pick <b>Zeqqat</b>.
+                {TEMPLATE_IS_LATEST
+                  ? "Deploy Zeqqat from Dokploy's templates."
+                  : `Deploy Zeqqat from Dokploy's templates. It is still pinned to v${TEMPLATE_PINNED}.`}
               </p>
-              {TEMPLATE_IS_LATEST ? null : (
-                <p className="zq-way-p">
-                  For now it installs an older Zeqqat. Use Zeqqat Cloud to get the latest.
-                </p>
-              )}
-            </div>
+              <span className="zq-way-go">
+                Open the template <span aria-hidden="true">&rarr;</span>
+              </span>
+            </a>
           </div>
         </section>
       </main>

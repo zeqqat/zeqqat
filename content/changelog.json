@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.66",
+    "date": "2026-11-14",
+    "changes": [
+      "Self-host page: the second card is the Dokploy template and links to it on dokploy.com"
+    ]
+  },
+  {
     "version": "0.3.65",
     "date": "2026-11-14",
     "changes": [
