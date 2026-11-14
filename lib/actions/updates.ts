@@ -1,7 +1,7 @@
 "use server";
 
 import { adminTargets } from "../admin-targets";
-import { forgetRemote, releaseStatus, type ReleaseStatus } from "../changelog";
+import { checkNow, forgetRemote, releaseStatus, type ReleaseStatus } from "../changelog";
 import { edition, siteHost } from "../edition";
 import { requireWorkspace } from "../guard";
 import { deploySelf, deployState, findSelfCompose, type DeployState, type SelfCompose } from "../self-update";
@@ -15,6 +15,11 @@ import { listUserWorkspaces } from "../workspace";
 export async function getReleaseStatus(): Promise<ReleaseStatus> {
   await requireWorkspace();
   return releaseStatus();
+}
+
+export async function checkForUpdates(): Promise<ReleaseStatus> {
+  await requireWorkspace();
+  return checkNow();
 }
 
 export type UpdateRoute =

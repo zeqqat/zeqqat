@@ -1,5 +1,7 @@
+import { CheckUpdatesOnPage } from "../../../components/CheckUpdates";
 import { ReleaseRow } from "../../../components/VersionPill";
 import { releaseStatus } from "../../../lib/changelog";
+import { edition } from "../../../lib/edition";
 import { requireWorkspace } from "../../../lib/guard";
 
 // Every release, newest first, marked with the one you're on. The footer's
@@ -14,6 +16,11 @@ export default async function ReleasesPage() {
         Releases<span className="dot">.</span>
       </h1>
       <p className="zq-sub">What changed in each version, newest first.</p>
+      {edition() !== "cloud" && (
+        <div style={{ marginTop: 12 }}>
+          <CheckUpdatesOnPage />
+        </div>
+      )}
       <div style={{ marginTop: 24 }}>
         {status.releases.map((r) => (
           <ReleaseRow key={r.version} r={r} current={status.current} latest={status.releases[0]?.version} />

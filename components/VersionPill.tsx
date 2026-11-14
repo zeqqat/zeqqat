@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Release, ReleaseStatus } from "../lib/changelog";
+import { CheckUpdates } from "./CheckUpdates";
 import { getReleaseStatus, getUpdateDeploy, getUpdateRoute, startUpdate, type UpdateRoute } from "../lib/actions/updates";
 
 // The version at the bottom of the side menu, with one pill: Latest, or
@@ -51,7 +52,7 @@ export function VersionPill({ version, edition }: { version: string; edition: "c
           </button>
         )}
       </span>
-      {open && <WhatsNew version={version} edition={edition} status={status} onClose={() => setOpen(false)} />}
+      {open && <WhatsNew version={version} edition={edition} status={status} onStatus={setStatus} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -60,11 +61,13 @@ function WhatsNew({
   version,
   edition,
   status,
+  onStatus,
   onClose,
 }: {
   version: string;
   edition: "cloud" | "self-hosted";
   status: ReleaseStatus | null;
+  onStatus: (s: ReleaseStatus) => void;
   onClose: () => void;
 }) {
   const [route, setRoute] = useState<UpdateRoute | null>(null);
@@ -174,6 +177,7 @@ function WhatsNew({
       <div className="zq-modal" role="dialog" aria-modal="true" aria-labelledby="zq-whatsnew-h">
         <div className="zq-modal-head">
           <h2 id="zq-whatsnew-h">What&apos;s new</h2>
+          {edition === "self-hosted" && !restarting && <CheckUpdates onStatus={onStatus} />}
           <button ref={closeRef} type="button" className="zq-modal-x" onClick={close} aria-label="Close" disabled={restarting}>
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
               <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />

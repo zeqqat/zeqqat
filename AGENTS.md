@@ -438,7 +438,9 @@ The side menu footer shows only `v<version>` and one pill: `Latest`, or
 newest first, scrolls) with a link to `/app/releases`. Tags: Latest (the
 newest), New (newer than yours), Your version. The public `/releases` shows
 the same list with no Your version. zeqqat.com serves
-its changelog at `/api/releases`; a self-hosted install fetches it hourly
+its changelog at `/api/releases`; a self-hosted install fetches it at most
+every ten minutes, and right away from the Check for updates pill in the
+modal and on `/app/releases` (`components/CheckUpdates.tsx`, `checkNow`)
 (`lib/changelog.ts`, `ZEQQAT_RELEASES_URL` to point elsewhere,
 `ZEQQAT_UPDATE_CHECK=0` to stop) to learn about newer versions. Cloud is
 always Latest.

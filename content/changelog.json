@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.67",
+    "date": "2026-11-14",
+    "changes": [
+      "Check for updates button in the What's new modal and on the Releases page",
+      "Self-hosted installs now look for new versions every 10 minutes instead of every hour"
+    ]
+  },
+  {
     "version": "0.3.66",
     "date": "2026-11-14",
     "changes": [

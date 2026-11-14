@@ -6,7 +6,9 @@ import { APP_VERSION } from "./version";
 // build, newest first, and gets a new entry with every version bump
 // (tests/unit/changelog.test.ts checks). A self-hosted install only has the
 // entries up to its own version, so it asks zeqqat.com (which always runs
-// the newest build) for /api/releases to learn about newer ones.
+// the newest build) for /api/releases to learn about newer ones: at most
+// every ten minutes on its own, and right away when someone clicks Check
+// for updates.
 
 export type Release = { version: string; date: string; changes: string[] };
 
@@ -57,7 +59,7 @@ function isRelease(r: unknown): r is Release {
 }
 
 let cache: { at: number; remote: Release[] } | null = null;
-const TTL = 60 * 60 * 1000;
+const TTL = 10 * 60 * 1000;
 
 async function fetchRemote(): Promise<Release[]> {
   if (process.env.ZEQQAT_UPDATE_CHECK === "0") return [];
@@ -92,7 +94,14 @@ export async function releaseStatus(): Promise<ReleaseStatus> {
   };
 }
 
-// After an update, ask again instead of trusting an hour-old answer.
+// After an update, ask again instead of trusting an older answer.
 export function forgetRemote() {
   cache = null;
+}
+
+// Check for updates, clicked by a person: ask zeqqat.com now. An answer a
+// few seconds old is reused, so clicking over and over stays one request.
+export async function checkNow(): Promise<ReleaseStatus> {
+  if (cache && Date.now() - cache.at > 15 * 1000) cache = null;
+  return releaseStatus();
 }
