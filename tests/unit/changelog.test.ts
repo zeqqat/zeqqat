@@ -17,6 +17,9 @@ describe("changelog", () => {
     for (const r of BUNDLED) {
       expect(r.changes.length).toBeGreaterThan(0);
       expect(r.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      // The time of the bump (UTC), shown on the Releases pages.
+      expect(r.at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+      expect(r.at?.slice(0, 10)).toBe(r.date);
       for (const c of r.changes) expect(c).not.toMatch(/—/);
     }
   });

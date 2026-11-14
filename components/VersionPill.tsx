@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Release, ReleaseStatus } from "../lib/changelog";
 import { CheckUpdates } from "./CheckUpdates";
 import { getReleaseStatus, getUpdateDeploy, getUpdateRoute, startUpdate, type UpdateRoute } from "../lib/actions/updates";
@@ -260,7 +260,17 @@ function UpdateLine({ route, phase, error }: { route: UpdateRoute | null; phase:
 // One release. Tags, in this order: Latest (the newest release), New
 // (newer than yours but not the newest), Your version. Latest comes first
 // so it sits in the same spot on the public page, which has no Your version.
-export function ReleaseRow({ r, current, latest }: { r: Release; current?: string | null; latest?: string }) {
+export function ReleaseRow({
+  r,
+  current,
+  latest,
+  showTime,
+}: {
+  r: Release;
+  current?: string | null;
+  latest?: string;
+  showTime?: boolean; // the Releases pages, not the modal
+}) {
   const isLatest = r.version === latest;
   const isCurrent = !!current && r.version === current;
   const isNew = !!current && !isCurrent && !isLatest && newer(r.version, current);
@@ -279,7 +289,7 @@ export function ReleaseRow({ r, current, latest }: { r: Release; current?: strin
         {isLatest && <span className="zq-rel-tag is-latest">Latest</span>}
         {isNew && <span className="zq-rel-tag is-new">New</span>}
         {isCurrent && <span className="zq-rel-tag">Your version</span>}
-        <span className="zq-rel-d">{fmtDate(r.date)}</span>
+        <span className="zq-rel-d">{showTime && r.at ? <ReleaseTime at={r.at} fallback={fmtDate(r.date)} /> : fmtDate(r.date)}</span>
       </div>
       <ul>
         {r.changes.map((c) => (
@@ -287,6 +297,23 @@ export function ReleaseRow({ r, current, latest }: { r: Release; current?: strin
         ))}
       </ul>
     </section>
+  );
+}
+
+const noop = () => () => {};
+
+// Date and time of a release in the reader's own time zone. The server
+// doesn't know that zone, so it renders the date alone and the time
+// appears once the page is live in the browser.
+function ReleaseTime({ at, fallback }: { at: string; fallback: string }) {
+  const live = useSyncExternalStore(noop, () => true, () => false);
+  const t = new Date(at);
+  if (!live || Number.isNaN(t.getTime())) return <>{fallback}</>;
+  return (
+    <time dateTime={at}>
+      {t.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })},{" "}
+      {t.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+    </time>
   );
 }
 

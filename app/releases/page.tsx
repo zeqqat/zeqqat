@@ -25,7 +25,7 @@ export default async function PublicReleases() {
         <p className="zq-sub">What changed in each version, newest first.</p>
         <div style={{ marginTop: 24 }}>
           {releases.map((r) => (
-            <ReleaseRow key={r.version} r={r} latest={releases[0]?.version} />
+            <ReleaseRow key={r.version} r={r} showTime latest={releases[0]?.version} />
           ))}
         </div>
       </main>

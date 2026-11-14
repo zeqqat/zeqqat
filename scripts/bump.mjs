@@ -47,8 +47,10 @@ for (const file of VERSION_FILES) {
 const changelogPath = "content/changelog.json";
 const changelog = JSON.parse(readFileSync(changelogPath, "utf8"));
 if (changelog.some((e) => e.version === next)) fail(`${changelogPath} already has ${next}`);
-const date = new Date().toISOString().slice(0, 10);
-changelog.unshift({ version: next, date, changes });
+// `at` is the moment of the bump (UTC); the Releases pages show it as a time.
+const at = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+const date = at.slice(0, 10);
+changelog.unshift({ version: next, date, at, changes });
 writeFileSync(changelogPath, JSON.stringify(changelog, null, 2) + "\n");
 
 // Pages that changed get today's date in the sitemap (content/lastmod.json).

@@ -1,7 +1,16 @@
 [
   {
+    "version": "0.3.68",
+    "date": "2026-11-14",
+    "at": "2026-11-14T19:49:08Z",
+    "changes": [
+      "Releases page shows what time each version was released, in your own time zone"
+    ]
+  },
+  {
     "version": "0.3.67",
     "date": "2026-11-14",
+    "at": "2026-11-14T19:27:57Z",
     "changes": [
       "Check for updates button in the What's new modal and on the Releases page",
       "Self-hosted installs now look for new versions every 10 minutes instead of every hour"
@@ -10,6 +19,7 @@
   {
     "version": "0.3.66",
     "date": "2026-11-14",
+    "at": "2026-11-14T19:10:05Z",
     "changes": [
       "Self-host page: the second card is the Dokploy template and links to it on dokploy.com"
     ]
@@ -17,6 +27,7 @@
   {
     "version": "0.3.65",
     "date": "2026-11-14",
+    "at": "2026-11-14T18:54:09Z",
     "changes": [
       "Landing: the hero is just the button and a self-host link",
       "Self-host page: two ways in, set up via Zeqqat Cloud or install the Zeqqat template in Dokploy"
@@ -25,6 +36,7 @@
   {
     "version": "0.3.64",
     "date": "2026-11-14",
+    "at": "2026-11-14T18:49:19Z",
     "changes": [
       "Updating from the What's new modal now shows what is happening: the steps, a spinner and a timer, and it stops early if Dokploy's deploy fails"
     ]
@@ -32,6 +44,7 @@
   {
     "version": "0.3.63",
     "date": "2026-11-14",
+    "at": "2026-11-14T18:28:25Z",
     "changes": [
       "Landing: the agent names and \"or any MCP client\" sit on one line again, with no gaps around them",
       "Sign-in page: Discord, X and GitHub links beside the logo",
@@ -41,6 +54,7 @@
   {
     "version": "0.3.62",
     "date": "2026-11-14",
+    "at": "2026-11-14T13:36:29Z",
     "changes": [
       "When a Google or GitHub sign-in takes too long or finishes in a different window, the sign-in page now says so",
       "Searching for container logs now finds application.readLogs"
@@ -49,6 +63,7 @@
   {
     "version": "0.3.61",
     "date": "2026-11-14",
+    "at": "2026-11-14T13:27:31Z",
     "changes": [
       "GitHub link in the header of the public pages",
       "Activity's today view (what Calls today opens) leads with a bar chart of calls per hour; the eye in its corner hides and shows it",
@@ -58,6 +73,7 @@
   {
     "version": "0.3.60",
     "date": "2026-11-14",
+    "at": "2026-11-14T07:20:25Z",
     "changes": [
       "Blog: I Asked Claude Which of My Dokploy Containers Have a Health Check. Only the Ones From Compose Files Did"
     ]
@@ -65,6 +81,7 @@
   {
     "version": "0.3.59",
     "date": "2026-11-13",
+    "at": "2026-11-13T20:20:01Z",
     "changes": [
       "SEO: sitemap dates now show when each page really changed, not the last release",
       "Blog: RSS feed at /rss.xml",
@@ -74,6 +91,7 @@
   {
     "version": "0.3.58",
     "date": "2026-11-13",
+    "at": "2026-11-13T18:59:25Z",
     "changes": [
       "Sign-in works whether your self-hosted Zeqqat is opened over http or https, so installs from the Dokploy template can sign up",
       "Over http, a banner says agents like Claude need HTTPS, with a Turn on HTTPS button for admins that sets it up through your Dokploy",
@@ -83,6 +101,7 @@
   {
     "version": "0.3.57",
     "date": "2026-11-13",
+    "at": "2026-11-13T17:32:16Z",
     "changes": [
       "zeqqat_whoami now says which Zeqqat version is answering, the latest release, and whether an update is available"
     ]
@@ -90,6 +109,7 @@
   {
     "version": "0.3.56",
     "date": "2026-11-13",
+    "at": "2026-11-13T17:25:53Z",
     "changes": [
       "Overview: the calls, blocked and redacted boxes count only calls to your Dokploy, not Zeqqat's own tools like whoami, so they match Recent activity"
     ]
@@ -97,6 +117,7 @@
   {
     "version": "0.3.55",
     "date": "2026-11-13",
+    "at": "2026-11-13T07:20:12Z",
     "changes": [
       "Blog: I Asked Claude Which of My Dokploy Containers Have a Memory Limit. Not One of Them Did"
     ]
@@ -104,6 +125,7 @@
   {
     "version": "0.3.54",
     "date": "2026-11-13",
+    "at": "2026-11-13T04:28:55Z",
     "changes": [
       "Test runs no longer send install pings, so the install count only shows real self-hosted installs"
     ]
@@ -111,6 +133,7 @@
   {
     "version": "0.3.53",
     "date": "2026-11-12",
+    "at": "2026-11-12T18:10:16Z",
     "changes": [
       "The Zeqqat connector and its tools now carry the Zeqqat logo, so clients that show MCP icons display it next to Zeqqat's calls"
     ]
@@ -118,6 +141,7 @@
   {
     "version": "0.3.52",
     "date": "2026-11-12",
+    "at": "2026-11-12T17:44:57Z",
     "changes": [
       "Add to Claude now names the connector after the connection and its owner, like Zeqqat | deployment (@gaita)"
     ]
@@ -125,6 +149,7 @@
   {
     "version": "0.3.51",
     "date": "2026-11-12",
+    "at": "2026-11-12T15:52:23Z",
     "changes": [
       "New agent tool zeqqat_activity: ask your agent what it did, and it reads the activity log (who asked, which agent, what ran, what was blocked)",
       "Setup: the self-host choice now says one click installs Zeqqat on your Dokploy (it no longer says your agent does it)"
@@ -133,6 +158,7 @@
   {
     "version": "0.3.50",
     "date": "2026-11-12",
+    "at": "2026-11-12T09:50:56Z",
     "changes": [
       "Side menu: the zigzag strip is back to 10px tall and still runs the full width, edge to edge"
     ]
@@ -140,6 +166,7 @@
   {
     "version": "0.3.49",
     "date": "2026-11-12",
+    "at": "2026-11-12T09:46:43Z",
     "changes": [
       "Side menu: the zigzag strip under the version is twice as tall and runs the full width of the menu, edge to edge"
     ]
@@ -147,6 +174,7 @@
   {
     "version": "0.3.48",
     "date": "2026-11-12",
+    "at": "2026-11-12T09:08:01Z",
     "changes": [
       "Instance name example now reads client-one, my-dokploy or personal"
     ]
@@ -154,6 +182,7 @@
   {
     "version": "0.3.47",
     "date": "2026-11-12",
+    "at": "2026-11-12T09:05:08Z",
     "changes": [
       "Instance name example now reads client-one, my-agency or personal"
     ]
@@ -161,6 +190,7 @@
   {
     "version": "0.3.46",
     "date": "2026-11-12",
+    "at": "2026-11-12T08:57:57Z",
     "changes": [
       "A new Dokploy is named my-dokploy by default, and the example now reads company A, company B"
     ]
@@ -168,6 +198,7 @@
   {
     "version": "0.3.45",
     "date": "2026-11-12",
+    "at": "2026-11-12T07:20:11Z",
     "changes": [
       "Blog: I Asked Claude Which of My Dokploy Apps I Could Roll Back. None of Them Could Be"
     ]
@@ -175,6 +206,7 @@
   {
     "version": "0.3.44",
     "date": "2026-11-12",
+    "at": "2026-11-12T05:56:33Z",
     "changes": [
       "Every MCP tool has a title and read-only or destructive hints; zeqqat_run is marked destructive only on connections that can delete"
     ]
@@ -182,6 +214,7 @@
   {
     "version": "0.3.43",
     "date": "2026-11-12",
+    "at": "2026-11-12T05:46:39Z",
     "changes": [
       "Grok and Muse join the agent buttons, with a ready-made message to send Grok Bot or Muse; VS Code moves under Another MCP client"
     ]
@@ -189,6 +222,7 @@
   {
     "version": "0.3.42",
     "date": "2026-11-12",
+    "at": "2026-11-12T05:30:36Z",
     "changes": [
       "Connect your agent is now one button per app: Add to Claude and Add to Cursor open the app with Zeqqat filled in; Claude Code, ChatGPT and VS Code show the URL or command to copy",
       "First-run setup is two centered steps, Connect Dokploy and Connect an agent",
@@ -198,6 +232,7 @@
   {
     "version": "0.3.41",
     "date": "2026-11-11",
+    "at": "2026-11-11T20:14:59Z",
     "changes": [
       "Agent setup steps for Claude, Claude Code, Cursor, ChatGPT and VS Code match each app's current menus",
       "The connect Dokploy and connect agent screens drop the side panels"
@@ -206,6 +241,7 @@
   {
     "version": "0.3.40",
     "date": "2026-11-11",
+    "at": "2026-11-11T10:35:40Z",
     "changes": [
       "Click your name in the account menu to change your picture, name and username",
       "Old usernames keep working: old connection URLs and links lead to the new one, and nobody else can take them",
@@ -216,6 +252,7 @@
   {
     "version": "0.3.39",
     "date": "2026-11-11",
+    "at": "2026-11-11T10:15:01Z",
     "changes": [
       "With no Dokploy connected, members are held back too, and the message names the admin to ask"
     ]
@@ -223,6 +260,7 @@
   {
     "version": "0.3.38",
     "date": "2026-11-11",
+    "at": "2026-11-11T09:24:14Z",
     "changes": [
       "Bump with one command: pnpm bump updates every version file and adds the changelog entry"
     ]
@@ -230,6 +268,7 @@
   {
     "version": "0.3.37",
     "date": "2026-11-11",
+    "at": "2026-11-11T08:52:27Z",
     "changes": [
       "Blog: posts now end by saying what Zeqqat is today, a free and open source MCP gateway for Dokploy"
     ]
@@ -237,6 +276,7 @@
   {
     "version": "0.3.36",
     "date": "2026-11-11",
+    "at": "2026-11-11T08:36:18Z",
     "changes": [
       "Until a workspace has its first Dokploy, the side menu pages ask you to connect it first. The overview and Releases stay open"
     ]
@@ -244,6 +284,7 @@
   {
     "version": "0.3.35",
     "date": "2026-11-11",
+    "at": "2026-11-11T07:25:34Z",
     "changes": [
       "Blog: what's filling a Dokploy server's disk, and why cleanup frees so little"
     ]
@@ -251,6 +292,7 @@
   {
     "version": "0.3.34",
     "date": "2026-11-10",
+    "at": "2026-11-10T14:43:15Z",
     "changes": [
       "Removed the public Integrations page: Zeqqat is the MCP for Dokploy",
       "Blog: three posts tidied so examples use placeholder names"
@@ -259,6 +301,7 @@
   {
     "version": "0.3.33",
     "date": "2026-11-10",
+    "at": "2026-11-10T13:55:49Z",
     "changes": [
       "Links to zeqqat.com and to blog posts now show a preview card when shared",
       "Docs, the self-host guide, Terms and Privacy are in the sitemap, each with its own description",
@@ -270,6 +313,7 @@
   {
     "version": "0.3.32",
     "date": "2026-11-10",
+    "at": "2026-11-10T13:30:34Z",
     "changes": [
       "The line under Releases is centered too",
       "GitHub releases credit merged pull requests and their contributors, with a Full Changelog link"
@@ -278,6 +322,7 @@
   {
     "version": "0.3.29",
     "date": "2026-11-10",
+    "at": "2026-11-10T13:00:16Z",
     "changes": [
       "Releases page is centered, with the site header and footer on /releases",
       "Each version on Releases opens its GitHub release"
@@ -286,6 +331,7 @@
   {
     "version": "0.3.28",
     "date": "2026-11-10",
+    "at": "2026-11-10T08:10:03Z",
     "changes": [
       "The What's new page is now Releases, at /app/releases",
       "A public Releases page at /releases",
@@ -296,6 +342,7 @@
   {
     "version": "0.3.27",
     "date": "2026-11-10",
+    "at": "2026-11-10T07:28:57Z",
     "changes": [
       "Blog: I asked Claude which of my Dokploy domains actually load"
     ]
@@ -303,6 +350,7 @@
   {
     "version": "0.3.26",
     "date": "2026-11-10",
+    "at": "2026-11-10T06:32:49Z",
     "changes": [
       "The footer shows only the version, with Latest or Update available",
       "What's new: see the changes in each version from the footer, and on the What's new page",
@@ -312,6 +360,7 @@
   {
     "version": "0.3.25",
     "date": "2026-11-09",
+    "at": "2026-11-09T20:21:33Z",
     "changes": [
       "Self-hosted sign-in page: the tagline and Dokploy logo sit on two clean lines"
     ]
@@ -319,6 +368,7 @@
   {
     "version": "0.3.24",
     "date": "2026-11-09",
+    "at": "2026-11-09T20:12:40Z",
     "changes": [
       "Self-hosted sign-in page shows the Dokploy logo in the tagline"
     ]
@@ -326,6 +376,7 @@
   {
     "version": "0.3.23",
     "date": "2026-11-09",
+    "at": "2026-11-09T20:11:40Z",
     "changes": [
       "Self-hosted sign-in page: a tagline, no terms line, and Lost your password? on the right"
     ]
@@ -333,6 +384,7 @@
   {
     "version": "0.3.22",
     "date": "2026-11-09",
+    "at": "2026-11-09T18:58:51Z",
     "changes": [
       "The one-button install names the service zeqqat, so its address starts with zeqqat-"
     ]
@@ -340,6 +392,7 @@
   {
     "version": "0.3.21",
     "date": "2026-11-09",
+    "at": "2026-11-09T18:56:24Z",
     "changes": [
       "Instance names accept underscores as well as dashes"
     ]
@@ -347,6 +400,7 @@
   {
     "version": "0.3.20",
     "date": "2026-11-09",
+    "at": "2026-11-09T17:58:51Z",
     "changes": [
       "One-button install: Zeqqat installs itself on your Dokploy",
       "The Dokploy template follows the latest version and signs in with a password"
@@ -355,6 +409,7 @@
   {
     "version": "0.3.19",
     "date": "2026-11-09",
+    "at": "2026-11-09T14:29:29Z",
     "changes": [
       "API key fields no longer trigger browser password autofill or save prompts"
     ]
@@ -362,6 +417,7 @@
   {
     "version": "0.3.18",
     "date": "2026-11-09",
+    "at": "2026-11-09T11:03:18Z",
     "changes": [
       "zeqqat_run tells the agent when it filled in secret handles"
     ]
@@ -369,6 +425,7 @@
   {
     "version": "0.3.17",
     "date": "2026-11-09",
+    "at": "2026-11-09T08:34:29Z",
     "changes": [
       "Dev installs: start over as a new user without deleting anything"
     ]
@@ -376,6 +433,7 @@
   {
     "version": "0.3.15",
     "date": "2026-11-09",
+    "at": "2026-11-09T07:27:46Z",
     "changes": [
       "Fonts are bundled instead of downloaded at build time"
     ]
@@ -383,6 +441,7 @@
   {
     "version": "0.3.14",
     "date": "2026-11-09",
+    "at": "2026-11-09T07:19:50Z",
     "changes": [
       "zeqqat_check: test from the internet whether an address loads or a port is open"
     ]
@@ -390,6 +449,7 @@
   {
     "version": "0.3.13",
     "date": "2026-11-08",
+    "at": "2026-11-08T18:34:52Z",
     "changes": [
       "The Zeqqat logo in the browser tab"
     ]
@@ -397,6 +457,7 @@
   {
     "version": "0.3.12",
     "date": "2026-11-08",
+    "at": "2026-11-08T18:21:23Z",
     "changes": [
       "Faster releases: each platform builds natively, side by side"
     ]
@@ -404,6 +465,7 @@
   {
     "version": "0.3.11",
     "date": "2026-11-08",
+    "at": "2026-11-08T18:08:33Z",
     "changes": [
       "Email and password sign-in for self-hosted installs"
     ]
@@ -411,6 +473,7 @@
   {
     "version": "0.3.9",
     "date": "2026-11-08",
+    "at": "2026-11-08T16:48:34Z",
     "changes": [
       "Search by word, keywords learned from use, and agents can suggest better summaries"
     ]
@@ -418,6 +481,7 @@
   {
     "version": "0.3.6",
     "date": "2026-11-08",
+    "at": "2026-11-08T16:09:53Z",
     "changes": [
       "Dokploy tool summaries point agents to the cheap deploy status checks"
     ]
@@ -425,6 +489,7 @@
   {
     "version": "0.3.0",
     "date": "2026-11-08",
+    "at": "2026-11-08T05:47:38Z",
     "changes": [
       "Email sign-in with a 6-digit code",
       "An integrations page"
@@ -433,6 +498,7 @@
   {
     "version": "0.2.8",
     "date": "2026-11-08",
+    "at": "2026-11-08T05:15:59Z",
     "changes": [
       "Listed in the Official MCP Registry, published on every release"
     ]
@@ -440,6 +506,7 @@
   {
     "version": "0.2.4",
     "date": "2026-11-07",
+    "at": "2026-11-07T08:34:42Z",
     "changes": [
       "An agent plugin and a Zeqqat skill for Claude and other agents"
     ]
@@ -447,6 +514,7 @@
   {
     "version": "0.2.2",
     "date": "2026-11-06",
+    "at": "2026-11-06T15:11:04Z",
     "changes": [
       "Self-hosted installs keep the @zeqqat name to themselves"
     ]
@@ -454,6 +522,7 @@
   {
     "version": "0.2.1",
     "date": "2026-11-06",
+    "at": "2026-11-06T14:43:40Z",
     "changes": [
       "Anonymous install ping, off with ZEQQAT_TELEMETRY=0"
     ]
@@ -461,6 +530,7 @@
   {
     "version": "0.2.0",
     "date": "2026-11-06",
+    "at": "2026-11-06T08:27:33Z",
     "changes": [
       "Add any app from its OpenAPI spec"
     ]

@@ -426,7 +426,9 @@ stand-in Dokploy.
 **Bump with `pnpm bump "What changed" ["Another line"]`** (`--minor` or
 `--major` for those). It sets the new version in every file that holds it
 (`package.json`, `plugin/plugin.json`, `server.json`) and adds the entry on
-top of `content/changelog.json` (version, date, your lines). It refuses to
+top of `content/changelog.json` (version, date, `at` = the UTC time of
+the bump, your lines). The Releases pages (not the modal) show `at` as a
+time in the reader's own time zone. It refuses to
 run without a changelog line or with an em dash, and warns about any other
 file still naming the old version. Never bump by hand or with `npm version`.
 A unit test fails while the top changelog entry isn't `package.json`'s

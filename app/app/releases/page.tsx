@@ -23,7 +23,7 @@ export default async function ReleasesPage() {
       )}
       <div style={{ marginTop: 24 }}>
         {status.releases.map((r) => (
-          <ReleaseRow key={r.version} r={r} current={status.current} latest={status.releases[0]?.version} />
+          <ReleaseRow key={r.version} r={r} showTime current={status.current} latest={status.releases[0]?.version} />
         ))}
       </div>
     </div>

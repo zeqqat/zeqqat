@@ -10,7 +10,8 @@ import { APP_VERSION } from "./version";
 // every ten minutes on its own, and right away when someone clicks Check
 // for updates.
 
-export type Release = { version: string; date: string; changes: string[] };
+// `at` (UTC, ISO) is when the version was bumped; older builds don't send it.
+export type Release = { version: string; date: string; at?: string; changes: string[] };
 
 export type ReleaseStatus = {
   current: string;
