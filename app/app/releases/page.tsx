@@ -17,7 +17,7 @@ export default async function ReleasesPage() {
       </h1>
       <p className="zq-sub">What changed in each version, newest first.</p>
       {edition() !== "cloud" && (
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
           <CheckUpdatesOnPage />
         </div>
       )}
