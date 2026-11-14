@@ -2407,6 +2407,68 @@ button.zq-ws-opt:hover,
   opacity: 0.6;
   cursor: default;
 }
+.zq-upd {
+  margin: 0 20px 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  flex: none;
+}
+.zq-upd-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.zq-upd-t {
+  font-size: 12px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.zq-upd-steps {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+.zq-upd-steps li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.zq-upd-steps li.is-now {
+  color: var(--fg);
+}
+.zq-upd-steps li.is-done {
+  color: var(--dim);
+}
+.zq-upd-i {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 2px solid var(--line2);
+  border-radius: 50%;
+}
+.zq-upd-steps li.is-done .zq-upd-i {
+  border: none;
+  color: var(--cobalt);
+}
+.zq-upd-steps li.is-now .zq-upd-i {
+  border-top-color: var(--cobalt);
+  animation: zq-https-spin 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .zq-upd-steps li.is-now .zq-upd-i {
+    animation-duration: 2.4s;
+  }
+}
 .zq-modal-list {
   overflow-y: auto;
   overscroll-behavior: contain;

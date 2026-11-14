@@ -3,15 +3,20 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Release, ReleaseStatus } from "../lib/changelog";
-import { getReleaseStatus, getUpdateRoute, startUpdate, type UpdateRoute } from "../lib/actions/updates";
+import { getReleaseStatus, getUpdateDeploy, getUpdateRoute, startUpdate, type UpdateRoute } from "../lib/actions/updates";
 
 // The version at the bottom of the side menu, with one pill: Latest, or
 // Update available. The pill opens the What's new modal: every version's
 // changes, newest first, and on a self-hosted install an Update now button
 // that has Dokploy deploy Zeqqat again (lib/self-update.ts). The newer
-// version's number is only shown inside the modal.
+// version's number is only shown inside the modal. While it updates, the
+// modal shows the real steps (no percentage: Dokploy doesn't report one)
+// and the list of changes stays scrollable.
 
 type Phase = "idle" | "starting" | "restarting" | "failed";
+// Inside "restarting": Dokploy is still deploying, or it finished (or the
+// old Zeqqat stopped answering) and the new version is coming up.
+type Stage = "deploying" | "booting";
 
 export function VersionPill({ version, edition }: { version: string; edition: "cloud" | "self-hosted" }) {
   const [status, setStatus] = useState<ReleaseStatus | null>(null);
@@ -65,6 +70,8 @@ function WhatsNew({
   const [route, setRoute] = useState<UpdateRoute | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("deploying");
+  const [elapsed, setElapsed] = useState(0);
   const closeRef = useRef<HTMLButtonElement>(null);
   const update = !!status?.updateAvailable;
   const restarting = phase === "starting" || phase === "restarting";
@@ -96,9 +103,18 @@ function WhatsNew({
     };
   }, [update, edition]);
 
+  useEffect(() => {
+    if (!restarting) return;
+    const started = Date.now();
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [restarting]);
+
   async function doUpdate() {
     if (!status) return;
     setError(null);
+    setStage("deploying");
+    setElapsed(0);
     setPhase("starting");
     const res = await startUpdate().catch(() => ({ ok: false as const, error: "Couldn't start the update." }));
     if (!res.ok) {
@@ -110,8 +126,15 @@ function WhatsNew({
     const target = status.latest;
     const deadline = Date.now() + 5 * 60 * 1000;
     // Dokploy pulls the new image and restarts Zeqqat. Ask the health check
-    // which version answers until it's the new one, then reload.
+    // which version answers until it's the new one, then reload. Meanwhile
+    // ask Dokploy how the deploy is going, for the steps and to stop early
+    // when it fails. A status from before this deploy is ignored: only
+    // "running" seen first makes a later "done" or "error" count.
+    const composeId = res.composeId;
+    let sawRunning = false;
+    let n = 0;
     const tick = async () => {
+      let answered = false;
       try {
         const r = await fetch("/api/health", { cache: "no-store" });
         const body = (await r.json()) as { version?: string };
@@ -119,8 +142,20 @@ function WhatsNew({
           window.location.reload();
           return;
         }
+        answered = true;
       } catch {
         // Down while it restarts: expected.
+        setStage("booting");
+      }
+      if (answered && n++ % 2 === 0) {
+        const s = await getUpdateDeploy(composeId).catch(() => null);
+        if (s === "running") sawRunning = true;
+        else if (sawRunning && s === "done") setStage("booting");
+        else if (sawRunning && s === "error") {
+          setError("Dokploy couldn't deploy the new version. Zeqqat is still running the old one. Check the deploy in Dokploy.");
+          setPhase("failed");
+          return;
+        }
       }
       if (Date.now() > deadline) {
         setError("The update is taking longer than usual. Check the deploy in Dokploy.");
@@ -146,12 +181,15 @@ function WhatsNew({
           </button>
         </div>
 
-        {update && edition === "self-hosted" && (
+        {update && edition === "self-hosted" && restarting && status && (
+          <UpdateProgress step={phase === "starting" ? 0 : stage === "deploying" ? 1 : 2} to={status.latest} elapsed={elapsed} />
+        )}
+        {update && edition === "self-hosted" && !restarting && (
           <div className="zq-modal-update">
             <UpdateLine route={route} phase={phase} error={error} />
-            {route?.kind === "ready" && phase !== "restarting" && (
-              <button type="button" className="zq-modal-btn" onClick={doUpdate} disabled={phase === "starting"}>
-                {phase === "starting" ? "Starting…" : phase === "failed" ? "Try again" : "Update now"}
+            {route?.kind === "ready" && (
+              <button type="button" className="zq-modal-btn" onClick={doUpdate}>
+                {phase === "failed" ? "Try again" : "Update now"}
               </button>
             )}
           </div>
@@ -174,10 +212,38 @@ function WhatsNew({
   );
 }
 
+// The update while it runs: three real steps, the current one spinning.
+function UpdateProgress({ step, to, elapsed }: { step: number; to: string; elapsed: number }) {
+  const steps = ["Asking Dokploy to deploy", `Dokploy is getting v${to}`, "Zeqqat restarts on the new version"];
+  const time = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
+  return (
+    <div className="zq-upd" role="status" aria-live="polite">
+      <div className="zq-upd-h">
+        <strong>Updating to v{to}</strong>
+        <span className="zq-upd-t">{time}</span>
+      </div>
+      <ol className="zq-upd-steps">
+        {steps.map((label, i) => (
+          <li key={label} className={i < step ? "is-done" : i === step ? "is-now" : ""}>
+            <span className="zq-upd-i" aria-hidden="true">
+              {i < step && (
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                  <path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </span>
+            {label}
+          </li>
+        ))}
+      </ol>
+      <p className="zq-modal-note">This page reloads when it&apos;s done. Keep reading below while you wait.</p>
+    </div>
+  );
+}
+
 function UpdateLine({ route, phase, error }: { route: UpdateRoute | null; phase: Phase; error: string | null }) {
   let text: string;
-  if (phase === "restarting") text = "Dokploy is deploying the new version. This page reloads when Zeqqat is back.";
-  else if (phase === "failed" && error) text = error;
+  if (phase === "failed" && error) text = error;
   else if (!route) text = "A new version is ready.";
   else if (route.kind === "ready") text = "A new version is ready. Zeqqat restarts for a few seconds.";
   else if (route.kind === "pinned")

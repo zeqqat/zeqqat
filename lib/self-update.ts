@@ -1,4 +1,4 @@
-import { dokploy, InstallError, type Target } from "./selfhost-install";
+import { dokploy, findDeep, InstallError, type Target } from "./selfhost-install";
 
 // In-app updates for a self-hosted install. The Dokploy template and the
 // one-button install both run the "latest" image with pull_policy: always,
@@ -113,4 +113,22 @@ export async function deploySelf(self: SelfCompose, toVersion: string, host: str
     title: `Update Zeqqat to v${toVersion}`,
     description: `From ${host}`,
   });
+}
+
+export type DeployState = "queued" | "running" | "done" | "error";
+
+// Where Dokploy is with the compose's deploy, for the update's progress
+// steps. Tries each Dokploy the admin holds: the one that knows this
+// compose answers, the others refuse and are skipped.
+export async function deployState(targets: Target[], composeId: string): Promise<DeployState | null> {
+  for (const t of targets) {
+    try {
+      const s = findDeep(await dokploy(t, "compose.one", undefined, { composeId }), "composeStatus");
+      if (s === "done" || s === "error" || s === "running") return s;
+      return "queued";
+    } catch (err) {
+      if (!(err instanceof InstallError)) throw err;
+    }
+  }
+  return null;
 }

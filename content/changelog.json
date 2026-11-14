@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.64",
+    "date": "2026-11-14",
+    "changes": [
+      "Updating from the What's new modal now shows what is happening: the steps, a spinner and a timer, and it stops early if Dokploy's deploy fails"
+    ]
+  },
+  {
     "version": "0.3.63",
     "date": "2026-11-14",
     "changes": [

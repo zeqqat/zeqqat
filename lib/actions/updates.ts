@@ -4,7 +4,7 @@ import { adminTargets } from "../admin-targets";
 import { forgetRemote, releaseStatus, type ReleaseStatus } from "../changelog";
 import { edition, siteHost } from "../edition";
 import { requireWorkspace } from "../guard";
-import { deploySelf, findSelfCompose, type SelfCompose } from "../self-update";
+import { deploySelf, deployState, findSelfCompose, type DeployState, type SelfCompose } from "../self-update";
 import { InstallError } from "../selfhost-install";
 import { listUserWorkspaces } from "../workspace";
 
@@ -43,7 +43,7 @@ export async function getUpdateRoute(): Promise<UpdateRoute> {
   return (await locate()).route;
 }
 
-export async function startUpdate(): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function startUpdate(): Promise<{ ok: true; composeId: string } | { ok: false; error: string }> {
   const { route, self } = await locate();
   if (route.kind !== "ready" || !self) return { ok: false, error: "This install can't update from here." };
   const status = await releaseStatus();
@@ -55,5 +55,13 @@ export async function startUpdate(): Promise<{ ok: true } | { ok: false; error: 
     throw err;
   }
   forgetRemote();
-  return { ok: true };
+  return { ok: true, composeId: self.composeId };
+}
+
+// Polled by the modal while the update runs. Only reads, and only through
+// Dokploy instances the caller already administers.
+export async function getUpdateDeploy(composeId: string): Promise<DeployState | null> {
+  if (edition() === "cloud" || typeof composeId !== "string" || !/^[\w-]{1,64}$/.test(composeId)) return null;
+  const { user } = await requireWorkspace();
+  return deployState(await adminTargets(user.id), composeId);
 }

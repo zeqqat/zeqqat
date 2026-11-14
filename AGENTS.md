@@ -449,7 +449,11 @@ through the admin's Dokploy instances for the compose whose
 `compose.deploy`s it; the image is `latest` with `pull_policy: always`, so
 that is the update. A compose pinned with `ZEQQAT_VERSION` is reported, not
 deployed. The modal then polls `/api/health` (which returns `version`)
-until the new version answers and reloads. Only forward to latest: no
+until the new version answers and reloads. While it waits it shows three
+real steps with a spinner and a timer (asked Dokploy, Dokploy deploying
+from `composeStatus` via `getUpdateDeploy`, Zeqqat restarting), never a
+percentage, and fails early when Dokploy reports the deploy as `error`.
+The list of changes stays scrollable throughout. Only forward to latest: no
 version picker, because an older build can break on a database a newer one
 already migrated.
 
