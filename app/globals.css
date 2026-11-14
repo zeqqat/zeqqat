@@ -4579,3 +4579,128 @@ button.zq-look:focus-visible {
     flex-basis: 100%;
   }
 }
+
+/* GitHub link in the public header: mark plus word, mark only on phones. */
+.zq-top-gh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.zq-top-gh .zq-mono-logo {
+  width: 17px;
+  height: 17px;
+}
+@media (max-width: 480px) {
+  .zq-top-gh-t {
+    display: none;
+  }
+}
+
+/* Calls per hour today, on Activity's "today" view. One series, so no
+   legend: the line above the bars says what is under the pointer. */
+.zq-chart {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 14px 16px 12px;
+  margin-bottom: 14px;
+}
+.zq-chart.is-hidden {
+  padding-bottom: 14px;
+}
+.zq-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.zq-chart-readout {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.zq-chart-eye {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: -5px -6px -5px 0;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  color: var(--dim);
+  cursor: pointer;
+}
+.zq-chart-eye:hover {
+  color: var(--fg);
+  background: var(--line);
+}
+.zq-chart-body {
+  margin-top: 14px;
+}
+.zq-chart-plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 140px;
+  border-top: 1px dashed var(--line2);
+  border-bottom: 1px solid var(--line2);
+}
+.zq-chart-peak {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint);
+  pointer-events: none;
+}
+.zq-chart-col {
+  flex: 1 1 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  outline: none;
+}
+.zq-chart-col i {
+  display: block;
+  width: 100%;
+  background: var(--cobalt);
+  border-radius: 2px 2px 0 0;
+}
+.zq-chart-col i.is-zero {
+  background: var(--line2);
+  border-radius: 0;
+}
+.zq-chart-col.is-active,
+.zq-chart-col:focus-visible {
+  background: var(--line);
+}
+.zq-chart-x {
+  display: flex;
+  gap: 3px;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint);
+}
+.zq-chart-x span {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: visible;
+}
+@media (max-width: 560px) {
+  .zq-chart-plot {
+    height: 110px;
+    gap: 2px;
+  }
+  .zq-chart-x {
+    gap: 2px;
+  }
+  .zq-chart-x span:nth-child(6n + 4) {
+    visibility: hidden;
+  }
+}

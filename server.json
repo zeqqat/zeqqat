@@ -3,7 +3,7 @@
   "name": "io.github.zeqqat/zeqqat",
   "title": "Zeqqat",
   "description": "The safe MCP for Dokploy: agents deploy and fix apps without holding keys or seeing secrets.",
-  "version": "0.3.60",
+  "version": "0.3.61",
   "websiteUrl": "https://zeqqat.com",
   "icons": [
     { "src": "https://zeqqat.com/zeqqat.svg", "mimeType": "image/svg+xml", "sizes": ["any"] },

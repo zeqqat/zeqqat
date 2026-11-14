@@ -53,12 +53,7 @@ export async function getOverviewStats(workspaceId: string) {
       .groupBy(sql`1`),
   ]);
 
-  // One bucket per UTC hour so far today, oldest first.
-  const hourly = new Array<number>(new Date().getUTCHours() + 1).fill(0);
-  for (const r of hourRows) {
-    const h = Number(r.h);
-    if (h >= 0 && h < hourly.length) hourly[h] = Number(r.n);
-  }
+  const hourly = hourBuckets(hourRows);
 
   return {
     agents: Number(agentsRows[0]?.n ?? 0),
@@ -68,6 +63,30 @@ export async function getOverviewStats(workspaceId: string) {
     redactedToday: Number(callsRows[0]?.redacted ?? 0),
     hourly,
   };
+}
+
+// One bucket per UTC hour so far today, oldest first.
+function hourBuckets(rows: { h: number; n: number }[]) {
+  const hourly = new Array<number>(new Date().getUTCHours() + 1).fill(0);
+  for (const r of rows) {
+    const h = Number(r.h);
+    if (h >= 0 && h < hourly.length) hourly[h] = Number(r.n);
+  }
+  return hourly;
+}
+
+// Calls per UTC hour so far today, for the chart on Activity's "today"
+// view. Same window and same calls as the "Calls today" tile that opens it.
+export async function getHourlyCallsToday(workspaceId: string) {
+  const rows = await db
+    .select({
+      h: sql<number>`extract(hour from ${callLog.createdAt} at time zone 'UTC')::int`,
+      n: sql<number>`count(*)`,
+    })
+    .from(callLog)
+    .where(and(eq(callLog.workspaceId, workspaceId), appCallsOnly, gte(callLog.createdAt, startOfToday())))
+    .groupBy(sql`1`);
+  return hourBuckets(rows);
 }
 
 // Who is in a workspace, as the Members page counts it: org owners (admins

@@ -37,6 +37,11 @@ export async function sendMail(mail: Mail): Promise<void> {
   throw new Error("No mailer configured (set RESEND_API_KEY or SMTP_URL)");
 }
 
+// The logo at the top of every email, served by this install.
+function logoHtml(host: string): string {
+  return `<p style="margin:0 0 16px"><img src="https://${escapeHtml(host)}/zeqqat-256.png" width="36" height="36" alt="Zeqqat" style="display:block;border:0;border-radius:8px"></p>`;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
@@ -52,6 +57,7 @@ export function passwordResetMail(to: string, token: string): Mail {
     "The link works once, for 24 hours. If you didn't ask for it, ignore this email: your password stays the same.",
   ].join("\n");
   const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#0d141a;max-width:420px">
+${logoHtml(host)}
 <p>Someone asked to reset the password for your ${escapeHtml(host)} account.</p>
 <p><a href="${escapeHtml(url)}" style="color:#0d141a;font-weight:600">Choose a new password</a></p>
 <p style="color:#5a6b78;font-size:13px">The link works once, for 24 hours. If you didn't ask for it, ignore this email: your password stays the same.</p>
@@ -69,6 +75,7 @@ export function signInCodeMail(to: string, code: string): Mail {
     "It works for 10 minutes. If you didn't try to sign in, ignore this email: nobody can get in without the code.",
   ].join("\n");
   const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#0d141a;max-width:420px">
+${logoHtml(host)}
 <p>Your ${escapeHtml(host)} sign-in code is</p>
 <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;font-weight:700;letter-spacing:0.18em;margin:8px 0 16px">${escapeHtml(code)}</p>
 <p style="color:#5a6b78;font-size:13px">It works for 10 minutes. If you didn't try to sign in, ignore this email: nobody can get in without the code.</p>

@@ -119,3 +119,6 @@ export function activityFilterLabel(f: ActivityFilter): string | null {
   if (!what) return null;
   return f.today ? `${what} today` : what;
 }
+
+// Remembers whether the calls-per-hour chart on Activity is hidden.
+export const CHART_COOKIE = "zq_calls_chart";

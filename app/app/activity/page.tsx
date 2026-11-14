@@ -1,8 +1,10 @@
+import { cookies } from "next/headers";
+import { CallsChart } from "../../../components/activity/CallsChart";
 import { RequestCard } from "../../../components/activity/RequestCard";
 import { listRequests } from "../../../lib/activity";
-import { activityFilterLabel, parseActivityFilter } from "../../../lib/activity-format";
+import { activityFilterLabel, CHART_COOKIE, parseActivityFilter } from "../../../lib/activity-format";
 import { requireWorkspace } from "../../../lib/guard";
-import { startOfToday } from "../../../lib/overview";
+import { getHourlyCallsToday, startOfToday } from "../../../lib/overview";
 
 // ?person=<username> narrows to one person's requests. ?when=today and
 // ?show=blocked|redacted are what the overview tiles open, so the list
@@ -28,6 +30,12 @@ export default async function ActivityPage({
     },
   );
 
+  // "Calls today" on the overview opens this view, so it leads with the
+  // day's calls per hour. The eye hides the chart and the choice sticks.
+  const showChart = filter.today && !filter.show && !person;
+  const hourly = showChart ? await getHourlyCallsToday(ws.workspaceId) : null;
+  const chartHidden = (await cookies()).get(CHART_COOKIE)?.value === "hidden";
+
   return (
     <div>
       <div className="zq-act-head">
@@ -45,6 +53,7 @@ export default async function ActivityPage({
           </span>
         )}
       </div>
+      {hourly && <CallsChart hourly={hourly} dayStart={startOfToday().toISOString()} initialHidden={chartHidden} />}
       {cards.length === 0 ? (
         <p className="zq-empty">
           {person

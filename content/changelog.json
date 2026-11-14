@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.61",
+    "date": "2026-11-14",
+    "changes": [
+      "GitHub link in the header of the public pages",
+      "Activity's today view (what Calls today opens) leads with a bar chart of calls per hour; the eye in its corner hides and shows it",
+      "Zeqqat logo at the top of sign-in and password emails"
+    ]
+  },
+  {
     "version": "0.3.60",
     "date": "2026-11-14",
     "changes": [

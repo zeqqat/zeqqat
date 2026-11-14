@@ -45,6 +45,14 @@ export async function SiteHeader() {
         </nav>
       </div>
       <div className="zq-top-right">
+        <a href={SITE_LINKS.github} className="zq-link zq-top-gh" rel="noreferrer noopener" aria-label="Zeqqat on GitHub">
+          <span
+            className="zq-mono-logo"
+            style={{ maskImage: "url(/logos/github.svg)", WebkitMaskImage: "url(/logos/github.svg)" }}
+            aria-hidden="true"
+          />
+          <span className="zq-top-gh-t">GitHub</span>
+        </a>
         {session?.user ? (
           <a href={SITE_LINKS.app} className="zq-link zq-link-strong">
             Dashboard
