@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.3.60",
+    "date": "2026-11-14",
+    "changes": [
+      "Blog: I Asked Claude Which of My Dokploy Containers Have a Health Check. Only the Ones From Compose Files Did"
+    ]
+  },
+  {
     "version": "0.3.59",
     "date": "2026-11-13",
     "changes": [
