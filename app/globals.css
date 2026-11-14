@@ -2516,6 +2516,20 @@ button.zq-ws-opt:hover,
     animation-duration: 2.4s;
   }
 }
+.zq-rel-update {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.zq-rel-update .zq-modal-update {
+  padding: 0;
+}
+.zq-rel-update .zq-upd {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
 .zq-modal-list {
   overflow-y: auto;
   overscroll-behavior: contain;

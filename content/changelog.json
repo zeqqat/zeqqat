@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.70",
+    "date": "2026-11-14",
+    "at": "2026-11-14T20:00:39Z",
+    "changes": [
+      "Update now is also on the Releases page, with the same steps while it updates"
+    ]
+  },
+  {
     "version": "0.3.69",
     "date": "2026-11-14",
     "at": "2026-11-14T19:50:24Z",

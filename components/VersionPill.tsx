@@ -70,14 +70,8 @@ function WhatsNew({
   onStatus: (s: ReleaseStatus) => void;
   onClose: () => void;
 }) {
-  const [route, setRoute] = useState<UpdateRoute | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [stage, setStage] = useState<Stage>("deploying");
-  const [elapsed, setElapsed] = useState(0);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const update = !!status?.updateAvailable;
-  const restarting = phase === "starting" || phase === "restarting";
+  const [restarting, setRestarting] = useState(false);
 
   const close = useCallback(() => {
     if (!restarting) onClose();
@@ -95,8 +89,59 @@ function WhatsNew({
     };
   }, [close]);
 
+  const releases = status?.releases ?? [];
+
+  return (
+    <div className="zq-modal-back" onMouseDown={(e) => e.target === e.currentTarget && close()}>
+      <div className="zq-modal" role="dialog" aria-modal="true" aria-labelledby="zq-whatsnew-h">
+        <div className="zq-modal-head">
+          <h2 id="zq-whatsnew-h">What&apos;s new</h2>
+          {edition === "self-hosted" && !restarting && <CheckUpdates onStatus={onStatus} />}
+          <button ref={closeRef} type="button" className="zq-modal-x" onClick={close} aria-label="Close" disabled={restarting}>
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {edition === "self-hosted" && <SelfUpdate status={status} onBusy={setRestarting} />}
+
+        <div className="zq-modal-list">
+          {!status && <p className="zq-modal-note">Loading…</p>}
+          {releases.map((r) => (
+            <ReleaseRow key={r.version} r={r} current={version} latest={releases[0]?.version} />
+          ))}
+        </div>
+
+        <div className="zq-modal-foot">
+          <Link href="/app/releases" onClick={onClose}>
+            See all changes →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The update itself, for a self-hosted install: the line saying a new
+// version is ready, the Update now button, and the steps while it runs.
+// Shown in the What's new modal and on the Releases page. Nothing when
+// there is no newer version.
+export function SelfUpdate({ status, onBusy }: { status: ReleaseStatus | null; onBusy?: (busy: boolean) => void }) {
+  const [route, setRoute] = useState<UpdateRoute | null>(null);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<Stage>("deploying");
+  const [elapsed, setElapsed] = useState(0);
+  const update = !!status?.updateAvailable;
+  const restarting = phase === "starting" || phase === "restarting";
+
   useEffect(() => {
-    if (!update || edition === "cloud") return;
+    onBusy?.(restarting);
+  }, [restarting, onBusy]);
+
+  useEffect(() => {
+    if (!update) return;
     let live = true;
     getUpdateRoute()
       .then((r) => live && setRoute(r))
@@ -104,7 +149,7 @@ function WhatsNew({
     return () => {
       live = false;
     };
-  }, [update, edition]);
+  }, [update]);
 
   useEffect(() => {
     if (!restarting) return;
@@ -170,48 +215,18 @@ function WhatsNew({
     setTimeout(tick, 3000);
   }
 
-  const releases = status?.releases ?? [];
-
+  if (!update || !status) return null;
+  if (restarting) {
+    return <UpdateProgress step={phase === "starting" ? 0 : stage === "deploying" ? 1 : 2} to={status.latest} elapsed={elapsed} />;
+  }
   return (
-    <div className="zq-modal-back" onMouseDown={(e) => e.target === e.currentTarget && close()}>
-      <div className="zq-modal" role="dialog" aria-modal="true" aria-labelledby="zq-whatsnew-h">
-        <div className="zq-modal-head">
-          <h2 id="zq-whatsnew-h">What&apos;s new</h2>
-          {edition === "self-hosted" && !restarting && <CheckUpdates onStatus={onStatus} />}
-          <button ref={closeRef} type="button" className="zq-modal-x" onClick={close} aria-label="Close" disabled={restarting}>
-            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-              <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {update && edition === "self-hosted" && restarting && status && (
-          <UpdateProgress step={phase === "starting" ? 0 : stage === "deploying" ? 1 : 2} to={status.latest} elapsed={elapsed} />
-        )}
-        {update && edition === "self-hosted" && !restarting && (
-          <div className="zq-modal-update">
-            <UpdateLine route={route} phase={phase} error={error} />
-            {route?.kind === "ready" && (
-              <button type="button" className="zq-modal-btn" onClick={doUpdate}>
-                {phase === "failed" ? "Try again" : "Update now"}
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="zq-modal-list">
-          {!status && <p className="zq-modal-note">Loading…</p>}
-          {releases.map((r) => (
-            <ReleaseRow key={r.version} r={r} current={version} latest={releases[0]?.version} />
-          ))}
-        </div>
-
-        <div className="zq-modal-foot">
-          <Link href="/app/releases" onClick={onClose}>
-            See all changes →
-          </Link>
-        </div>
-      </div>
+    <div className="zq-modal-update">
+      <UpdateLine route={route} phase={phase} error={error} />
+      {route?.kind === "ready" && (
+        <button type="button" className="zq-modal-btn" onClick={doUpdate}>
+          {phase === "failed" ? "Try again" : "Update now"}
+        </button>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { CheckUpdatesOnPage } from "../../../components/CheckUpdates";
-import { ReleaseRow } from "../../../components/VersionPill";
+import { ReleaseRow, SelfUpdate } from "../../../components/VersionPill";
 import { releaseStatus } from "../../../lib/changelog";
 import { edition } from "../../../lib/edition";
 import { requireWorkspace } from "../../../lib/guard";
@@ -19,6 +19,11 @@ export default async function ReleasesPage() {
       {edition() !== "cloud" && (
         <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
           <CheckUpdatesOnPage />
+        </div>
+      )}
+      {edition() !== "cloud" && status.updateAvailable && (
+        <div className="zq-rel-update">
+          <SelfUpdate status={status} />
         </div>
       )}
       <div style={{ marginTop: 24 }}>

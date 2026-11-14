@@ -452,7 +452,8 @@ through the admin's Dokploy instances for the compose whose
 `ZEQQAT_PUBLIC_URL` or domain is this install's own host, then
 `compose.deploy`s it; the image is `latest` with `pull_policy: always`, so
 that is the update. A compose pinned with `ZEQQAT_VERSION` is reported, not
-deployed. The modal then polls `/api/health` (which returns `version`)
+deployed. The same Update now block (`SelfUpdate`) is in the modal and on
+`/app/releases`. It then polls `/api/health` (which returns `version`)
 until the new version answers and reloads. While it waits it shows three
 real steps with a spinner and a timer (asked Dokploy, Dokploy deploying
 from `composeStatus` via `getUpdateDeploy`, Zeqqat restarting), never a
