@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.62",
+    "date": "2026-11-14",
+    "changes": [
+      "When a Google or GitHub sign-in takes too long or finishes in a different window, the sign-in page now says so",
+      "Searching for container logs now finds application.readLogs"
+    ]
+  },
+  {
     "version": "0.3.61",
     "date": "2026-11-14",
     "changes": [

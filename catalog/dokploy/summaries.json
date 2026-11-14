@@ -29,7 +29,7 @@
   "application.move": "Move an application to another environment",
   "application.one": "Get one application's full details, incl. its long deploy history. For status only, use application.search",
   "application.readAppMonitoring": "Read CPU, memory and network metrics for an application by appName",
-  "application.readLogs": "Read recent logs for an application, with tail, since and search filters",
+  "application.readLogs": "Read an application's recent container (runtime) logs, with tail, since and search filters",
   "application.readTraefikConfig": "Read the Traefik routing config Dokploy generated for an application",
   "application.redeploy": "Redeploy an application: rebuild and restart it",
   "application.refreshToken": "Regenerate an application's deploy webhook token",
