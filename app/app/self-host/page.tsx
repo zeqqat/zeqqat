@@ -26,12 +26,7 @@ export default async function SelfHostPage() {
         Install Zeqqat on your own Dokploy<span className="dot">.</span>
       </h1>
       <p className="zq-sub">
-        One click, and Zeqqat installs itself on your Dokploy with the key it already has. Prefer to do it by hand?
-        Follow{" "}
-        <a className="zq-textlink" href="/docs/self-host">
-          the self-hosting guide
-        </a>
-        .
+        One click, and Zeqqat installs itself on your Dokploy with the key it already has.
       </p>
       {instances.length === 0 ? (
         <div className="zq-block">

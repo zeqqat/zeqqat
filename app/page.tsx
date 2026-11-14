@@ -80,21 +80,9 @@ export default function LandingPage() {
           </p>
 
           <div className="zq-hero-cta">
-            <a className="zq-hero-oss" href={SITE_LINKS.github} rel="noreferrer noopener">
-              <span>Free and open source</span>
-              <span
-                className="zq-mono-logo"
-                style={{ maskImage: "url(/logos/github.svg)", WebkitMaskImage: "url(/logos/github.svg)" }}
-                aria-hidden="true"
-              />
-            </a>
             <a className="zq-hero-btn" href={SITE_LINKS.signup}>
               Get started free <span aria-hidden="true">&rarr;</span>
             </a>
-            <p className="zq-hero-note">
-              Nothing to install: one remote URL that works from Claude on your laptop or your
-              phone. Add your Dokploy, pick what your agent may do, and you&rsquo;re done.
-            </p>
             <p className="zq-hero-alt">
               Prefer your own server? <a href={SITE_LINKS.selfHost}>Self-host it</a>
             </p>

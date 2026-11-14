@@ -591,30 +591,6 @@ body {
   align-items: center;
   text-align: center;
 }
-.zq-hero-oss {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--mint);
-  margin: 0 0 8px;
-  padding-bottom: 2px;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.15s ease;
-}
-.zq .zq-hero-oss {
-  color: var(--mint);
-}
-.zq-hero-oss:hover {
-  border-bottom-color: currentColor;
-}
-.zq-hero-oss .zq-mono-logo {
-  width: 14px;
-  height: 14px;
-}
 .zq-hero-btn {
   display: inline-flex;
   align-items: center;
@@ -633,13 +609,6 @@ body {
 .zq-hero-btn:hover {
   opacity: 0.86;
 }
-.zq-hero-note {
-  font-size: 12.5px;
-  color: var(--faint);
-  margin: 14px 0 0;
-  max-width: 46ch;
-  line-height: 1.6;
-}
 .zq-hero-alt {
   font-size: 12.5px;
   color: var(--dim);
@@ -653,6 +622,44 @@ body {
 }
 .zq .zq-hero-alt a:hover {
   text-decoration-color: currentColor;
+}
+
+/* ---------- self-host: the two ways in ---------- */
+.zq-way {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 22px;
+  transition: border-color 0.15s ease;
+}
+.zq a.zq-way:hover {
+  border-color: var(--line2);
+}
+.zq-way-t {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0;
+}
+.zq-way-p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--dim);
+  margin: 0;
+}
+.zq-way-go {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 /* ---------- landing: site footer ---------- */

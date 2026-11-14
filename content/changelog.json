@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.65",
+    "date": "2026-11-14",
+    "changes": [
+      "Landing: the hero is just the button and a self-host link",
+      "Self-host page: two ways in, set up via Zeqqat Cloud or install the Zeqqat template in Dokploy"
+    ]
+  },
+  {
     "version": "0.3.64",
     "date": "2026-11-14",
     "changes": [
