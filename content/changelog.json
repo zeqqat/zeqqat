@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.63",
+    "date": "2026-11-14",
+    "changes": [
+      "Landing: the agent names and \"or any MCP client\" sit on one line again, with no gaps around them",
+      "Sign-in page: Discord, X and GitHub links beside the logo",
+      "Footer: X (Twitter) link"
+    ]
+  },
+  {
     "version": "0.3.62",
     "date": "2026-11-14",
     "changes": [

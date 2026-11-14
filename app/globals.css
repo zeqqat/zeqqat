@@ -4438,8 +4438,9 @@ button.zq-look:focus-visible {
   right: auto;
 }
 
-/* Agent buttons, one per app, like "Continue with Google" (AgentPicker) */
-.zq-agents {
+/* Agent buttons, one per app, like "Continue with Google" (AgentPicker).
+   Not .zq-agents: that is the landing's rotating row of names. */
+.zq-agent-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -4578,6 +4579,30 @@ button.zq-look:focus-visible {
   .zq-https .zq-btn {
     flex-basis: 100%;
   }
+}
+
+/* Discord, X and GitHub marks beside the brand on the sign-in page. */
+.zq-top-social {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.zq-top-social a {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--dim);
+  transition: color 0.15s, background 0.15s;
+}
+.zq-top-social a:hover {
+  color: var(--fg);
+  background: var(--panel);
+}
+.zq-top-social .zq-mono-logo {
+  width: 17px;
+  height: 17px;
 }
 
 /* GitHub link in the public header: mark plus word, mark only on phones. */

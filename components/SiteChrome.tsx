@@ -1,4 +1,5 @@
 import { getServerSession } from "../lib/session";
+import { SOCIAL_LINKS } from "../lib/social-links";
 import { ThemeToggle } from "./ThemeToggle";
 
 // Header and footer for zeqqat.com's public pages (landing, releases).
@@ -7,17 +8,15 @@ export const SITE_LINKS = {
   signin: "/signin",
   signup: "/signup",
   app: "/app",
-  github: "https://github.com/zeqqat/zeqqat",
+  github: SOCIAL_LINKS.github,
   docs: "/docs/agents",
   selfHost: "/docs/self-host",
   blog: "/blog",
   releases: "/releases",
   terms: "/terms",
   privacy: "/privacy",
-  // Permanent invite (never expires, no use limit) into #general of the
-  // Zeqqat server. If it is ever revoked, set this back to "" to hide it:
-  // an expired invite renders a Discord error page.
-  discord: "https://discord.gg/rY6H8Rjcxp",
+  discord: SOCIAL_LINKS.discord,
+  x: SOCIAL_LINKS.x,
 };
 
 function Brand() {
@@ -97,6 +96,7 @@ export function SiteFooter() {
             {SITE_LINKS.discord ? (
               <li><a href={SITE_LINKS.discord} rel="noreferrer noopener">Discord</a></li>
             ) : null}
+            <li><a href={SITE_LINKS.x} rel="noreferrer noopener">X (Twitter)</a></li>
           </ul>
         </nav>
         <nav aria-label="Legal">

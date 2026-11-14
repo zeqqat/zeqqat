@@ -25,7 +25,7 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
   const errorURL = `/signin${target === "/app" ? "" : `?next=${encodeURIComponent(target)}`}`;
   return (
     <div className="zq">
-      <PublicHeader />
+      <PublicHeader social />
       <div className="zq-auth-wrap">
         <main className="zq-card zq-consent zq-signin">
           <div className="zq-requester">

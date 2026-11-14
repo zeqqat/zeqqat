@@ -15,7 +15,7 @@ export function AgentPicker({ mcpUrl }: { mcpUrl: string }) {
   };
 
   return (
-    <div className="zq-agents">
+    <div className="zq-agent-list">
       {AGENTS.map((a) => {
         const href = links[a.key];
         const isOpen = open === a.key;
