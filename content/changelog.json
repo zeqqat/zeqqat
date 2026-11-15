@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.85",
+    "date": "2026-11-15",
+    "at": "2026-11-15T18:47:50Z",
+    "changes": [
+      "Removed the tagline from the self-hosted sign-in page."
+    ]
+  },
+  {
     "version": "0.3.84",
     "date": "2026-11-15",
     "at": "2026-11-15T18:38:01Z",
