@@ -125,6 +125,8 @@ export function DemoReplay({ replay }: { replay: Replay }) {
   // When each beat appeared (ms), so Activity's clocks read like a real run.
   const [times, setTimes] = useState<number[]>([]);
   const [run, setRun] = useState(0);
+  // The request opened on the Zeqqat side (a turn index), or the list.
+  const [open, setOpen] = useState<number | null>(null);
   const shown = times.length;
 
   // Starts empty (on mount, and from "Play again", which clears it first).
@@ -230,46 +232,91 @@ export function DemoReplay({ replay }: { replay: Replay }) {
           <span className="zq-demo-head-sub">activity</span>
         </header>
         <div className="zq-demo-log">
-          {replay.turns.map((turn, ti) => {
-            const askedAt = at((b) => b.t === "ask" && b.turn === ti);
-            if (askedAt == null) return null;
-            const calls: ActivityCall[] = [];
-            turn.steps.forEach((s, si) => {
-              const t = at((b) => b.t === "step" && b.turn === ti && b.step === si);
-              if (t == null) return;
-              const id = `demo-${replay.slug}-${ti}-${si}`;
-              calls.push(isLookup(s) ? lookupCall(s, id, iso(t), turn.ask) : appCall(s, id, iso(t), turn.ask));
-            });
-            const states: CallState[] = calls.filter((c) => !c.lookup).map((c) => c.state);
-            const lookups = calls.length - states.length;
-            const last = calls.length ? calls[calls.length - 1].at : iso(askedAt);
-            return (
-              <div key={ti} className="zq-act-sheet zq-demo-sheet">
-                <div className="zq-rc">
-                  <Avatar person={DEMO_PERSON} />
-                  <div className="zq-rc-body">
-                    <div className="zq-rc-top">
-                      <b>{DEMO_PERSON.name}</b>
-                      <span className="zq-rc-handle">@{DEMO_PERSON.username}</span>
-                      <span className="zq-rc-sep">·</span>
-                      <RelTime iso={last} />
-                    </div>
-                    <p className="zq-rc-req">{turn.ask}</p>
-                    <div className="zq-rc-foot">
-                      <span className="zq-rc-via">
-                        via <AgentMark host="claude.ai" size={13} />
-                        <b>Claude</b>
-                      </span>
-                      <Strip states={states} />
-                      {calls.length > 0 && <Tally states={states} lookups={lookups} />}
-                    </div>
+          {(() => {
+            // Each turn is one request. Like /app/activity: a list of
+            // request cards (newest first), and a card opens its calls.
+            const reqs = replay.turns
+              .map((turn, ti) => {
+                const askedAt = at((b) => b.t === "ask" && b.turn === ti);
+                if (askedAt == null) return null;
+                const calls: ActivityCall[] = [];
+                turn.steps.forEach((s, si) => {
+                  const t = at((b) => b.t === "step" && b.turn === ti && b.step === si);
+                  if (t == null) return;
+                  const id = `demo-${replay.slug}-${ti}-${si}`;
+                  calls.push(isLookup(s) ? lookupCall(s, id, iso(t), turn.ask) : appCall(s, id, iso(t), turn.ask));
+                });
+                const states: CallState[] = calls.filter((c) => !c.lookup).map((c) => c.state);
+                const last = calls.length ? calls[calls.length - 1].at : iso(askedAt);
+                return { ti, ask: turn.ask, calls, states, lookups: calls.length - states.length, last };
+              })
+              .filter((r) => r != null);
+            const card = (r: (typeof reqs)[number], linked: boolean) => (
+              <div className={`zq-rc${linked ? " is-link" : ""}`}>
+                {linked && (
+                  <button
+                    type="button"
+                    className="zq-rc-link zq-demo-open"
+                    aria-label={`Open: ${r.ask}`}
+                    onClick={() => setOpen(r.ti)}
+                  />
+                )}
+                <Avatar person={DEMO_PERSON} />
+                <div className="zq-rc-body">
+                  <div className="zq-rc-top">
+                    <b>{DEMO_PERSON.name}</b>
+                    <span className="zq-rc-handle">@{DEMO_PERSON.username}</span>
+                    <span className="zq-rc-sep">·</span>
+                    <RelTime iso={r.last} />
+                  </div>
+                  <p className="zq-rc-req">{r.ask}</p>
+                  <div className="zq-rc-foot">
+                    <span className="zq-rc-via">
+                      via <AgentMark host="claude.ai" size={13} />
+                      <b>Claude</b>
+                    </span>
+                    <Strip states={r.states} />
+                    {r.calls.length > 0 && <Tally states={r.states} lookups={r.lookups} />}
                   </div>
                 </div>
-                {calls.length > 0 && <DateBar start={calls[0].at} end={last} running={false} />}
-                {calls.map((c) => (c.lookup ? <LookupLine key={c.id} call={c} /> : <CallCard key={c.id} call={c} />))}
               </div>
             );
-          })}
+            const opened = open == null ? null : reqs.find((r) => r.ti === open);
+            if (opened) {
+              return (
+                <>
+                  <button type="button" className="zq-back zq-demo-back" onClick={() => setOpen(null)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M15 6l-6 6 6 6" />
+                    </svg>
+                    Activity
+                  </button>
+                  <div className="zq-act-sheet zq-demo-sheet">
+                    {card(opened, false)}
+                    {opened.calls.length > 0 && (
+                      <DateBar start={opened.calls[0].at} end={opened.last} running={false} />
+                    )}
+                    {opened.calls.map((c) =>
+                      c.lookup ? <LookupLine key={c.id} call={c} /> : <CallCard key={c.id} call={c} />,
+                    )}
+                  </div>
+                </>
+              );
+            }
+            if (reqs.length === 0) return null;
+            return (
+              <>
+                <div className="zq-act-list zq-demo-sheet">
+                  {[...reqs].reverse().map((r) => (
+                    <div key={r.ti} className="zq-demo-row">
+                      {card(r, true)}
+                    </div>
+                  ))}
+                </div>
+                {done && <p className="zq-demo-hint">Click a request to see each call Zeqqat logged.</p>}
+              </>
+            );
+          })()}
         </div>
       </section>
 
@@ -279,6 +326,7 @@ export function DemoReplay({ replay }: { replay: Replay }) {
           className="zq-demo-replay"
           onClick={() => {
             setTimes([]);
+            setOpen(null);
             setRun((n) => n + 1);
           }}
           disabled={!done}

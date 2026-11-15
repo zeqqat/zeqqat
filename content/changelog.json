@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.79",
+    "date": "2026-11-15",
+    "at": "2026-11-15T15:29:31Z",
+    "changes": [
+      "Landing replays: the Zeqqat side shows request cards like the Activity list; click one to see its calls"
+    ]
+  },
+  {
     "version": "0.3.78",
     "date": "2026-11-15",
     "at": "2026-11-15T15:26:21Z",
