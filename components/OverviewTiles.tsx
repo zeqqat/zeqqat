@@ -65,7 +65,7 @@ export function OverviewTiles({
       </a>
 
       <a href="/app/activity?when=today&show=redacted" className={`zq-stat zq-kpi${redactedToday ? " is-redacted" : ""}`}>
-        <span className="zq-kpi-l">Secrets redacted</span>
+        <span className="zq-kpi-l">Secrets hidden</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{redactedToday}</span>
           <span className="zq-kpi-mask" aria-hidden="true">

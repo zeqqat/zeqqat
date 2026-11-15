@@ -60,7 +60,7 @@ export function CallCard({ call, href }: { call: ActivityCall; href?: string }) 
         {call.redactions > 0 && (
           <span className="zq-cc-red">
             {SHIELD}
-            {call.redactions === 1 ? "1 secret redacted" : `${call.redactions} secrets redacted`}
+            {call.redactions === 1 ? "1 secret hidden" : `${call.redactions} secrets hidden`}
           </span>
         )}
       </div>

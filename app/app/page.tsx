@@ -87,7 +87,7 @@ export default async function OverviewPage() {
           </a>
         </div>
         {recent.length === 0 ? (
-          <p className="zq-empty">No requests yet.</p>
+          <p className="zq-empty">No calls yet.</p>
         ) : (
           <div className="zq-act-list">
             {recent.map((c) => (

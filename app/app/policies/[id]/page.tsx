@@ -18,7 +18,7 @@ import { policyPagePath } from "../../../../lib/tool-names";
 
 const ERRORS: Record<string, string> = {
   name: "Name it with letters and numbers, for example read_plus_deploy.",
-  taken: "This namespace already has a policy with that name for this integration.",
+  taken: "You already have a policy with that name for this integration.",
   in_use: "This policy is attached to a connection. Pick another policy there first.",
 };
 
@@ -80,7 +80,7 @@ export default async function PolicyPage({
       </p>
       {error && <p className="zq-form-err">{error}</p>}
       {query.saved && <Ok text={`Saved as v${row.version}. It applies from the next call.`} />}
-      {query.copied && <Ok text="Copied into your namespace. It's yours now: edit it freely." />}
+      {query.copied && <Ok text="Copied. It's yours now: edit it freely." />}
 
       {row.copiedFromName && (
         <section className="zq-block">

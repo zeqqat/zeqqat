@@ -27,7 +27,6 @@ export default function Terms() {
         <section className="zq-block">
           <h2 className="zq-block-t">The service</h2>
           <ul className="zq-steps">
-            <li>zeqqat.com is free while in beta. We will tell you before that changes.</li>
             <li>
               It is provided as is, without warranties. We work to keep it available and secure, but we cannot promise
               it will never be down or never have bugs.

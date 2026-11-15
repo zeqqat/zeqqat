@@ -28,7 +28,7 @@
 
 <br>
 
-Zeqqat is the safe, open source MCP for Dokploy, self-hosted or Cloud. Your agent connects to one Zeqqat URL instead of holding your API keys. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
+Zeqqat is the open source MCP gateway for Dokploy, self-hosted or Cloud. Your agent connects to one Zeqqat URL instead of holding your API keys. Zeqqat decides what it may do, makes the call for it, and records everything. Self-host it on your own Dokploy for free, or use the hosted version at [zeqqat.com](https://zeqqat.com).
 
 ## ✨ Features
 
@@ -100,7 +100,6 @@ To turn it off, set `ZEQQAT_TELEMETRY=0` (`DO_NOT_TRACK=1` works too) and restar
 
 | | Zeqqat Cloud | Self-hosted |
 | --- | --- | --- |
-| Cost | Free while in beta | Free and open source |
 | Setup | Sign up at [zeqqat.com](https://zeqqat.com) | One Docker Compose service on your Dokploy |
 | Where your keys live | Encrypted on zeqqat.com | Encrypted on your own server |
 | Features | Everything | Everything |

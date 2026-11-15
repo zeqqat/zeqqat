@@ -8,7 +8,7 @@ import { integrationTools, policyIntegrations } from "../../../../lib/policies";
 
 const ERRORS: Record<string, string> = {
   name: "Name it with letters and numbers, for example read_plus_deploy.",
-  taken: "This namespace already has a policy with that name for this integration.",
+  taken: "You already have a policy with that name for this integration.",
 };
 
 export default async function NewPolicyPage({

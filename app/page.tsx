@@ -5,10 +5,10 @@ import { SITE_LINKS, SiteFooter, SiteHeader } from "../components/SiteChrome";
 import { pageMeta, SITE_URL } from "../lib/seo";
 
 const DESCRIPTION =
-  "Talk to your Dokploy. Tell Claude, ChatGPT or Grok what you want and it deploys, reads logs and fixes your apps. Your secrets stay hidden from the AI, it can't delete unless you allow it, and every action is logged.";
+  "Talk to your Dokploy. Tell Claude, ChatGPT or Grok what you want and it deploys, reads logs and fixes your apps. Your secrets stay hidden from the AI, it can't delete unless you allow it, and every call is logged.";
 
 export const metadata = pageMeta({
-  title: "Zeqqat: the safe MCP for Dokploy",
+  title: "Zeqqat: the MCP gateway for Dokploy",
   absolute: true,
   description: DESCRIPTION,
   path: "/",
@@ -50,7 +50,7 @@ const ASKS = [
 const PROOF = [
   "Secrets stay hidden from the AI",
   "Can't delete unless you allow it",
-  "Every action is logged",
+  "Every call is logged",
 ];
 
 export default function LandingPage() {
@@ -68,7 +68,7 @@ export default function LandingPage() {
 
       <div className="zq-mid">
         <main className="zq-in">
-          <p className="zq-hero-label">The safe MCP for Dokploy</p>
+          <p className="zq-hero-label">The MCP gateway for Dokploy</p>
           <h1 className="zq-mark">
             Talk to your
             <br />

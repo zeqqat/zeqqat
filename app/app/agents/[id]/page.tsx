@@ -47,7 +47,7 @@ export default async function AgentDetailPage({ params }: { params: Promise<{ id
         </dd>
         <dt>Last 50 calls</dt>
         <dd>
-          {views.length} calls · {blocked} blocked · {redacted} secrets redacted
+          {views.length} calls · {blocked} blocked · {redacted} secrets hidden
         </dd>
       </dl>
 

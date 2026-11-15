@@ -75,7 +75,7 @@ export function CallLogList({
                 ["all", "All"],
                 ["ok", "Done"],
                 ["blocked", "Blocked"],
-                ["redacted", "Redacted"],
+                ["redacted", "Hidden"],
                 ["error", "Errors"],
               ] as [Filter, string][]
             ).map(([k, label]) => (
@@ -119,7 +119,7 @@ export function CallLogList({
               showAgent && c.agent,
               showInstance && c.instance,
               c.kind,
-              c.redactions > 0 && `${c.redactions} redacted`,
+              c.redactions > 0 && `${c.redactions} hidden`,
               c.outcome !== "blocked" && `${c.durationMs}ms`,
             ]
               .filter(Boolean)

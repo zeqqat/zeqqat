@@ -62,7 +62,7 @@ export default function Privacy() {
           </ul>
         </section>
 
-        <p className="zq-note">Last updated November 2026. Zeqqat is in beta and this page may change as it grows.</p>
+        <p className="zq-note">Last updated November 2026. This page may change as Zeqqat grows.</p>
       </main>
     </div>
   );

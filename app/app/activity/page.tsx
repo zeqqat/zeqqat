@@ -44,7 +44,7 @@ export default async function ActivityPage({
         </h1>
         {person && (
           <span className="zq-act-filter">
-            Only @{person}&rsquo;s requests · <a href="/app/activity">Show everyone</a>
+            Only @{person}&rsquo;s calls · <a href="/app/activity">Show everyone</a>
           </span>
         )}
         {!person && filterLabel && (
@@ -57,13 +57,13 @@ export default async function ActivityPage({
       {cards.length === 0 ? (
         <p className="zq-empty">
           {person
-            ? "No requests from this person yet."
+            ? "No calls from this person yet."
             : filter.show === "blocked"
               ? "Nothing was blocked today."
               : filter.show === "redacted"
-                ? "No secrets were redacted today."
+                ? "No secrets were hidden today."
                 : filter.today
-                  ? "No requests yet today."
+                  ? "No calls yet today."
                   : "Activity starts with the first thing someone asks their agent to do."}
         </p>
       ) : (

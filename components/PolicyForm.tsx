@@ -61,7 +61,7 @@ export function PolicyForm(p: Props) {
           <dt>Visibility</dt>
           <dd>
             <select className="zq-select" name="visibility" defaultValue={p.visibility} disabled={!p.canEdit} style={{ width: "auto" }}>
-              <option value="private">Private: only this namespace</option>
+              <option value="private">Private: only @{p.namespace}</option>
               <option value="public">Public: listed on @{p.namespace}, anyone can copy it</option>
             </select>
           </dd>

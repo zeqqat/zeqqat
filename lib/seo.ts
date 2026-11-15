@@ -4,7 +4,7 @@ import { SITE_URL } from "./blog";
 export { SITE_URL };
 
 // The share image every public page falls back to (app/opengraph-image.tsx).
-export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: "Zeqqat: the safe MCP for Dokploy" };
+export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: "Zeqqat: the MCP gateway for Dokploy" };
 
 type PageMeta = {
   // Shown as "<title> | Zeqqat" unless `absolute` is set.

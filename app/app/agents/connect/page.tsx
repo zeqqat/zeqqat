@@ -14,7 +14,7 @@ export default async function ConnectAgentPage() {
         Connect an agent<span className="dot">.</span>
       </h1>
       <p className="zq-sub">
-        Add this one URL to any MCP client. It asks you to sign in and approve it the first time, then shows up in
+        Add this one URL to any agent. It asks you to sign in and approve it the first time, then shows up in
         Agents.
       </p>
       <div className="zq-block">

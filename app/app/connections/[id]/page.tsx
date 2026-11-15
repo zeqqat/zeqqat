@@ -101,7 +101,7 @@ export default async function ConnectionPage({
           <span className="ic" aria-hidden="true">
             ✓
           </span>
-          <span>Connection created. Add the URL below to your MCP client.</span>
+          <span>Connection created. Add the URL below to your agent.</span>
         </div>
       )}
       {query.saved && (
@@ -122,8 +122,8 @@ export default async function ConnectionPage({
             This replaces <a className="zq-textlink" href={`/app/connections/${replaces.id}`}>{replaces.url}</a>, with the same
             policy.{" "}
             {replaces.sunsetAt
-              ? `That one keeps working until ${formatCutoff(replaces.sunsetAt)} and tells clients this URL until then.`
-              : "That one keeps working until you sunset it, and tells clients this URL in the meantime."}
+              ? `That one keeps working until ${formatCutoff(replaces.sunsetAt)} and tells agents this URL until then.`
+              : "That one keeps working until you turn it off, and tells agents this URL in the meantime."}
           </span>
         </div>
       )}
@@ -132,7 +132,7 @@ export default async function ConnectionPage({
           <span className="ic" aria-hidden="true">
             ✓
           </span>
-          <span>Sunset scheduled. Clients are told on every call from now on.</span>
+          <span>Turn-off date set. Agents are told the date on every call from now on.</span>
         </div>
       )}
 
@@ -143,8 +143,8 @@ export default async function ConnectionPage({
           </span>
           <span>
             {notice.state === "warning"
-              ? `Being retired on ${formatCutoff(conn.sunsetAt!)}. Until then everything works, and the server's instructions and every result carry`
-              : `Retired on ${formatCutoff(conn.sunsetAt!)}. Clients can still connect, but get no tools, only`}{" "}
+              ? `Turns off on ${formatCutoff(conn.sunsetAt!)}. Until then everything works, and the server's instructions and every result carry`
+              : `Turned off on ${formatCutoff(conn.sunsetAt!)}. Agents can still connect, but get no tools, only`}{" "}
             this message: &ldquo;{notice.text}&rdquo;
           </span>
         </div>
@@ -155,8 +155,8 @@ export default async function ConnectionPage({
             !
           </span>
           <span>
-            Replaced by <a className="zq-textlink" href={`/app/connections/${replacedBy.id}`}>{replacedBy.url}</a>. Every client
-            using this URL is pointed there once you set a sunset date below.
+            Replaced by <a className="zq-textlink" href={`/app/connections/${replacedBy.id}`}>{replacedBy.url}</a>. Every agent
+            using this URL is pointed there once you set a turn-off date below.
           </span>
         </div>
       )}
@@ -233,7 +233,7 @@ export default async function ConnectionPage({
                           aria-label={`${p.alias} policy`}
                           style={{ width: "auto" }}
                         >
-                          <option value="">By kind (boxes)</option>
+                          <option value="">No policy (use the checkboxes)</option>
                           {(pickable.get(p.integrationSlug) ?? []).map((pol) => (
                             <option key={pol.id} value={pol.id}>
                               {pol.canonical}
@@ -335,17 +335,17 @@ export default async function ConnectionPage({
                 <div className="zq-item-main">
                   <div className="zq-item-t">Replace</div>
                   <div className="zq-item-s">
-                    A new connection with a new URL and this policy. Agents keep using this one until its sunset date, and are
-                    told the new URL on every call until then. Leave the date empty to sunset it later.
+                    A new connection with a new URL and this policy. Agents keep using this one until its turn-off date, and are
+                    told the new URL on every call until then. Leave the date empty to turn it off later.
                   </div>
                   <form action={replaceConnectionAction} id="replace" style={{ marginTop: 10, display: "grid", gap: 8 }}>
                     <input type="hidden" name="connection_id" value={conn.id} />
                     <input className="zq-input" name="name" placeholder={`Name (default ${conn.name})`} autoComplete="off" />
                     <label className="zq-label" htmlFor="replace_cutoff">
-                      Sunset this one on
+                      Turn this one off on
                     </label>
                     <input className="zq-input" id="replace_cutoff" type="date" name="cutoff" min={today} defaultValue={inAWeek} />
-                    <input className="zq-input" name="message" placeholder="Extra note for clients (optional)" maxLength={400} />
+                    <input className="zq-input" name="message" placeholder="Extra note for agents (optional)" maxLength={400} />
                   </form>
                   {query.error === "name" && <p className="zq-form-err">Use letters and numbers for the name.</p>}
                 </div>
@@ -358,17 +358,17 @@ export default async function ConnectionPage({
             )}
             <div className="zq-item">
               <div className="zq-item-main">
-                <div className="zq-item-t">{conn.sunsetAt ? "Cancel the sunset" : "Sunset"}</div>
+                <div className="zq-item-t">{conn.sunsetAt ? "Cancel the turn-off" : "Turn off on a date"}</div>
                 <div className="zq-item-s">
                   {conn.sunsetAt
                     ? "The URL goes back to serving tools with no notice."
-                    : "Pick the last day it serves tools. Until then it works and tells clients the date (and the new URL, if you replaced it). After it, clients can connect but get no tools."}
+                    : "Pick the last day it serves tools. Until then it works and tells agents the date (and the new URL, if you replaced it). After it, agents can connect but get no tools."}
                 </div>
                 {!conn.sunsetAt && (
                   <form action={sunsetConnectionAction} id="sunset" style={{ marginTop: 10, display: "grid", gap: 8 }}>
                     <input type="hidden" name="connection_id" value={conn.id} />
-                    <input className="zq-input" type="date" name="cutoff" min={today} defaultValue={inAWeek} aria-label="Sunset date" required />
-                    <input className="zq-input" name="message" placeholder="Extra note for clients (optional)" maxLength={400} />
+                    <input className="zq-input" type="date" name="cutoff" min={today} defaultValue={inAWeek} aria-label="Turn-off date" required />
+                    <input className="zq-input" name="message" placeholder="Extra note for agents (optional)" maxLength={400} />
                   </form>
                 )}
                 {query.error === "cutoff" && <p className="zq-form-err">Pick a date.</p>}
@@ -378,12 +378,12 @@ export default async function ConnectionPage({
                   <form action={reviveConnectionAction}>
                     <input type="hidden" name="connection_id" value={conn.id} />
                     <button type="submit" className="zq-action zq-action-sm">
-                      Cancel sunset
+                      Cancel turn-off
                     </button>
                   </form>
                 ) : (
                   <button type="submit" form="sunset" className="zq-action zq-action-sm">
-                    Sunset
+                    Turn off
                   </button>
                 )}
               </div>
@@ -392,7 +392,7 @@ export default async function ConnectionPage({
               <div className="zq-item-main">
                 <div className="zq-item-t">Delete</div>
                 <div className="zq-item-s">
-                  The URL stops answering at once, with no message, and every agent on it is signed out. Prefer Sunset when people
+                  The URL stops answering at once, with no message, and every agent on it is signed out. Prefer Turn off when people
                   still use it. Type delete to confirm.
                 </div>
                 <form action={deleteConnectionAction} id="del" style={{ marginTop: 10 }}>

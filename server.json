@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.zeqqat/zeqqat",
   "title": "Zeqqat",
-  "description": "The safe MCP for Dokploy: agents deploy and fix apps without holding keys or seeing secrets.",
-  "version": "0.3.72",
+  "description": "The MCP gateway for Dokploy: agents deploy and fix apps without holding keys or seeing secrets.",
+  "version": "0.3.73",
   "websiteUrl": "https://zeqqat.com",
   "icons": [
     { "src": "https://zeqqat.com/zeqqat.svg", "mimeType": "image/svg+xml", "sizes": ["any"] },

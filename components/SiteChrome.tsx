@@ -78,7 +78,7 @@ export function SiteFooter() {
             </span>
             <span className="zq-name">zeqqat</span>
           </span>
-          <p>The open source, safe MCP for Dokploy.</p>
+          <p>The open source MCP gateway for Dokploy.</p>
         </div>
         <nav aria-label="Product">
           <h2>Product</h2>

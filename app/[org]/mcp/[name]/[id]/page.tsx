@@ -97,7 +97,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
               !
             </span>
             <span>
-              {notice.state === "warning" ? `Being retired on ${formatCutoff(conn.sunsetAt!)}.` : `Retired on ${formatCutoff(conn.sunsetAt!)}. It serves no tools.`}{" "}
+              {notice.state === "warning" ? `Turns off on ${formatCutoff(conn.sunsetAt!)}.` : `Turned off on ${formatCutoff(conn.sunsetAt!)}. It serves no tools.`}{" "}
               {notice.replacementUrl ? (
                 <>
                   Use <a className="zq-textlink" href={notice.replacementUrl}>{notice.replacementUrl}</a> instead.
@@ -111,7 +111,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
           <code>{conn.url}</code>
           <CopyButton text={conn.url} />
         </div>
-        <p className="zq-note">Add this URL to your MCP client. It signs you in the first time it connects.</p>
+        <p className="zq-note">Add this URL to your agent. It signs you in the first time it connects.</p>
 
         <section className="zq-block">
           <h2 className="zq-block-t" style={{ marginBottom: 12 }}>

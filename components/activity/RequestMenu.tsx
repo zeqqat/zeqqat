@@ -86,7 +86,7 @@ export function RequestMenu({
                     }
                   }}
                 >
-                  {copied ? "Link copied" : "Copy link to this request"}
+                  {copied ? "Link copied" : "Copy link"}
                 </button>
               )}
               {exportHref && (
@@ -96,7 +96,7 @@ export function RequestMenu({
               )}
               {personHref && personName && (
                 <a href={personHref} className="zq-menu-item" role="menuitem">
-                  Show only {personName}&rsquo;s requests
+                  Show only {personName}&rsquo;s calls
                 </a>
               )}
             </span>

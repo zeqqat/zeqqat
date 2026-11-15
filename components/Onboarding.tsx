@@ -115,7 +115,7 @@ export function MemberStart({
               ))}
             </div>
           )}
-          <p className="zq-note">These are the team defaults for new agents. An owner can give yours more or less.</p>
+          <p className="zq-note">This is what your agent can do here. An owner can change it.</p>
         </aside>
       </div>
     </div>
@@ -139,7 +139,6 @@ export function SetupChoice({ siteHost, agentHost }: { siteHost: string; agentHo
       <div className="zq-choice">
         <section className="zq-choice-card" aria-labelledby="choice-hosted">
           <span className="zq-where" style={{ alignSelf: "flex-start" }}>
-            <span className="zq-where-tag">Beta</span>
             <b>{siteHost}</b>
           </span>
           <h2 className="zq-choice-h" id="choice-hosted">
@@ -147,7 +146,6 @@ export function SetupChoice({ siteHost, agentHost }: { siteHost: string; agentHo
           </h2>
           <ul className="zq-choice-list">
             <li>Nothing else to set up. Your agents already work.</li>
-            <li>Free while in Beta.</li>
             <li>Your Dokploy key is stored encrypted here.</li>
             <li>Invite teammates and manage everything from this dashboard.</li>
           </ul>

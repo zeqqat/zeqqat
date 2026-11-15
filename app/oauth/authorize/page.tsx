@@ -201,7 +201,7 @@ export default async function AuthorizePage({
   // cutoff the connection serves no tools, so there's nothing to sign in to.
   const cutOff = conn ? sunsetState(conn) === "cutoff" : false;
   if (conn && (cutOff || conn.authMode !== "members")) {
-    return errorPage("This connection doesn't take sign-ins", cutOff ? "It has been retired." : "It's public, so it needs no sign-in.");
+    return errorPage("This connection doesn't take sign-ins", cutOff ? "It has been turned off." : "It's public, so it needs no sign-in.");
   }
   if (conn) {
     const ws = await db.query.workspace.findFirst({ where: eq(workspace.id, conn.workspaceId) });
@@ -247,6 +247,6 @@ export default async function AuthorizePage({
   // sign-in is for one connection URL (naming doc v2, sections 6 and 9).
   return errorPage(
     "Sign in from a connection URL",
-    `This sign-in doesn't say which Zeqqat connection it's for. Add the connection URL from your workspace (it looks like ${new URL(publicUrl()).host}/<org>/mcp/<name>/<id>) to your MCP client and sign in from there.`,
+    `This sign-in doesn't say which Zeqqat connection it's for. Add the connection URL from your workspace (it looks like ${new URL(publicUrl()).host}/<org>/mcp/<name>/<id>) to your agent and sign in from there.`,
   );
 }

@@ -31,11 +31,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: "Zeqqat",
   title: {
-    default: "Zeqqat: the safe MCP for Dokploy",
+    default: "Zeqqat: the MCP gateway for Dokploy",
     template: "%s | Zeqqat",
   },
   description:
-    "Talk to your Dokploy. Tell Claude, ChatGPT or Grok what you want and it deploys, reads logs and fixes your apps. Your secrets stay hidden from the AI, it can't delete unless you allow it, and every action is logged.",
+    "Talk to your Dokploy. Tell Claude, ChatGPT or Grok what you want and it deploys, reads logs and fixes your apps. Your secrets stay hidden from the AI, it can't delete unless you allow it, and every call is logged.",
   openGraph: { type: "website", siteName: "Zeqqat", images: [DEFAULT_OG_IMAGE] },
   twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE.url] },
 };

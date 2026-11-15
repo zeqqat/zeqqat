@@ -90,7 +90,7 @@ export default async function ConnectionsPage({
                     {c.authMode === "public" && <span className="zq-badge zq-badge-warn">Public</span>}
                     <span className="zq-item-s">{c.shortId}</span>{" "}
                     {sunsetState(c) === "warning" && <span className="zq-badge zq-badge-warn">Sunsets {formatCutoff(c.sunsetAt!)}</span>}
-                    {sunsetState(c) === "cutoff" && <span className="zq-badge">Retired</span>}
+                    {sunsetState(c) === "cutoff" && <span className="zq-badge">Turned off</span>}
                   </div>
                   <div className="zq-item-s">
                     {count(granted, c.id)} {count(granted, c.id) === 1 ? "instance" : "instances"}

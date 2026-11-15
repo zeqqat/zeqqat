@@ -196,8 +196,8 @@ export async function sunsetNotice(conn: ConnectionRow, now = new Date()): Promi
   const custom = conn.sunsetMessage ? ` ${conn.sunsetMessage}` : "";
   const text =
     state === "warning"
-      ? `This Zeqqat connection (${conn.name}) is being retired on ${date}. It keeps working until then.${where}${custom}`
-      : `This Zeqqat connection (${conn.name}) was retired on ${date} and no longer serves tools.${where}${custom}`;
+      ? `This Zeqqat connection (${conn.name}) turns off on ${date}. It keeps working until then.${where}${custom}`
+      : `This Zeqqat connection (${conn.name}) was turned off on ${date} and no longer serves tools.${where}${custom}`;
   return { state, text, replacementUrl };
 }
 

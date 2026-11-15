@@ -82,13 +82,13 @@ export async function PolicyPublic({ found }: { found: Found }) {
               <p className="zq-note">The copy is yours. Later changes here won&rsquo;t change it; you&rsquo;ll see an update note.</p>
             </form>
           ) : session?.user ? (
-            <p className="zq-note">Switch to a namespace you own to copy this policy.</p>
+            <p className="zq-note">Switch to a username or organization you own to copy this policy.</p>
           ) : (
             <p className="zq-note">
               <a className="zq-textlink" href="/signin">
                 Sign in
               </a>{" "}
-              to copy this policy into your namespace.
+              to copy this policy to your username or organization.
             </p>
           )}
         </section>

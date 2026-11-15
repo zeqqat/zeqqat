@@ -116,11 +116,8 @@ export default async function InstanceDetailPage({
         <dd>
           {inst.createdBy ?? "Someone on your team"}, {inst.createdAt.toUTCString().slice(5, 16)}
         </dd>
-        <dt>Redaction</dt>
-        <dd>
-          <span className="zq-redact">[redacted by zeqqat]</span> replaces env vars, database URLs and tokens in every
-          response
-        </dd>
+        <dt>Secrets</dt>
+        <dd>Env vars, database URLs and tokens are hidden from the agent in every response</dd>
       </dl>
 
       <section className="zq-block">

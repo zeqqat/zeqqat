@@ -3,8 +3,8 @@ import { listPolicies, policyIntegrations } from "../../../lib/policies";
 import { policyPagePath } from "../../../lib/tool-names";
 
 const ERRORS: Record<string, string> = {
-  owner_only: "Only owners of this namespace can create or copy policies.",
-  integration: "Pick an integration this namespace uses.",
+  owner_only: "Only owners can create or copy policies here.",
+  integration: "Pick one of your integrations.",
 };
 
 // A namespace's policies. Each is an explicit list of the tools an agent
@@ -86,7 +86,7 @@ export default async function PoliciesPage({
         )}
         <p className="zq-note">
           Public policies are listed on <a className="zq-textlink" href={`/${ws.organizationSlug}`}>@{ws.organizationSlug}</a>, at{" "}
-          <code>{policyPagePath(ws.organizationSlug, "integration", "name")}</code>. Others copy them into their own namespace;
+          <code>{policyPagePath(ws.organizationSlug, "integration", "name")}</code>. Others copy them to their own username or organization;
           your edits never change their copies.
         </p>
       </section>

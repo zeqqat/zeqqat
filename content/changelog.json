@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.3.73",
+    "date": "2026-11-15",
+    "at": "2026-11-15T13:27:06Z",
+    "changes": [
+      "Zeqqat is now called the MCP gateway for Dokploy everywhere",
+      "No more Beta labels or free while in Beta notes",
+      "Clearer words in the app: calls, hidden secrets, agents, turn off on a date, and No policy (use the checkboxes)"
+    ]
+  },
+  {
     "version": "0.3.72",
     "date": "2026-11-15",
     "at": "2026-11-15T07:21:47Z",

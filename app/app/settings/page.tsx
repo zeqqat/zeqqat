@@ -8,12 +8,12 @@ import { requireWorkspace } from "../../../lib/guard";
 import { listUserWorkspaces, orgsOf } from "../../../lib/workspace";
 
 const ERRORS: Record<string, string> = {
-  confirm: "Type the workspace's handle to confirm.",
+  confirm: "That didn't match. Type it exactly as shown.",
   last: "An org needs at least one workspace.",
   name: "Give the workspace a name.",
-  confirm_transfer: "Type the workspace's handle to confirm the transfer.",
+  confirm_transfer: "That didn't match. Type it exactly as shown.",
   transfer: "That transfer didn't go through. Pick an organization you own.",
-  transfer_personal: "Only workspaces in your personal namespace can be transferred.",
+  transfer_personal: "Only workspaces under your own username can be transferred.",
 };
 
 export default async function SettingsPage({
@@ -83,7 +83,7 @@ export default async function SettingsPage({
               Save
             </button>
           </form>
-          <p className="zq-help">The handle ({ws.workspaceSlug}) stays the same.</p>
+          <p className="zq-help">Only the name changes. {ws.workspaceSlug} stays the same.</p>
         </section>
       )}
 
@@ -122,7 +122,7 @@ export default async function SettingsPage({
           <p className="zq-note" style={{ marginTop: 0 }}>
             {edition() === "cloud" ? (
               <>
-                On zeqqat.com, free while in Beta.{" "}
+                On zeqqat.com.{" "}
                 <a className="zq-textlink" href="/app/self-host">
                   Install on your own Dokploy
                 </a>
