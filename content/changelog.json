@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.72",
+    "date": "2026-11-15",
+    "at": "2026-11-15T07:21:47Z",
+    "changes": [
+      "Blog: How to Host OpenClaw on a VPS (Securely) with Dokploy"
+    ]
+  },
+  {
     "version": "0.3.71",
     "date": "2026-11-15",
     "at": "2026-11-15T05:35:37Z",
