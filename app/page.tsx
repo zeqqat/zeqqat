@@ -95,8 +95,18 @@ export default function LandingPage() {
             ))}
           </ul>
 
+          <div className="zq-hero-cta">
+            <a className="zq-hero-btn" href={SITE_LINKS.signup}>
+              Connect your Dokploy <span aria-hidden="true">&rarr;</span>
+            </a>
+            <p className="zq-hero-alt">
+              Prefer your own server? <a href={SITE_LINKS.selfHost}>Self-host it</a>
+            </p>
+          </div>
+
           {/* What people actually ask, in their own words (from Dokploy's support
               forum). Each opens a replay of the answer (/demo/<slug>). */}
+          <p className="zq-hero-asks-label">See it in action. Tap a question.</p>
           <ul className="zq-hero-asks" aria-label="Things you can ask">
             {REPLAYS.map((r) => (
               <li key={r.slug}>
@@ -107,15 +117,6 @@ export default function LandingPage() {
               </li>
             ))}
           </ul>
-
-          <div className="zq-hero-cta">
-            <a className="zq-hero-btn" href={SITE_LINKS.signup}>
-              Connect your Dokploy <span aria-hidden="true">&rarr;</span>
-            </a>
-            <p className="zq-hero-alt">
-              Prefer your own server? <a href={SITE_LINKS.selfHost}>Self-host it</a>
-            </p>
-          </div>
         </main>
       </div>
 

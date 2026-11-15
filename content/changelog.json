@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.81",
+    "date": "2026-11-15",
+    "at": "2026-11-15T16:01:22Z",
+    "changes": [
+      "Landing: button first, then See it in action with the three questions"
+    ]
+  },
+  {
     "version": "0.3.80",
     "date": "2026-11-15",
     "at": "2026-11-15T15:36:54Z",
