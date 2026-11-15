@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { DOC_PAGES } from "@/lib/agent-docs";
 import { getAllPosts, SITE_URL } from "@/lib/blog";
 import { BUNDLED } from "@/lib/changelog";
+import { REPLAYS } from "@/lib/demo-replays";
 import { lastmodOf, readLastmod } from "@/lib/lastmod";
 
 // Every public page a search result should land on: the landing page, the
@@ -26,6 +27,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const at = (path: string) => lastmodOf(path, lastmod);
   return [
     { url: `${SITE_URL}/`, lastModified: at("/"), changeFrequency: "weekly", priority: 1 },
+    ...REPLAYS.map((r) => ({
+      url: `${SITE_URL}/demo/${r.slug}`,
+      lastModified: at(`/demo/${r.slug}`),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
     { url: `${SITE_URL}/docs`, lastModified: at("/docs"), changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/docs/self-host`, lastModified: at("/docs/self-host"), changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/docs/agents`, lastModified: at("/docs/agents"), changeFrequency: "weekly", priority: 0.8 },

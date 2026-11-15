@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { AGENT_DOCS, DOC_PAGES, sectionsOf } from "./agent-docs";
+import { REPLAYS } from "./demo-replays";
 
 // Search engines trust a sitemap's lastmod only while it moves when the
 // page really changed. So each page without a date of its own (a blog post
@@ -28,7 +29,7 @@ function sha(...parts: string[]): string {
 // chrome (header, footer) is left out: a menu change isn't a page change.
 export function pageFingerprints(): Record<string, string> {
   const out: Record<string, string> = {
-    "/": sha(read("app/page.tsx"), read("components/AgentRotator.tsx")),
+    "/": sha(read("app/page.tsx"), read("components/AgentRotator.tsx"), JSON.stringify(REPLAYS.map((r) => r.ask))),
     "/docs": sha(read("app/docs/page.tsx"), JSON.stringify(DOC_PAGES)),
     "/docs/self-host": sha(read("app/docs/self-host/page.tsx")),
     "/docs/agents": sha(
@@ -39,6 +40,9 @@ export function pageFingerprints(): Record<string, string> {
     "/terms": sha(read("app/terms/page.tsx")),
     "/privacy": sha(read("app/privacy/page.tsx")),
   };
+  for (const r of REPLAYS) {
+    out[`/demo/${r.slug}`] = sha(read("app/demo/[slug]/page.tsx"), read("components/DemoReplay.tsx"), JSON.stringify(r));
+  }
   for (const p of DOC_PAGES) {
     out[`/docs/agents/${p.id}`] = sha(
       read("app/docs/agents/[page]/page.tsx"),

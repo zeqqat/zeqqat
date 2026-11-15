@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { edition } from "../lib/edition";
 import { AgentRotator } from "../components/AgentRotator";
 import { SITE_LINKS, SiteFooter, SiteHeader } from "../components/SiteChrome";
+import { REPLAYS } from "../lib/demo-replays";
 import { pageMeta, SITE_URL } from "../lib/seo";
 
 const DESCRIPTION =
@@ -37,12 +38,6 @@ const JSON_LD = [
     logo: `${SITE_URL}/apple-icon.png`,
     sameAs: ["https://github.com/zeqqat/zeqqat"],
   },
-];
-
-const ASKS = [
-  "Why can't my app reach its database?",
-  "Show me the logs from my last deploy.",
-  "My disk is filling up. What's using it?",
 ];
 
 // Each line must stay true for every new user by default (delete is off
@@ -88,10 +83,16 @@ export default function LandingPage() {
             It deploys, reads logs and fixes your apps.
           </p>
 
-          {/* What people actually ask, in their own words (from Dokploy's support forum). */}
+          {/* What people actually ask, in their own words (from Dokploy's support
+              forum). Each opens a replay of the answer (/demo/<slug>). */}
           <ul className="zq-hero-asks" aria-label="Things you can ask">
-            {ASKS.map((ask) => (
-              <li key={ask}>{ask}</li>
+            {REPLAYS.map((r) => (
+              <li key={r.slug}>
+                <a href={`/demo/${r.slug}`}>
+                  <span>{r.ask}</span>
+                  <span className="zq-hero-ask-go">See the answer</span>
+                </a>
+              </li>
             ))}
           </ul>
 

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.75",
+    "date": "2026-11-15",
+    "at": "2026-11-15T14:35:36Z",
+    "changes": [
+      "Landing: the three example questions open a replay, Claude's chat beside Zeqqat's activity (/demo)"
+    ]
+  },
+  {
     "version": "0.3.74",
     "date": "2026-11-15",
     "at": "2026-11-15T13:49:33Z",

@@ -1,6 +1,6 @@
 {
   "/": {
-    "hash": "92106ec7cc289bab",
+    "hash": "ca0cbfee9c955eb9",
     "date": "2026-11-15"
   },
   "/docs": {
@@ -21,6 +21,18 @@
   },
   "/privacy": {
     "hash": "5d1bcbf0e730545f",
+    "date": "2026-11-15"
+  },
+  "/demo/database": {
+    "hash": "7a1a24e1a31f48e1",
+    "date": "2026-11-15"
+  },
+  "/demo/deploy-logs": {
+    "hash": "af77a927eee1caa2",
+    "date": "2026-11-15"
+  },
+  "/demo/disk": {
+    "hash": "5c9f0efbdf8e4501",
     "date": "2026-11-15"
   },
   "/docs/agents/overview": {
