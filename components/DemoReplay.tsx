@@ -1,24 +1,42 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Replay } from "../lib/demo-replays";
+import type { ActivityCall } from "../lib/activity";
+import type { CallState } from "../lib/activity-format";
+import { lookupText } from "../lib/activity-format";
+import {
+  DEMO_CONNECTION,
+  DEMO_INSTANCE,
+  DEMO_PERSON,
+  isLookup,
+  type Replay,
+  type ReplayCall,
+  type ReplayLookup,
+} from "../lib/demo-replays";
+import { CallCard, LookupLine } from "./activity/CallCard";
+import { Avatar, Strip, Tally } from "./activity/Parts";
+import { DateBar, RelTime } from "./activity/Time";
 import { AgentMark } from "./Marks";
 
 // Plays one replay: the agent's chat on the left, Zeqqat's activity on the
 // right, step by step and in step with each other, so a visitor sees what
-// the agent got and what Zeqqat recorded at the same moment. Everything is
-// pre-written (lib/demo-replays.ts); nothing here talks to a server.
+// the agent got and what Zeqqat recorded at the same moment. The right side
+// uses the app's own Activity components (request card, call cards, lookup
+// lines), so it looks exactly like /app/activity. Everything is pre-written
+// (lib/demo-replays.ts); nothing here talks to a server.
 
-type Step =
-  { t: "ask"; turn: number } | { t: "call"; turn: number; call: number } | { t: "para"; turn: number; para: number };
+type Beat =
+  | { t: "ask"; turn: number }
+  | { t: "step"; turn: number; step: number }
+  | { t: "para"; turn: number; para: number };
 
-const DELAY: Record<Step["t"], number> = { ask: 900, call: 1000, para: 650 };
+const DELAY: Record<Beat["t"], number> = { ask: 900, step: 1000, para: 650 };
 
-function stepsOf(replay: Replay): Step[] {
-  const out: Step[] = [];
+function beatsOf(replay: Replay): Beat[] {
+  const out: Beat[] = [];
   replay.turns.forEach((turn, ti) => {
     out.push({ t: "ask", turn: ti });
-    turn.calls.forEach((_, ci) => out.push({ t: "call", turn: ti, call: ci }));
+    turn.steps.forEach((_, si) => out.push({ t: "step", turn: ti, step: si }));
     turn.answer.forEach((_, pi) => out.push({ t: "para", turn: ti, para: pi }));
   });
   return out;
@@ -27,39 +45,122 @@ function stepsOf(replay: Replay): Step[] {
 // `code` spans in the scripted text. A paragraph starting with "> " is a
 // log excerpt, shown as a block.
 function Text({ s }: { s: string }) {
-  return <>{s.split("`").map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <span key={i}>{part}</span>))}</>;
+  return (
+    <>
+      {s.split("`").map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <span key={i}>{part}</span>))}
+    </>
+  );
+}
+
+const BASE: Omit<ActivityCall, "id" | "at" | "state" | "lookup" | "lookupTool" | "toolName" | "reason"> = {
+  requestId: null,
+  httpStatus: null,
+  durationMs: 0,
+  op: null,
+  summary: null,
+  kind: null,
+  method: null,
+  path: null,
+  integrationRef: null,
+  integrationSlug: null,
+  instanceId: null,
+  instanceAlias: null,
+  instanceBaseUrl: null,
+  connectionId: null,
+  connectionName: DEMO_CONNECTION,
+  connectionUrl: null,
+  workspaceName: "Default",
+  account: { username: DEMO_PERSON.username, type: "personal" },
+  inputs: null,
+  response: null,
+  outbound: null,
+  errorMessage: null,
+  redactions: 0,
+  policyName: null,
+  policyVersion: null,
+  callerRole: "admin",
+  specRelease: null,
+  person: DEMO_PERSON,
+  agent: { host: "claude.ai" },
+};
+
+function lookupCall(s: ReplayLookup, id: string, at: string, reason: string): ActivityCall {
+  return {
+    ...BASE,
+    id,
+    at,
+    state: "ok",
+    lookup: lookupText("search", { query: s.search }),
+    lookupTool: "zeqqat_search",
+    toolName: "zeqqat_search",
+    reason,
+  };
+}
+
+function appCall(s: ReplayCall, id: string, at: string, reason: string): ActivityCall {
+  return {
+    ...BASE,
+    id,
+    at,
+    state: s.outcome,
+    durationMs: s.ms,
+    lookup: null,
+    lookupTool: null,
+    toolName: `@zeqqat/dokploy.http.${s.action}`,
+    op: s.tool,
+    summary: s.summary,
+    kind: s.kind,
+    integrationRef: "@zeqqat/dokploy",
+    integrationSlug: "dokploy",
+    instanceAlias: DEMO_INSTANCE,
+    inputs: s.inputs,
+    errorMessage: s.outcome === "blocked" ? `Not sent: ${s.kind} on "${DEMO_INSTANCE}" isn't allowed through this connection.` : null,
+    redactions: s.hidden ?? 0,
+    reason,
+  };
 }
 
 export function DemoReplay({ replay }: { replay: Replay }) {
-  const steps = useMemo(() => stepsOf(replay), [replay]);
-  const [shown, setShown] = useState(0);
+  const beats = useMemo(() => beatsOf(replay), [replay]);
+  // When each beat appeared (ms), so Activity's clocks read like a real run.
+  const [times, setTimes] = useState<number[]>([]);
   const [run, setRun] = useState(0);
+  const shown = times.length;
 
-  // Starts at 0 (on mount, and from "Play again", which resets it first).
+  // Starts empty (on mount, and from "Play again", which clears it first).
   // With reduced motion everything shows at once.
   useEffect(() => {
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     let i = 0;
     let timer: ReturnType<typeof setTimeout>;
     const next = () => {
-      if (i >= steps.length) return;
+      if (i >= beats.length) return;
       timer = setTimeout(
         () => {
-          i = reduce ? steps.length : i + 1;
-          setShown(i);
+          const now = Date.now();
+          if (reduce) {
+            i = beats.length;
+            setTimes(beats.map(() => now));
+          } else {
+            i += 1;
+            setTimes((t) => [...t, now]);
+          }
           next();
         },
-        reduce ? 0 : DELAY[steps[i].t],
+        reduce ? 0 : DELAY[beats[i].t],
       );
     };
     next();
     return () => clearTimeout(timer);
-  }, [steps, run]);
+  }, [beats, run]);
 
-  const seen = steps.slice(0, shown);
-  const has = (pred: (s: Step) => boolean) => seen.some(pred);
-  const done = shown >= steps.length;
-  const waiting = !done && shown > 0 && steps[shown]?.t !== "ask";
+  const at = (pred: (b: Beat) => boolean): number | null => {
+    const i = beats.findIndex(pred);
+    return i >= 0 && i < shown ? times[i] : null;
+  };
+  const iso = (ms: number) => new Date(ms).toISOString();
+  const done = shown >= beats.length;
+  const waiting = !done && shown > 0 && beats[shown]?.t !== "ask";
 
   return (
     <div className="zq-demo">
@@ -71,35 +172,41 @@ export function DemoReplay({ replay }: { replay: Replay }) {
         </header>
         <div className="zq-demo-chat" aria-live="polite">
           {replay.turns.map((turn, ti) => {
-            if (!has((s) => s.t === "ask" && s.turn === ti)) return null;
+            if (at((b) => b.t === "ask" && b.turn === ti) == null) return null;
             return (
               <div key={ti} className="zq-demo-turn">
                 <p className="zq-demo-you">{turn.ask}</p>
-                {turn.calls.map((c, ci) =>
-                  has((s) => s.t === "call" && s.turn === ti && s.call === ci) ? (
-                    <p key={ci} className={`zq-demo-tool${c.outcome === "blocked" ? " is-blocked" : ""}`}>
-                      <span className="zq-demo-tool-k">zeqqat_run</span> {c.tool}
-                      {c.hidden ? (
+                {turn.steps.map((s, si) => {
+                  if (at((b) => b.t === "step" && b.turn === ti && b.step === si) == null) return null;
+                  if (isLookup(s)) {
+                    return (
+                      <p key={si} className="zq-demo-tool">
+                        <span className="zq-demo-tool-k">zeqqat_search</span> {s.search}
+                      </p>
+                    );
+                  }
+                  return (
+                    <p key={si} className={`zq-demo-tool${s.outcome === "blocked" ? " is-blocked" : ""}`}>
+                      <span className="zq-demo-tool-k">zeqqat_run</span> {s.tool}
+                      {s.hidden ? (
                         <span className="zq-demo-tool-h">
-                          {c.hidden} {c.hidden === 1 ? "secret" : "secrets"} as {"{{zq_secret_…}}"}
+                          {s.hidden} {s.hidden === 1 ? "secret" : "secrets"} as {"{{zq_secret_…}}"}
                         </span>
                       ) : null}
-                      {c.outcome === "blocked" && <span className="zq-demo-tool-h">not allowed</span>}
+                      {s.outcome === "blocked" && <span className="zq-demo-tool-h">not allowed</span>}
                     </p>
-                  ) : null,
-                )}
+                  );
+                })}
                 {turn.answer.map((p, pi) =>
-                  has((s) => s.t === "para" && s.turn === ti && s.para === pi) ? (
-                    p.startsWith("> ") ? (
-                      <pre key={pi} className="zq-demo-pre">
-                        {p.slice(2)}
-                      </pre>
-                    ) : (
-                      <p key={pi} className="zq-demo-ai">
-                        <Text s={p} />
-                      </p>
-                    )
-                  ) : null,
+                  at((b) => b.t === "para" && b.turn === ti && b.para === pi) == null ? null : p.startsWith("> ") ? (
+                    <pre key={pi} className="zq-demo-pre">
+                      {p.slice(2)}
+                    </pre>
+                  ) : (
+                    <p key={pi} className="zq-demo-ai">
+                      <Text s={p} />
+                    </p>
+                  ),
                 )}
               </div>
             );
@@ -124,33 +231,42 @@ export function DemoReplay({ replay }: { replay: Replay }) {
         </header>
         <div className="zq-demo-log">
           {replay.turns.map((turn, ti) => {
-            if (!has((s) => s.t === "ask" && s.turn === ti)) return null;
-            const calls = turn.calls.filter((_, ci) => has((s) => s.t === "call" && s.turn === ti && s.call === ci));
-            const blocked = calls.filter((c) => c.outcome === "blocked").length;
-            const hidden = calls.reduce((n, c) => n + (c.hidden ?? 0), 0);
+            const askedAt = at((b) => b.t === "ask" && b.turn === ti);
+            if (askedAt == null) return null;
+            const calls: ActivityCall[] = [];
+            turn.steps.forEach((s, si) => {
+              const t = at((b) => b.t === "step" && b.turn === ti && b.step === si);
+              if (t == null) return;
+              const id = `demo-${replay.slug}-${ti}-${si}`;
+              calls.push(isLookup(s) ? lookupCall(s, id, iso(t), turn.ask) : appCall(s, id, iso(t), turn.ask));
+            });
+            const states: CallState[] = calls.filter((c) => !c.lookup).map((c) => c.state);
+            const lookups = calls.length - states.length;
+            const last = calls.length ? calls[calls.length - 1].at : iso(askedAt);
             return (
-              <div key={ti} className="zq-demo-req">
-                <p className="zq-demo-req-q">&ldquo;{turn.ask}&rdquo;</p>
-                <p className="zq-demo-req-by">
-                  @you via Claude · {calls.length} {calls.length === 1 ? "call" : "calls"}
-                  {blocked > 0 && <span className="zq-demo-bad"> · {blocked} blocked</span>}
-                  {hidden > 0 && (
-                    <span className="zq-demo-hid">
-                      {" "}
-                      · {hidden} {hidden === 1 ? "secret" : "secrets"} hidden
-                    </span>
-                  )}
-                </p>
-                {calls.map((c, ci) => (
-                  <div key={ci} className="zq-demo-call">
-                    <div className="zq-demo-call-top">
-                      <code>{c.tool}</code>
-                      <span className={`zq-kind k-${c.kind}`}>{c.kind}</span>
-                      <span className={`zq-demo-out is-${c.outcome}`}>{c.outcome === "ok" ? "ok" : "blocked"}</span>
+              <div key={ti} className="zq-act-sheet zq-demo-sheet">
+                <div className="zq-rc">
+                  <Avatar person={DEMO_PERSON} />
+                  <div className="zq-rc-body">
+                    <div className="zq-rc-top">
+                      <b>{DEMO_PERSON.name}</b>
+                      <span className="zq-rc-handle">@{DEMO_PERSON.username}</span>
+                      <span className="zq-rc-sep">·</span>
+                      <RelTime iso={last} />
                     </div>
-                    {c.note && <p className="zq-demo-call-note">{c.note}</p>}
+                    <p className="zq-rc-req">{turn.ask}</p>
+                    <div className="zq-rc-foot">
+                      <span className="zq-rc-via">
+                        via <AgentMark host="claude.ai" size={13} />
+                        <b>Claude</b>
+                      </span>
+                      <Strip states={states} />
+                      {calls.length > 0 && <Tally states={states} lookups={lookups} />}
+                    </div>
                   </div>
-                ))}
+                </div>
+                {calls.length > 0 && <DateBar start={calls[0].at} end={last} running={false} />}
+                {calls.map((c) => (c.lookup ? <LookupLine key={c.id} call={c} /> : <CallCard key={c.id} call={c} />))}
               </div>
             );
           })}
@@ -158,10 +274,15 @@ export function DemoReplay({ replay }: { replay: Replay }) {
       </section>
 
       <div className="zq-demo-foot">
-        <button type="button" className="zq-demo-replay" onClick={() => {
-            setShown(0);
+        <button
+          type="button"
+          className="zq-demo-replay"
+          onClick={() => {
+            setTimes([]);
             setRun((n) => n + 1);
-          }} disabled={!done}>
+          }}
+          disabled={!done}
+        >
           {done ? "Play again" : "Playing…"}
         </button>
       </div>

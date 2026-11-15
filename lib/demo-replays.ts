@@ -4,20 +4,36 @@
 // tools, in the same order, with the same outcome. Names, ids and log lines
 // are swapped for generic ones so no real project shows. The numbers in the
 // disk replay are the real ones. Keep it that way: a step goes in only if
-// Zeqqat can really do it today (and "not allowed" only if the default
-// rules really block it).
+// Zeqqat can really do it today (and "blocked" only if the default rules
+// really block it).
+//
+// The Zeqqat side is drawn with the app's own Activity components
+// (components/DemoReplay.tsx), so it looks exactly like /app/activity.
+
+// One step the agent takes: a catalog lookup (zeqqat_search), or a call to
+// Dokploy through zeqqat_run.
+export type ReplayLookup = { search: string };
 
 export type ReplayCall = {
   tool: string; // operationId, as the agent passes it to zeqqat_run
+  action: string; // its canonical action, as Activity shows it (@zeqqat/dokploy.http.<action>)
+  summary: string; // the catalog's one-line summary (catalog/dokploy/summaries.json)
   kind: "read" | "create" | "edit" | "delete";
   outcome: "ok" | "blocked";
+  inputs: Record<string, unknown>;
+  ms: number;
   hidden?: number; // secrets replaced by handles in the result
-  note?: string; // what the agent got back, one short line
 };
 
+export type ReplayStep = ReplayLookup | ReplayCall;
+
+export function isLookup(s: ReplayStep): s is ReplayLookup {
+  return "search" in s;
+}
+
 export type ReplayTurn = {
-  ask: string; // what the person types
-  calls: ReplayCall[];
+  ask: string; // what the person types; also the request's reason in Activity
+  steps: ReplayStep[];
   answer: string[]; // the agent's reply, one entry per paragraph; `code` in backticks, "> " starts a log excerpt
 };
 
@@ -28,6 +44,11 @@ export type Replay = {
   turns: ReplayTurn[];
 };
 
+// Who asks in every replay.
+export const DEMO_PERSON = { name: "Mauricio Doe", username: "mauricio_doe", image: null };
+export const DEMO_INSTANCE = "my-dokploy";
+export const DEMO_CONNECTION = "claude";
+
 export const REPLAYS: Replay[] = [
   {
     slug: "database",
@@ -36,26 +57,36 @@ export const REPLAYS: Replay[] = [
     turns: [
       {
         ask: "Why can't my app reach its database?",
-        calls: [
+        steps: [
+          { search: "project applications databases" },
           {
             tool: "project.all",
+            action: "project_all",
+            summary: "List every project with its environments and services",
             kind: "read",
             outcome: "ok",
-            note: "My App and my-app-db, both in project shop",
+            inputs: {},
+            ms: 412,
           },
           {
             tool: "application.one",
+            action: "application_one",
+            summary: "Get one application's full details, incl. its long deploy history",
             kind: "read",
             outcome: "ok",
+            inputs: { applicationId: "kq3Vt8xLm2" },
+            ms: 538,
             hidden: 2,
-            note: "DATABASE_URL points at host my-app-db",
           },
           {
             tool: "postgres.one",
+            action: "postgres_one",
+            summary: "Get one Postgres database's details by postgresId",
             kind: "read",
             outcome: "ok",
+            inputs: { postgresId: "p7Hw2nRc9e" },
+            ms: 301,
             hidden: 1,
-            note: "running, internal host my-app-db-x7k2pq",
           },
         ],
         answer: [
@@ -73,24 +104,34 @@ export const REPLAYS: Replay[] = [
     turns: [
       {
         ask: "Show me the logs from my last deploy.",
-        calls: [
+        steps: [
+          { search: "read deployment build logs" },
           {
             tool: "application.search",
+            action: "application_search",
+            summary: "Search applications by name; each result's applicationStatus is the quickest deploy check",
             kind: "read",
             outcome: "ok",
-            note: "My App, last deploy: error",
+            inputs: { name: "my-app" },
+            ms: 288,
           },
           {
             tool: "deployment.all",
+            action: "deployment_all",
+            summary: "List an application's full deploy history, newest first",
             kind: "read",
             outcome: "ok",
-            note: 'newest: "add checkout page", failed after 52 s',
+            inputs: { applicationId: "kq3Vt8xLm2" },
+            ms: 344,
           },
           {
             tool: "deployment.readLogs",
+            action: "deployment_read_logs",
+            summary: "Read a deployment's build and deploy log",
             kind: "read",
             outcome: "ok",
-            note: "last 100 lines of the build log",
+            inputs: { deploymentId: "d4Lp0sYv1Q", tail: 100 },
+            ms: 627,
           },
         ],
         answer: [
@@ -109,12 +150,16 @@ export const REPLAYS: Replay[] = [
     turns: [
       {
         ask: "My disk is filling up. What's using it?",
-        calls: [
+        steps: [
+          { search: "disk usage docker space server" },
           {
             tool: "settings.getDockerDiskUsage",
+            action: "settings_get_docker_disk_usage",
+            summary: "Get Docker's disk usage: images, containers, volumes and cache",
             kind: "read",
             outcome: "ok",
-            note: "images 8.1 GB, build cache 7.6 GB, volumes 917 MB",
+            inputs: {},
+            ms: 1184,
           },
         ],
         answer: [
@@ -125,12 +170,15 @@ export const REPLAYS: Replay[] = [
       },
       {
         ask: "Clear the build cache.",
-        calls: [
+        steps: [
           {
             tool: "settings.cleanDockerBuilder",
+            action: "settings_clean_docker_builder",
+            summary: "Delete Docker's build cache on a server",
             kind: "delete",
             outcome: "blocked",
-            note: "deletes aren't allowed on this connection",
+            inputs: {},
+            ms: 3,
           },
         ],
         answer: [
