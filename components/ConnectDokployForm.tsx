@@ -26,7 +26,7 @@ export function ConnectDokployForm({
             Instance name
           </label>
           <InfoBubble title="Instance" inline>
-            Each Dokploy you add is an instance. The name is how you tell your instances apart.
+            This is the name of this Dokploy, so you can tell it apart from others you add.
           </InfoBubble>
         </div>
         <input
