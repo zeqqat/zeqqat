@@ -6,5 +6,5 @@ export const contentType = "image/png";
 
 // The card shown when zeqqat.com is pasted into Discord, X, Slack or LinkedIn.
 export default function Image() {
-  return ogImage({ label: "The safe MCP for Dokploy", title: "Give AI access to your Dokploy. Minus the risk." });
+  return ogImage({ label: "The safe MCP for Dokploy", title: "Talk to your Dokploy." });
 }

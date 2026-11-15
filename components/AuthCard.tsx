@@ -41,13 +41,12 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
                 ? (
                   <>
                     <span>
-                      Give AI access to your{" "}
+                      Talk to your{" "}
                       <b className="zq-inline-brand">
                         <DokployMark size={15} />
                         Dokploy.
                       </b>
                     </span>
-                    <span>Minus the risk.</span>
                   </>
                 )
                 : "Sign in, or create your account."}

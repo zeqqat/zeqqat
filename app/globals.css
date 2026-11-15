@@ -583,6 +583,89 @@ body {
   }
 }
 
+/* ---------- landing: label, example asks, proof ---------- */
+.zq-nb {
+  white-space: nowrap;
+}
+.zq-hero-label {
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--dim);
+}
+.zq-hero-asks {
+  list-style: none;
+  margin: 30px auto 0;
+  padding: 0;
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.zq-hero-asks li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--fg);
+  text-align: left;
+}
+.zq-hero-asks li::before {
+  content: "\203A";
+  color: var(--mint);
+  font-weight: 600;
+}
+.zq-hero-proof {
+  list-style: none;
+  margin: 34px auto 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+/* Three ticks on one line need a little more than the column. */
+@media (min-width: 801px) {
+  .zq-hero-proof {
+    margin-left: -60px;
+    margin-right: -60px;
+  }
+}
+.zq-hero-proof li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.zq-hero-proof svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--mint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+@media (max-width: 480px) {
+  .zq-hero-asks {
+    margin-top: 24px;
+  }
+  .zq-hero-proof {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 /* ---------- landing: call to action ---------- */
 .zq-hero-cta {
   margin-top: 40px;

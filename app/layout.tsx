@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     template: "%s | Zeqqat",
   },
   description:
-    "Give AI access to your Dokploy, self-hosted or Cloud. Your agent deploys, reads logs and fixes your apps, you decide exactly what it may touch, and your API keys, env vars and secrets never reach the LLM.",
+    "Talk to your Dokploy. Tell Claude, ChatGPT or Grok what you want and it deploys, reads logs and fixes your apps. Your secrets stay hidden from the AI, it can't delete unless you allow it, and every action is logged.",
   openGraph: { type: "website", siteName: "Zeqqat", images: [DEFAULT_OG_IMAGE] },
   twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE.url] },
 };

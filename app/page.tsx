@@ -5,7 +5,7 @@ import { SITE_LINKS, SiteFooter, SiteHeader } from "../components/SiteChrome";
 import { pageMeta, SITE_URL } from "../lib/seo";
 
 const DESCRIPTION =
-  "Give AI access to your Dokploy, self-hosted or Cloud. Your agent deploys, reads logs and fixes your apps, you decide exactly what it may touch, and your API keys, env vars and secrets never reach the LLM.";
+  "Talk to your Dokploy. Tell Claude, ChatGPT or Grok what you want and it deploys, reads logs and fixes your apps. Your secrets stay hidden from the AI, it can't delete unless you allow it, and every action is logged.";
 
 export const metadata = pageMeta({
   title: "Zeqqat: the safe MCP for Dokploy",
@@ -39,6 +39,20 @@ const JSON_LD = [
   },
 ];
 
+const ASKS = [
+  "Why can't my app reach its database?",
+  "Show me the logs from my last deploy.",
+  "My disk is filling up. What's using it?",
+];
+
+// Each line must stay true for every new user by default (delete is off
+// until the owner allows it).
+const PROOF = [
+  "Secrets stay hidden from the AI",
+  "Can't delete unless you allow it",
+  "Every action is logged",
+];
+
 export default function LandingPage() {
   // The landing page sells zeqqat.com. A self-hosted install opens straight
   // into the app (which sends signed-out visitors to sign in).
@@ -54,10 +68,10 @@ export default function LandingPage() {
 
       <div className="zq-mid">
         <main className="zq-in">
+          <p className="zq-hero-label">The safe MCP for Dokploy</p>
           <h1 className="zq-mark">
-            Give AI access to
+            Talk to your
             <br />
-            your{" "}
             <span className="zq-hero-brand">
               <span
                 className="zq-mono-logo"
@@ -66,28 +80,40 @@ export default function LandingPage() {
               />
               Dokploy
             </span>
-            .
-            <br />
-            Minus the risk<span className="dot">.</span>
+            <span className="dot">.</span>
           </h1>
           <p className="zq-tagline">
-            The safe MCP for Dokploy, self-hosted or Cloud. Works with{" "}
-            <br className="zq-br-wide" />
             <AgentRotator />{" "}
             <br className="zq-br-wide" />
-            Let it deploy, read logs and fix your apps. You decide exactly what it may touch,
-            see every call it makes, and your API keys, env vars and secrets never reach the LLM.
+            It deploys, reads logs and fixes your apps.
           </p>
+
+          {/* What people actually ask, in their own words (from Dokploy's support forum). */}
+          <ul className="zq-hero-asks" aria-label="Things you can ask">
+            {ASKS.map((ask) => (
+              <li key={ask}>{ask}</li>
+            ))}
+          </ul>
 
           <div className="zq-hero-cta">
             <a className="zq-hero-btn" href={SITE_LINKS.signup}>
-              Get started free <span aria-hidden="true">&rarr;</span>
+              Connect your Dokploy <span aria-hidden="true">&rarr;</span>
             </a>
             <p className="zq-hero-alt">
               Prefer your own server? <a href={SITE_LINKS.selfHost}>Self-host it</a>
             </p>
           </div>
 
+          <ul className="zq-hero-proof">
+            {PROOF.map((line) => (
+              <li key={line}>
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8.5l3.2 3.2L13 4.8" />
+                </svg>
+                {line}
+              </li>
+            ))}
+          </ul>
         </main>
       </div>
 

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.71",
+    "date": "2026-11-15",
+    "at": "2026-11-15T05:35:37Z",
+    "changes": [
+      "Landing page: new headline \"Talk to your Dokploy\", three example questions, a Connect your Dokploy button, and what keeps it safe in three short lines"
+    ]
+  },
+  {
     "version": "0.3.70",
     "date": "2026-11-14",
     "at": "2026-11-14T20:00:39Z",

@@ -13,7 +13,7 @@
     <a href="https://github.com/zeqqat/zeqqat/stargazers"><img src="https://img.shields.io/github/stars/zeqqat/zeqqat?style=flat" alt="Stars"></a>
   </p>
 
-  <p><b>Give AI access to your Dokploy. Minus the risk.</b></p>
+  <p><b>Talk to your Dokploy.</b></p>
 
   <p>
     <a href="https://zeqqat.com">Website</a> ·

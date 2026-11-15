@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * The row of agent names in the landing tagline ("Claude, ChatGPT, Grok or any
- * MCP client"). Each slot flips through its own list like a drum turning
+ * The row of agent names in the landing tagline ("Tell Claude, ChatGPT or Grok
+ * what you want."). Each slot flips through its own list like a drum turning
  * toward the reader.
  *
  * Rules, all deliberate:
@@ -122,11 +122,10 @@ export function AgentRotator() {
   return (
     <span className="zq-agents">
       <span className="zq-agent-names">
-        <AgentSlot agents={AGENT_SLOTS[0]} suffix="," />{" "}
-        <AgentSlot agents={AGENT_SLOTS[1]} suffix="," />{" "}
-        <AgentSlot agents={AGENT_SLOTS[2]} />
-      </span>
-      <span className="zq-agents-rest"> or any MCP client.</span>
+        Tell <AgentSlot agents={AGENT_SLOTS[0]} suffix="," />{" "}
+        <AgentSlot agents={AGENT_SLOTS[1]} /> or <AgentSlot agents={AGENT_SLOTS[2]} />
+      </span>{" "}
+      <span className="zq-nb">what you want.</span>
     </span>
   );
 }
