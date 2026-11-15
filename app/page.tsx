@@ -83,6 +83,18 @@ export default function LandingPage() {
             It deploys, reads logs and fixes your apps.
           </p>
 
+          {/* Right under the promise: the three things that make it safe. */}
+          <ul className="zq-hero-proof">
+            {PROOF.map((line) => (
+              <li key={line}>
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8.5l3.2 3.2L13 4.8" />
+                </svg>
+                {line}
+              </li>
+            ))}
+          </ul>
+
           {/* What people actually ask, in their own words (from Dokploy's support
               forum). Each opens a replay of the answer (/demo/<slug>). */}
           <ul className="zq-hero-asks" aria-label="Things you can ask">
@@ -104,17 +116,6 @@ export default function LandingPage() {
               Prefer your own server? <a href={SITE_LINKS.selfHost}>Self-host it</a>
             </p>
           </div>
-
-          <ul className="zq-hero-proof">
-            {PROOF.map((line) => (
-              <li key={line}>
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M3 8.5l3.2 3.2L13 4.8" />
-                </svg>
-                {line}
-              </li>
-            ))}
-          </ul>
         </main>
       </div>
 

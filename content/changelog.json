@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.80",
+    "date": "2026-11-15",
+    "at": "2026-11-15T15:36:54Z",
+    "changes": [
+      "Landing: the three proof lines sit right under the subtitle"
+    ]
+  },
+  {
     "version": "0.3.79",
     "date": "2026-11-15",
     "at": "2026-11-15T15:29:31Z",
