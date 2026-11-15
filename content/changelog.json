@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.82",
+    "date": "2026-11-15",
+    "at": "2026-11-15T16:15:16Z",
+    "changes": [
+      "Landing: the three proof lines move below the demo questions"
+    ]
+  },
+  {
     "version": "0.3.81",
     "date": "2026-11-15",
     "at": "2026-11-15T16:01:22Z",

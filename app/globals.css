@@ -659,7 +659,7 @@ body {
 }
 .zq-hero-proof {
   list-style: none;
-  margin: 22px auto 0;
+  margin: 26px auto 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
@@ -703,7 +703,7 @@ body {
 
 /* ---------- landing: call to action ---------- */
 .zq-hero-cta {
-  margin-top: 30px;
+  margin-top: 34px;
   display: flex;
   flex-direction: column;
   align-items: center;

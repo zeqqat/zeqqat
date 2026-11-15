@@ -83,18 +83,6 @@ export default function LandingPage() {
             It deploys, reads logs and fixes your apps.
           </p>
 
-          {/* Right under the promise: the three things that make it safe. */}
-          <ul className="zq-hero-proof">
-            {PROOF.map((line) => (
-              <li key={line}>
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path d="M3 8.5l3.2 3.2L13 4.8" />
-                </svg>
-                {line}
-              </li>
-            ))}
-          </ul>
-
           <div className="zq-hero-cta">
             <a className="zq-hero-btn" href={SITE_LINKS.signup}>
               Connect your Dokploy <span aria-hidden="true">&rarr;</span>
@@ -114,6 +102,18 @@ export default function LandingPage() {
                   <span>{r.ask}</span>
                   <span className="zq-hero-ask-go">See the answer</span>
                 </a>
+              </li>
+            ))}
+          </ul>
+
+          {/* After the demo: the three things that make it safe. */}
+          <ul className="zq-hero-proof">
+            {PROOF.map((line) => (
+              <li key={line}>
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 8.5l3.2 3.2L13 4.8" />
+                </svg>
+                {line}
               </li>
             ))}
           </ul>
