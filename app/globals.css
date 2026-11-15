@@ -255,8 +255,9 @@ body {
   margin: 20px auto 0;
   letter-spacing: -0.01em;
   text-align: center;
-  max-width: 52ch;
+  max-width: 60ch;
   line-height: 1.65;
+  text-wrap: balance;
 }
 .zq-tagline b {
   color: var(--fg);
@@ -452,25 +453,9 @@ body {
    one line and never rewraps the rest of the paragraph. On phones the row is
    a block (so the <br>s are dropped to avoid a blank line), shows only the
    three names on one line, and drops "or any MCP client" to keep it short. */
-.zq-agents {
-  display: inline-block;
+/* One paragraph: the names stay on one line together, the rest flows. */
+.zq-agent-names {
   white-space: nowrap;
-}
-@media (max-width: 480px) {
-  .zq-agents-rest {
-    display: none;
-  }
-  .zq-br-wide {
-    display: none;
-  }
-  .zq-agents {
-    display: block;
-    white-space: normal;
-    margin: 4px 0;
-  }
-  .zq-agent-names {
-    white-space: nowrap;
-  }
 }
 .zq-slot {
   display: inline-grid;
@@ -478,7 +463,9 @@ body {
   vertical-align: top;
   height: 1.65em;
   perspective: 300px;
-  transition: width 0.45s ease;
+}
+.zq-slot-size {
+  visibility: hidden;
 }
 .zq-slot-item {
   grid-area: 1 / 1;

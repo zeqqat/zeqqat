@@ -78,9 +78,7 @@ export default function LandingPage() {
             <span className="dot">.</span>
           </h1>
           <p className="zq-tagline">
-            <AgentRotator />{" "}
-            <br className="zq-br-wide" />
-            It deploys, reads logs and fixes your apps.
+            <AgentRotator /> It deploys, reads logs and fixes your apps.
           </p>
 
           <div className="zq-hero-cta">

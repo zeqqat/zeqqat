@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * The row of agent names in the landing tagline ("Tell Claude, ChatGPT or Grok
@@ -12,8 +12,9 @@ import { useEffect, useRef, useState } from "react";
  *   once, and a slot always moves to the next name in its own list, so it
  *   never repeats itself back to back.
  * - Each slot waits its own random 3 to 8 seconds, so they never turn together.
- * - The row sits on its own line (see `.zq-agents`), so a slot changing width
- *   only re-centres that line and never rewraps the rest of the paragraph.
+ * - Each slot is as wide as its widest name (every name sits, hidden, in the
+ *   same grid cell), so a flip never changes the line's width and the rest
+ *   of the paragraph never rewraps or jumps.
  * - First render is always index 0 in every slot, so server and client markup
  *   match; randomness only starts in effects.
  *
@@ -67,9 +68,9 @@ function AgentLabel({ agent, suffix }: { agent: Agent; suffix?: string }) {
 }
 
 /**
- * The slot's width follows the name currently showing and eases between
- * names, so a short name never leaves a gap before the next comma. Old and new
- * names share one grid cell while they flip, so they stay lined up.
+ * Every name in the slot shares one grid cell; the ones not showing are
+ * invisible but still take up room, so the slot is always as wide as its
+ * widest name. Old and new names flip in that same cell.
  */
 export function AgentSlot({
   agents,
@@ -83,8 +84,6 @@ export function AgentSlot({
 }) {
   const [idx, setIdx] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
-  const [width, setWidth] = useState<number | undefined>(undefined);
-  const inRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (agents.length < 2) return;
@@ -96,12 +95,15 @@ export function AgentSlot({
     return () => clearTimeout(t);
   }, [idx, agents.length, waitMs]);
 
-  useEffect(() => {
-    if (inRef.current) setWidth(inRef.current.offsetWidth);
-  }, [idx]);
-
   return (
-    <span className="zq-slot" style={{ width }}>
+    <span className="zq-slot">
+      {agents.map((a, i) =>
+        i === idx || i === prev ? null : (
+          <span key={`size-${i}`} className="zq-slot-item zq-slot-size" aria-hidden="true">
+            <AgentLabel agent={a} suffix={suffix} />
+          </span>
+        ),
+      )}
       {prev !== null ? (
         <span key={`out-${prev}-${idx}`} className="zq-slot-item zq-slot-out" aria-hidden="true">
           <AgentLabel agent={agents[prev]} suffix={suffix} />
@@ -109,7 +111,6 @@ export function AgentSlot({
       ) : null}
       <span
         key={`in-${idx}`}
-        ref={inRef}
         className={`zq-slot-item${prev !== null ? " zq-slot-in" : ""}`}
       >
         <AgentLabel agent={agents[idx]} suffix={suffix} />
