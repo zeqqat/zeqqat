@@ -858,6 +858,20 @@ body {
   justify-content: center;
   padding: 28px 20px 80px;
 }
+.zq-auth-tagline {
+  position: fixed;
+  left: 26px;
+  bottom: 20px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--faint);
+}
+@media (max-width: 480px) {
+  .zq-auth-tagline {
+    left: 18px;
+  }
+}
 .zq-card {
   width: 100%;
   max-width: 420px;

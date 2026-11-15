@@ -67,6 +67,9 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
           )}
         </main>
       </div>
+      {/* Self-hosted has no site footer, so the tagline sits bottom left in
+          the landing footer's small type. */}
+      {edition() !== "cloud" && <p className="zq-auth-tagline">The open source MCP gateway for Dokploy.</p>}
     </div>
   );
 }
