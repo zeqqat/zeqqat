@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.78",
+    "date": "2026-11-15",
+    "at": "2026-11-15T15:26:21Z",
+    "changes": [
+      "Landing replays: the asker is Mauricio Doe again"
+    ]
+  },
+  {
     "version": "0.3.77",
     "date": "2026-11-15",
     "at": "2026-11-15T15:18:40Z",

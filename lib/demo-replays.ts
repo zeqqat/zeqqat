@@ -45,7 +45,7 @@ export type Replay = {
 };
 
 // Who asks in every replay.
-export const DEMO_PERSON = { name: "Mau Doe", username: "mau_doe", image: null };
+export const DEMO_PERSON = { name: "Mauricio Doe", username: "mauricio_doe", image: null };
 export const DEMO_INSTANCE = "my-dokploy";
 export const DEMO_CONNECTION = "claude";
 
