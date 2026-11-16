@@ -34,13 +34,13 @@ Zeqqat is the open source MCP gateway for Dokploy, self-hosted or Cloud. Your ag
 
 - **Keys stay out of the model**: API keys are encrypted at rest and never returned to an agent.
 - **Scrubbed responses**: env vars, tokens and private keys are stripped from every response before the model sees it.
-- **Permissions per connection**: allow reading, creating, editing or deleting, one connection at a time.
+- **Permissions per MCP URL**: allow reading, creating, editing or deleting, one MCP URL at a time.
 - **Policies**: allow exactly the tools you list, and share policies with others.
 - **Activity log**: every request shows who asked, which agent, the reason it gave, what it called and what came back.
 - **Teams**: organizations, workspaces and roles, so teammates get their own access instead of a shared key.
 - **The whole Dokploy API**: all 554 endpoints, found by search, so your agent's context isn't flooded with tool definitions.
 - **Any API from its OpenAPI spec**: paste a link to an app's spec (Stripe, GitHub, your own) and every endpoint becomes a tool under your account, with read, create, edit and delete guessed for each. From the dashboard, from your agent with `zeqqat_import`, or with `POST /api/integrations/import`.
-- **Standard OAuth sign-in**: agents connect with OAuth 2.1, and each token only works on the connection it was issued for.
+- **Standard OAuth sign-in**: agents connect with OAuth 2.1, and each token only works on the MCP URL it was issued for.
 - **Self-hosted**: one container and Postgres, with migrations applied on startup.
 
 ## 🚀 Getting Started
@@ -67,7 +67,7 @@ To reach it locally on `http://localhost:3000`, uncomment the `ports` lines in `
 
 ### Connect an agent
 
-After you connect your Dokploy, Zeqqat gives you a connection URL like `https://your-zeqqat-address/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
+After you connect your Dokploy, Zeqqat gives you an MCP URL like `https://your-zeqqat-address/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
 
 ## ⚙️ Configuration
 
@@ -92,7 +92,7 @@ So we can tell how many self-hosted installs exist and which versions they run, 
 { "installId": "a random UUID made on first start", "version": "0.2.1" }
 ```
 
-No IP address, hostname, users, emails, instances, API keys, connections or tool calls are ever sent, and zeqqat.com doesn't store your IP. The code is in [`lib/telemetry.ts`](lib/telemetry.ts).
+No IP address, hostname, users, emails, instances, API keys, MCP URLs or tool calls are ever sent, and zeqqat.com doesn't store your IP. The code is in [`lib/telemetry.ts`](lib/telemetry.ts).
 
 To turn it off, set `ZEQQAT_TELEMETRY=0` (`DO_NOT_TRACK=1` works too) and restart.
 

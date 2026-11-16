@@ -99,7 +99,7 @@ export default async function IntegrationsPage({
           </h1>
           <p className="zq-sub">
             Each server you add is an instance, with its own API key, encrypted and never shown after saving.
-            Connections decide which agents reach which instance, and how far.
+            MCP URLs decide which agents reach which instance, and how far.
           </p>
         </div>
         {isOwner && !adding && !importing && !connecting && (
@@ -245,7 +245,7 @@ export default async function IntegrationsPage({
 
       <p className="zq-note">
         {liveAgents.length} {liveAgents.length === 1 ? "agent is" : "agents are"} signed in to this workspace. Set what
-        each URL can do on each instance in <a className="zq-textlink" href="/app/connections">Connections</a>.
+        each URL can do on each instance in <a className="zq-textlink" href="/app/mcp-urls">MCP URLs</a>.
       </p>
     </div>
   );

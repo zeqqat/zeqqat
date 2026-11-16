@@ -58,7 +58,7 @@ export default async function SettingsPage({
               : params.deleted
                 ? "Workspace deleted."
                 : params.transferred
-                  ? "Workspace transferred. Its connections have new URLs; the old ones keep working and tell agents the new one."
+                  ? "Workspace transferred. Its MCP URLs have new addresses; the old ones keep working and tell agents the new one."
                   : "Saved."}
           </span>
         </div>
@@ -92,7 +92,7 @@ export default async function SettingsPage({
           New workspace in @{ws.organizationSlug}
         </h2>
         <p className="zq-note" style={{ marginTop: 0, marginBottom: 12 }}>
-          Workspaces split one org by team: their own instances and keys, their own connections, their own members. For
+          Workspaces split one org by team: their own instances and keys, their own MCP URLs, their own members. For
           example Engineering gets the deploy tools and Marketing gets social media.
         </p>
         {isOrgOwner ? (
@@ -107,7 +107,7 @@ export default async function SettingsPage({
           New organization
         </h2>
         <p className="zq-note" style={{ marginTop: 0, marginBottom: 12 }}>
-          An organization has its own username, used in every connection URL: /&lt;username&gt;/mcp/&hellip; Lowercase with
+          An organization has its own username, used in every MCP URL: /&lt;username&gt;/mcp/&hellip; Lowercase with
           underscores, e.g. acme_corp. Your personal account @{personal ? ws.organizationSlug : "you"} has one owner, you;
           an organization can have several.
         </p>
@@ -140,8 +140,8 @@ export default async function SettingsPage({
             Transfer this workspace to an organization
           </h2>
           <p className="zq-note" style={{ marginTop: 0, marginBottom: 12 }}>
-            Moves its instances, connections and the policies it uses into an organization you own, so others can share ownership.
-            Connection URLs change; the old ones keep working and tell agents the new URL. Type {ws.workspaceSlug} to confirm.
+            Moves its instances, MCP URLs and the policies it uses into an organization you own, so others can share ownership.
+            Its MCP URLs change; the old ones keep working and tell agents the new URL. Type {ws.workspaceSlug} to confirm.
           </p>
           {teamOrgs.length === 0 ? (
             <p className="zq-empty">Create an organization first (above), then transfer this workspace to it.</p>
@@ -169,7 +169,7 @@ export default async function SettingsPage({
             Delete this workspace
           </h2>
           <p className="zq-note" style={{ marginTop: 0, marginBottom: 12 }}>
-            Removes its instances and their keys, its connections and its activity. Type {ws.workspaceSlug} to confirm.
+            Removes its instances and their keys, its MCP URLs and its activity. Type {ws.workspaceSlug} to confirm.
           </p>
           <form action={deleteWorkspaceAction} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <input className="zq-input" name="confirm" placeholder={ws.workspaceSlug} autoComplete="off" style={{ flex: "999 1 240px" }} />

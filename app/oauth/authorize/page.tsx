@@ -103,7 +103,7 @@ function Scope({
         <dd>{orgSlug}</dd>
         <dt>Workspace</dt>
         <dd>{workspaceName}</dd>
-        <dt>Connection</dt>
+        <dt>MCP URL</dt>
         <dd>{connectionName}</dd>
         {access && (
           <>
@@ -201,7 +201,7 @@ export default async function AuthorizePage({
   // cutoff the connection serves no tools, so there's nothing to sign in to.
   const cutOff = conn ? sunsetState(conn) === "cutoff" : false;
   if (conn && (cutOff || conn.authMode !== "members")) {
-    return errorPage("This connection doesn't take sign-ins", cutOff ? "It has been turned off." : "It's public, so it needs no sign-in.");
+    return errorPage("This MCP URL doesn't take sign-ins", cutOff ? "It has been turned off." : "It's public, so it needs no sign-in.");
   }
   if (conn) {
     const ws = await db.query.workspace.findFirst({ where: eq(workspace.id, conn.workspaceId) });
@@ -228,7 +228,7 @@ export default async function AuthorizePage({
     // instances, narrowed by this person's role.
     const policy = (await getConnectionPolicy(conn.id, conn.workspaceId)).filter((p) => p.enabled);
     const perm = union(policy.map((p) => intersect(p.perm, ROLE_CAP[role])));
-    const access = policy.length === 0 ? "Nothing yet. An admin adds instances to this connection." : describe(perm);
+    const access = policy.length === 0 ? "Nothing yet. An admin adds instances to this MCP URL." : describe(perm);
 
     return (
       <Shell host={host}>
@@ -246,7 +246,7 @@ export default async function AuthorizePage({
   // No connection named: the bare /mcp endpoint is retired, so every
   // sign-in is for one connection URL (naming doc v2, sections 6 and 9).
   return errorPage(
-    "Sign in from a connection URL",
+    "Sign in from an MCP URL",
     `This sign-in doesn't say which Zeqqat connection it's for. Add the connection URL from your workspace (it looks like ${new URL(publicUrl()).host}/<org>/mcp/<name>/<id>) to your agent and sign in from there.`,
   );
 }

@@ -25,7 +25,7 @@ const PIP: Record<CallState, React.ReactNode> = {
 };
 
 export function Avatar({ person }: { person: Person }) {
-  const name = person?.name ?? "Public connection";
+  const name = person?.name ?? "Public MCP URL";
   return (
     <span className="zq-av" aria-hidden="true">
       {person?.image ? (

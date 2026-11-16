@@ -75,7 +75,7 @@ export default async function ToolsPage({
       <p className="zq-sub">
         Every tool of the integrations connected to this workspace, named <code>@org/target.type.action</code>. Agents find them
         with zeqqat_search and run them with zeqqat_run by operationId on an instance; whether a run is allowed is decided by
-        the connection (or the policy attached to the instance) and the person&rsquo;s role.
+        the MCP URL (or the policy attached to the instance) and the person&rsquo;s role.
       </p>
       {toReview > 0 && (
         <p className="zq-note">

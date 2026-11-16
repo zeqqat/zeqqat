@@ -114,7 +114,7 @@ function appCall(s: ReplayCall, id: string, at: string, reason: string): Activit
     integrationSlug: "dokploy",
     instanceAlias: DEMO_INSTANCE,
     inputs: s.inputs,
-    errorMessage: s.outcome === "blocked" ? `Not sent: ${s.kind} on "${DEMO_INSTANCE}" isn't allowed through this connection.` : null,
+    errorMessage: s.outcome === "blocked" ? `Not sent: ${s.kind} on "${DEMO_INSTANCE}" isn't allowed through this MCP URL.` : null,
     redactions: s.hidden ?? 0,
     reason,
   };

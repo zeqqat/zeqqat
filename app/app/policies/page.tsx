@@ -64,7 +64,7 @@ export default async function PoliciesPage({
           Yours
         </h2>
         {policies.length === 0 ? (
-          <p className="zq-empty">No policies yet. Connections allow tools by kind until you attach one.</p>
+          <p className="zq-empty">No policies yet. MCP URLs allow tools by kind until you attach one.</p>
         ) : (
           <div className="zq-list">
             {policies.map((p) => (

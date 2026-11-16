@@ -308,11 +308,11 @@ export default async function MembersPage({
         </h2>
         <dl className="zq-kv">
           <dt>Admin</dt>
-          <dd>Adds instances and their keys, creates connections and sets their policy, manages members. Can delete through a connection that allows it</dd>
+          <dd>Adds instances and their keys, creates MCP URLs and sets their policy, manages members. Can delete through an MCP URL that allows it</dd>
           <dt>Member</dt>
-          <dd>Read, create and edit through any connection that allows it</dd>
+          <dd>Read, create and edit through any MCP URL that allows it</dd>
           <dt>Viewer</dt>
-          <dd>Read only, whatever the connection allows</dd>
+          <dd>Read only, whatever the MCP URL allows</dd>
         </dl>
       </section>
     </div>

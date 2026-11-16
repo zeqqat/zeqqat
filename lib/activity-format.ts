@@ -88,9 +88,9 @@ export function lookupText(action: string, args: unknown): string {
     case "describe":
       return str(a.name) ? `Read how ${a.name} works` : "Read how a tool works";
     case "whoami":
-      return "Checked what this connection reaches";
+      return "Checked what this MCP URL reaches";
     case "policy":
-      return str(a.instance) ? `Read the policy on ${a.instance}` : "Read the policies on this connection";
+      return str(a.instance) ? `Read the policy on ${a.instance}` : "Read the policies on this MCP URL";
     case "docs":
       return str(a.question) ? `Read the Zeqqat docs: “${a.question}”` : "Read the Zeqqat docs";
     case "run":

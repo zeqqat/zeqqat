@@ -138,7 +138,7 @@ export const TOOLS = [
     title: "Search tools",
     annotations: { title: "Search tools", readOnlyHint: true, openWorldHint: false },
     description:
-      "Find tools across every integration this connection reaches (deploys, logs, apps, projects...). Always search before deciding a task can't be done. Returns operationIds to pass to zeqqat_run, with the instances each may run on." +
+      "Find tools across every integration this MCP URL reaches (deploys, logs, apps, projects...). Always search before deciding a task can't be done. Returns operationIds to pass to zeqqat_run, with the instances each may run on." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
@@ -198,7 +198,7 @@ export const TOOLS = [
     title: "Show context",
     annotations: { title: "Show context", readOnlyHint: true, openWorldHint: false },
     description:
-      "Call first: returns the Zeqqat context. Which integrations and instances this connection reaches, and what you may do on each.",
+      "Call first: returns the Zeqqat context. Which integrations and instances this MCP URL reaches, and what you may do on each.",
     inputSchema: { type: "object", properties: { reason: REASON_OPTIONAL } },
     outputSchema: outputSchema({}),
   },
@@ -348,7 +348,7 @@ export const TOOLS = [
     title: "Read Zeqqat docs",
     annotations: { title: "Read Zeqqat docs", readOnlyHint: true, openWorldHint: false },
     description:
-      "Answers questions about how Zeqqat works: why a call was denied, permissions, integrations, instances, connections, errors. Pass a question; returns short passages." +
+      "Answers questions about how Zeqqat works: why a call was denied, permissions, integrations, instances, MCP URLs, errors. Pass a question; returns short passages." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
@@ -418,9 +418,9 @@ function instructionsText(context: ZeqqatContext, callerRole: McpContext["caller
         )
         .join("; ")
     : "nothing yet";
-  const who = callerRole === "public" ? " Public connection: read only." : "";
+  const who = callerRole === "public" ? " Public MCP URL: read only." : "";
   const text =
-    `${context.notice ? `${context.notice} ` : ""}Zeqqat MCP gateway. Connection "${context.connection ?? ""}" in workspace "${context.workspace}", owned by the ${context.account.type} account @${context.account.username}. Reaches: ${reach}.${who} ` +
+    `${context.notice ? `${context.notice} ` : ""}Zeqqat MCP gateway. MCP URL "${context.mcpUrl ?? ""}" in workspace "${context.workspace}", owned by the ${context.account.type} account @${context.account.username}. Reaches: ${reach}.${who} ` +
     `Flow: zeqqat_search, then zeqqat_describe, then zeqqat_run with an operationId and an instance name. Search, describe and run need a one-line reason saying what the user asked for, worded the same on every call for one request. Every result starts with this context. Secrets never reach you: results show handles like {{zq_secret_...}}, which you pass back in zeqqat_run inputs, and zeqqat_secret creates new ones. ` +
     `Context: ${JSON.stringify({ context })}`;
   return text;

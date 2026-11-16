@@ -3,7 +3,7 @@
   "mcpServers": {
     "zeqqat": {
       "type": "streamable-http",
-      "url": "https://zeqqat.com/your-username/mcp/your-connection/your-id"
+      "url": "https://zeqqat.com/your-username/mcp/your-url-name/your-id"
     }
   }
 }

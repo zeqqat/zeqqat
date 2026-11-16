@@ -126,7 +126,7 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
                 {call.callerRole && <small> · {call.callerRole}</small>}
               </>
             ) : (
-              "Public connection, no sign-in"
+              "Public MCP URL, no sign-in"
             )}
           </dd>
           <dt>agent</dt>
@@ -149,7 +149,7 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
           <dd>{call.workspaceName}</dd>
           {call.connectionName && (
             <>
-              <dt>connection</dt>
+              <dt>MCP URL</dt>
               <dd>
                 {call.connectionName} {call.connectionUrl && <small>{call.connectionUrl}</small>}
               </dd>

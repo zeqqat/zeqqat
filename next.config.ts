@@ -26,6 +26,14 @@ const nextConfig: NextConfig = {
       ],
     },
   },
+  // The MCP URLs page used to be called Connections.
+  async redirects() {
+    return [
+      { source: "/app/connections", destination: "/app/mcp-urls", permanent: true },
+      { source: "/app/connections/:id", destination: "/app/mcp-urls/:id", permanent: true },
+      { source: "/docs/agents/connections", destination: "/docs/agents/mcp-urls", permanent: true },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

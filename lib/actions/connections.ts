@@ -36,8 +36,8 @@ export async function createConnectionAction(_prev: ConnFormState, formData: For
     description,
     createdByUserId: user.id,
   });
-  revalidatePath("/app/connections");
-  redirect(`/app/connections/${id}?created=1`);
+  revalidatePath("/app/mcp-urls");
+  redirect(`/app/mcp-urls/${id}?created=1`);
 }
 
 // Saves the whole policy table in one go: one row per instance, each with
@@ -48,7 +48,7 @@ export async function savePolicyAction(formData: FormData) {
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/connections");
+  if (!conn) redirect("/app/mcp-urls");
   const instances = await db
     .select({ id: instance.id, integrationSlug: integration.slug })
     .from(instance)
@@ -81,8 +81,8 @@ export async function savePolicyAction(formData: FormData) {
         .onConflictDoUpdate({ target: [connectionGrant.connectionId, connectionGrant.instanceId], set: values });
     }
   });
-  revalidatePath(`/app/connections/${conn.id}`);
-  redirect(`/app/connections/${conn.id}?saved=1`);
+  revalidatePath(`/app/mcp-urls/${conn.id}`);
+  redirect(`/app/mcp-urls/${conn.id}?saved=1`);
 }
 
 // Switching to public drops every write permission and signs out every
@@ -93,7 +93,7 @@ export async function setAuthModeAction(formData: FormData) {
   const id = formData.get("connection_id")?.toString() ?? "";
   const mode = formData.get("auth_mode")?.toString() === "public" ? "public" : "members";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn || conn.authMode === mode) redirect(`/app/connections/${id}`);
+  if (!conn || conn.authMode === mode) redirect(`/app/mcp-urls/${id}?tab=manage`);
   await db.transaction(async (tx) => {
     await tx.update(connection).set({ authMode: mode }).where(eq(connection.id, conn.id));
     if (mode === "public") {
@@ -104,8 +104,8 @@ export async function setAuthModeAction(formData: FormData) {
       await revokeGrants(tx, conn.id);
     }
   });
-  revalidatePath(`/app/connections/${conn.id}`);
-  redirect(`/app/connections/${conn.id}?saved=1`);
+  revalidatePath(`/app/mcp-urls/${conn.id}`);
+  redirect(`/app/mcp-urls/${conn.id}?saved=1&tab=manage`);
 }
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -140,12 +140,12 @@ export async function sunsetConnectionAction(formData: FormData) {
   const id = formData.get("connection_id")?.toString() ?? "";
   const message = (formData.get("message")?.toString() ?? "").trim().slice(0, 400) || null;
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/connections");
+  if (!conn) redirect("/app/mcp-urls");
   const cutoff = readCutoff(formData);
-  if (!cutoff) redirect(`/app/connections/${conn.id}?error=cutoff`);
+  if (!cutoff) redirect(`/app/mcp-urls/${conn.id}?error=cutoff&tab=manage`);
   await db.update(connection).set({ sunsetAt: cutoff, sunsetMessage: message }).where(eq(connection.id, conn.id));
-  revalidatePath("/app/connections");
-  redirect(`/app/connections/${conn.id}?sunset=1`);
+  revalidatePath("/app/mcp-urls");
+  redirect(`/app/mcp-urls/${conn.id}?sunset=1&tab=manage`);
 }
 
 // Replacing a connection: a new one (same name unless changed) with a new
@@ -155,14 +155,26 @@ export async function replaceConnectionAction(formData: FormData) {
   const { user, ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const old = await getConnection(ws.workspaceId, id);
-  if (!old) redirect("/app/connections");
+  if (!old) redirect("/app/mcp-urls");
   const rawName = formData.get("name")?.toString() ?? "";
   const name = rawName.trim() ? toConnectionName(rawName) : old.name;
-  if (!CONNECTION_NAME.test(name)) redirect(`/app/connections/${old.id}?error=name`);
+  if (!CONNECTION_NAME.test(name)) redirect(`/app/mcp-urls/${old.id}?error=name&tab=manage`);
   const message = (formData.get("message")?.toString() ?? "").trim().slice(0, 400) || null;
   const newConnId = await replaceConnection({ old, name, cutoff: readCutoff(formData), message, createdByUserId: user.id });
-  revalidatePath("/app/connections");
-  redirect(`/app/connections/${newConnId}?replaced=${old.id}`);
+  revalidatePath("/app/mcp-urls");
+  redirect(`/app/mcp-urls/${newConnId}?replaced=${old.id}`);
+}
+
+// The description under the URL: what kind of tools it connects to.
+export async function updateDescriptionAction(formData: FormData) {
+  const { ws } = await requireOwner();
+  const id = formData.get("connection_id")?.toString() ?? "";
+  const conn = await ownedConnection(ws.workspaceId, id);
+  if (!conn) redirect("/app/mcp-urls");
+  const description = (formData.get("description")?.toString() ?? "").replace(/\s+/g, " ").trim().slice(0, 140) || null;
+  await db.update(connection).set({ description }).where(eq(connection.id, conn.id));
+  revalidatePath("/app/mcp-urls");
+  redirect(`/app/mcp-urls/${conn.id}?saved=1&tab=manage`);
 }
 
 // Cancels a sunset: the connection is fully live again.
@@ -170,10 +182,10 @@ export async function reviveConnectionAction(formData: FormData) {
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/connections");
+  if (!conn) redirect("/app/mcp-urls");
   await db.update(connection).set({ sunsetAt: null, sunsetMessage: null }).where(eq(connection.id, conn.id));
-  revalidatePath("/app/connections");
-  redirect(`/app/connections/${conn.id}`);
+  revalidatePath("/app/mcp-urls");
+  redirect(`/app/mcp-urls/${conn.id}?tab=manage`);
 }
 
 // Deleting is soft: the URL stops answering at all (it looks exactly like
@@ -182,14 +194,14 @@ export async function reviveConnectionAction(formData: FormData) {
 export async function deleteConnectionAction(formData: FormData) {
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
-  if (formData.get("confirm")?.toString() !== "delete") redirect(`/app/connections/${id}?error=confirm`);
+  if (formData.get("confirm")?.toString() !== "delete") redirect(`/app/mcp-urls/${id}?error=confirm&tab=manage`);
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/connections");
+  if (!conn) redirect("/app/mcp-urls");
   await db.transaction(async (tx) => {
     await tx.update(connection).set({ deletedAt: new Date() }).where(eq(connection.id, conn.id));
     await tx.delete(connectionGrant).where(eq(connectionGrant.connectionId, conn.id));
     await revokeGrants(tx, conn.id);
   });
-  revalidatePath("/app/connections");
-  redirect("/app/connections?deleted=1");
+  revalidatePath("/app/mcp-urls");
+  redirect("/app/mcp-urls?deleted=1");
 }

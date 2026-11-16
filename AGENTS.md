@@ -129,6 +129,14 @@ need an org on zeqqat.com, not a local one (planned, not built).
   `summaries.json`, update `kinds.json`'s `specSha256` and the manifest's
   `release`, run `pnpm test` (it fails while an endpoint lacks either).
 
+**MCP URL, not connection.** What the code calls a `connection` (table,
+files, `lib/connections.ts`) is an **MCP URL** everywhere a person or an
+agent reads it: the dashboard (`/app/mcp-urls`, the old `/app/connections`
+redirects), tool descriptions, errors, the context (`mcpUrl`), the docs
+and the plugin. "Connection" was misleading: a URL is not connected to
+anything until someone pastes it into an agent. People whose agent signed
+in through one are "connected".
+
 **UI vocabulary matches the code.** The dashboard says Integrations and
 instances. Never label anything "Service": Dokploy uses "service" for an
 app or database inside a project, so the word is ambiguous to users and

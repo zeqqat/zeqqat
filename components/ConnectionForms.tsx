@@ -60,7 +60,7 @@ export function CreateConnectionForm({ orgSlug }: { orgSlug: string }) {
             <input type="radio" name="auth_mode" value="members" checked={mode === "members"} onChange={() => setMode("members")} />
             <span>
               <b>Workspace members</b>
-              <small>Agents sign in. Each person&rsquo;s role narrows what the connection allows.</small>
+              <small>Agents sign in. Each person&rsquo;s role narrows what the URL allows.</small>
             </span>
           </label>
           <label className="zq-radio">
@@ -74,7 +74,7 @@ export function CreateConnectionForm({ orgSlug }: { orgSlug: string }) {
       </fieldset>
       <ErrorBox error={state.error} />
       <button type="submit" className="zq-action zq-action-primary" disabled={pending} style={{ marginTop: 16 }}>
-        {pending ? "Creating..." : "Create connection"}
+        {pending ? "Creating..." : "Create MCP URL"}
       </button>
     </form>
   );

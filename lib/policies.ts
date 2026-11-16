@@ -54,13 +54,13 @@ function kindsText(perm: Perm): string {
   const kinds = ["read", "create", "edit", "delete"] as const;
   const yes = kinds.filter((k) => perm[k]);
   const no = kinds.filter((k) => !perm[k]);
-  if (yes.length === 0) return "Nothing allowed on this instance through this connection.";
+  if (yes.length === 0) return "Nothing allowed on this instance through this MCP URL.";
   return `Allowed: ${yes.join(", ")}.${no.length ? ` Not allowed: ${no.join(", ")}.` : ""}`;
 }
 
 // One line for the model: what this instance allows.
 export function accessSummary(access: InstanceAccess): string {
-  if (access.mode === "none") return "Not reachable through this connection.";
+  if (access.mode === "none") return "Not reachable through this MCP URL.";
   if (access.mode === "kinds") return kindsText(access.perm);
   const p = access.policy;
   const base = p.description || `Allows ${p.allow.length} tool${p.allow.length === 1 ? "" : "s"}; everything else is denied.`;

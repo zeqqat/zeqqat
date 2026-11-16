@@ -167,7 +167,7 @@ export function CallLogList({
                     )}
                     {c.outcome === "blocked" && (
                       <p className="zq-note" style={{ marginTop: 10 }}>
-                        This call was stopped by the connection&rsquo;s policy or the person&rsquo;s role. <a className="zq-textlink" href="/app/connections">Change it in Connections</a>
+                        This call was stopped by the MCP URL&rsquo;s policy or the person&rsquo;s role. <a className="zq-textlink" href="/app/mcp-urls">Change it in MCP URLs</a>
                       </p>
                     )}
                   </div>

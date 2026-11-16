@@ -47,13 +47,13 @@ describe("contextFrom", () => {
     ]);
     expect(c.account).toEqual({ username: "acme_corp", type: "organization" });
     expect("namespace" in c).toBe(false);
-    expect(c.connection).toBe("deployment");
+    expect(c.mcpUrl).toBe("deployment");
     expect(c.integrations.map((g) => g.name)).toEqual(["@zeqqat/dokploy", "@gaita/coolify"]);
     expect(c.integrations[0].instances).toEqual([
       { name: "prod", policy: null, policySummary: "Allowed: read. Not allowed: create, edit, delete." },
       { name: "staging", policy: null, policySummary: "Allowed: read, create, edit. Not allowed: delete." },
     ]);
-    expect(c.missing).toMatch(/not on this connection/);
+    expect(c.missing).toMatch(/not on this MCP URL/);
   });
 
   it("names a personal account by its username", () => {

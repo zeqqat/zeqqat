@@ -155,7 +155,7 @@ export async function toolSearch(ctx: Ctx, args: { query?: string; limit?: numbe
     const connected = [...new Set(instances.map((i) => integrationRef(i.integrationOrgSlug, i.integrationSlug)))];
     const text = connected.length
       ? `No matches for "${query}". Connected integrations: ${connected.join(", ")}. Try a broader term (deploy, logs, stop), or ask zeqqat_docs.`
-      : `No matches for "${query}", and no instances are reachable through this connection yet.`;
+      : `No matches for "${query}", and no instances are reachable through this MCP URL yet.`;
     return logged(ctx, TOOL_NAMES.search, requestArgs, toolOk({ matches: [], integrations: connected }, text));
   }
 
@@ -207,7 +207,7 @@ export async function toolDescribe(ctx: Ctx, args: { name?: string; instance?: s
         ctx,
         TOOL_NAMES.describe,
         requestArgs,
-        toolError(`No instance called "${args.instance}" on this connection. Instances you can use: ${instanceNames(instances)}.`),
+        toolError(`No instance called "${args.instance}" on this MCP URL. Instances you can use: ${instanceNames(instances)}.`),
       );
     }
     integrationIds = [inst.integrationId];
@@ -219,7 +219,7 @@ export async function toolDescribe(ctx: Ctx, args: { name?: string; instance?: s
       ctx,
       TOOL_NAMES.describe,
       requestArgs,
-      toolError(`No tool named "${args.name}" reachable through this connection. Use zeqqat_search to find the operationId.`),
+      toolError(`No tool named "${args.name}" reachable through this MCP URL. Use zeqqat_search to find the operationId.`),
     );
   }
   if (found.length > 1) {
@@ -274,7 +274,7 @@ export async function toolWhoami(ctx: Ctx): Promise<ToolResult> {
     ctx,
     TOOL_NAMES.whoami,
     {},
-    toolOk(null, "Above is your Zeqqat context: what this connection reaches and what you may do on each instance."),
+    toolOk(null, "Above is your Zeqqat context: what this MCP URL reaches and what you may do on each instance."),
   );
 }
 
@@ -318,7 +318,7 @@ export async function toolPolicy(ctx: Ctx, args: { instance?: string }): Promise
       ctx,
       TOOL_NAMES.policy,
       requestArgs,
-      toolError(`No instance called "${args.instance}" on this connection. Instances you can use: ${instanceNames(instances)}.`),
+      toolError(`No instance called "${args.instance}" on this MCP URL. Instances you can use: ${instanceNames(instances)}.`),
     );
   }
   const policies = picked.map((i) => {
@@ -348,7 +348,7 @@ export async function toolPolicy(ctx: Ctx, args: { instance?: string }): Promise
         : `${p.instance}: ${p.summary}`,
     )
     .join("\n");
-  return logged(ctx, TOOL_NAMES.policy, requestArgs, toolOk({ policies }, text || "This connection reaches no instances yet."));
+  return logged(ctx, TOOL_NAMES.policy, requestArgs, toolOk({ policies }, text || "This MCP URL reaches no instances yet."));
 }
 
 // A fresh random secret the agent can use without seeing: a database
@@ -362,7 +362,7 @@ export async function toolSecret(ctx: Ctx, args: { kind?: string; length?: numbe
   const length = args.length ?? 32;
   const requestArgs = { kind, length };
   if (ctx.callerRole === "public" || ctx.callerRole === "viewer") {
-    return logged(ctx, TOOL_NAMES.secret, requestArgs, toolError("This connection is read only, so it can't create secrets."));
+    return logged(ctx, TOOL_NAMES.secret, requestArgs, toolError("This MCP URL is read only, so it can't create secrets."));
   }
   if (!SECRET_KINDS.includes(kind)) {
     return logged(ctx, TOOL_NAMES.secret, requestArgs, toolError(`kind must be one of: ${SECRET_KINDS.join(", ")}.`));
@@ -420,7 +420,7 @@ export async function toolImport(
       `${r.updated ? "Updated" : "Added"} ${r.ref} (${r.name}) with ${r.endpoints} tools: ` +
       `${r.kinds.read} read, ${r.kinds.create} create, ${r.kinds.edit} edit, ${r.kinds.delete} delete. ` +
       "Kinds are guessed from each endpoint's method and name; anything that looks destructive is marked delete. " +
-      `To use it, the user adds an instance in the Zeqqat dashboard (Integrations) with the app's URL${r.baseUrl ? ` (${r.baseUrl})` : ""} and API key, then attaches it to this connection.`;
+      `To use it, the user adds an instance in the Zeqqat dashboard (Integrations) with the app's URL${r.baseUrl ? ` (${r.baseUrl})` : ""} and API key, then attaches it to this MCP URL.`;
     return logged(ctx, TOOL_NAMES.import, requestArgs, toolOk(data, text));
   } catch (err) {
     const msg = err instanceof ImportError ? err.message : "The import failed. Check the link and try again.";
@@ -450,7 +450,7 @@ export async function toolFeedback(
         ctx,
         TOOL_NAMES.feedback,
         requestArgs,
-        toolError(`No instance called "${args.instance}" on this connection. Instances you can use: ${instanceNames(instances)}.`),
+        toolError(`No instance called "${args.instance}" on this MCP URL. Instances you can use: ${instanceNames(instances)}.`),
       );
     }
     integrationIds = [inst.integrationId];
@@ -464,7 +464,7 @@ export async function toolFeedback(
       toolError(
         found.length
           ? `"${args.name}" exists in more than one integration. Pass an instance.`
-          : `No tool named "${args.name}" reachable through this connection. Use zeqqat_search to find the operationId.`,
+          : `No tool named "${args.name}" reachable through this MCP URL. Use zeqqat_search to find the operationId.`,
       ),
     );
   }
@@ -508,7 +508,7 @@ export async function toolCheck(ctx: Ctx, args: { address?: string; instance?: s
     const instances = await reachableInstances(ctx);
     const inst = instances.find((i) => i.alias === args.instance);
     if (!inst || inst.integrationSlug !== "dokploy") {
-      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError(`instance must be a Dokploy instance on this connection: ${instanceNames(instances.filter((i) => i.integrationSlug === "dokploy"))}.`));
+      return logged(ctx, TOOL_NAMES.check, requestArgs, toolError(`instance must be a Dokploy instance on this MCP URL: ${instanceNames(instances.filter((i) => i.integrationSlug === "dokploy"))}.`));
     }
     if (!(CHECKABLE_PORTS as readonly number[]).includes(args.port)) {
       return logged(ctx, TOOL_NAMES.check, requestArgs, toolError(`port must be one of ${CHECKABLE_PORTS.join(", ")} (SSH, web, Dokploy's dashboard).`));
@@ -546,7 +546,7 @@ export async function toolCheck(ctx: Ctx, args: { address?: string; instance?: s
 // do?" instead of opening the dashboard.
 
 function activityPerson(c: RequestCard) {
-  return c.person ? (c.person.username ? `@${c.person.username}` : c.person.name) : "a public connection";
+  return c.person ? (c.person.username ? `@${c.person.username}` : c.person.name) : "a public MCP URL";
 }
 
 function activityCard(c: RequestCard, base: string) {
@@ -583,9 +583,9 @@ function activityCall(c: ActivityCall) {
 export async function toolActivity(ctx: Ctx, args: { limit?: number; request?: string }): Promise<ToolResult> {
   const requestArgs = { limit: args.limit ?? null, request: args.request ?? null };
   const fail = (msg: string) => logged(ctx, TOOL_NAMES.activity, requestArgs, toolError(msg));
-  if (!ctx.userId) return fail("Activity needs a connection that belongs to a person. Open Activity in the Zeqqat dashboard instead.");
+  if (!ctx.userId) return fail("Activity needs an MCP URL that belongs to a person. Open Activity in the Zeqqat dashboard instead.");
   const ws = (await listUserWorkspaces(ctx.userId)).find((w) => w.workspaceId === ctx.workspaceId);
-  if (!ws) return fail("This connection's workspace isn't visible to you.");
+  if (!ws) return fail("This MCP URL's workspace isn't visible to you.");
   const viewer = { userId: ctx.userId, ws };
   const base = publicUrl().replace(/\/$/, "");
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
@@ -10,13 +10,13 @@ import { DokployMark } from "./Marks";
 import { ThemeToggle } from "./ThemeToggle";
 import { VersionPill } from "./VersionPill";
 
-type Pane = "overview" | "connections" | "integrations" | "tools" | "policies" | "activity" | "members" | "settings";
+type Pane = "overview" | "mcp-urls" | "integrations" | "tools" | "policies" | "activity" | "members" | "settings";
 
 // `also` lists other paths that belong to the same pane, so an instance
 // page (/app/instances/<id>) still highlights Integrations.
 const ITEMS: { pane: Pane; label: string; href: string; also?: string[] }[] = [
   { pane: "overview", label: "Overview", href: "/app" },
-  { pane: "connections", label: "Connections", href: "/app/connections" },
+  { pane: "mcp-urls", label: "MCP URLs", href: "/app/mcp-urls" },
   { pane: "integrations", label: "Integrations", href: "/app/integrations", also: ["/app/instances"] },
   { pane: "tools", label: "Tools", href: "/app/tools" },
   { pane: "policies", label: "Policies", href: "/app/policies" },
@@ -24,6 +24,27 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[] }[] = [
   { pane: "members", label: "Members", href: "/app/team" },
   { pane: "settings", label: "Settings", href: "/app/settings" },
 ];
+
+// Pages outside the menu that still get a name in the top bar.
+const OTHER_PAGES: Record<string, string> = {
+  "/app/account": "Account",
+  "/app/releases": "Releases",
+  "/app/agents": "Agents",
+  "/app/self-host": "Self-host",
+  "/app/feedback": "Feedback",
+};
+
+// A page deeper than the menu (one MCP URL, say) names itself at the end
+// of the top bar's path with <CrumbLast text="..." />.
+const CrumbContext = createContext<(text: string | null) => void>(() => {});
+export function CrumbLast({ text }: { text: string }) {
+  const set = useContext(CrumbContext);
+  useEffect(() => {
+    set(text);
+    return () => set(null);
+  }, [set, text]);
+  return null;
+}
 
 export type ShellOrg = { id: string; slug: string; name: string };
 export type ShellWorkspace = { id: string; slug: string; name: string; role: "admin" | "member" | "viewer" };
@@ -76,6 +97,7 @@ export function AppShell({
   const [switchOpen, setSwitchOpen] = useState(false);
   const switchRef = useRef<HTMLDivElement>(null);
   const multiWs = workspaces.length > 1;
+  const [crumbLast, setCrumbLast] = useState<string | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   // A held-back page opened by its address (a bookmark, a typed URL): show
   // nothing of it, go to the connect screen and say why.
@@ -157,7 +179,15 @@ export function AppShell({
   const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
   const menuClass = menu === "open" ? " is-open" : menu === "closed" ? " is-closed" : "";
 
+  // Where you are, for the top bar: the menu page this path belongs to.
+  const menuPage = ITEMS.find((item) =>
+    item.href === "/app" ? pathname === "/app" : [item.href, ...(item.also ?? [])].some((h) => pathname.startsWith(h)),
+  );
+  const otherHref = Object.keys(OTHER_PAGES).find((h) => pathname.startsWith(h));
+  const page = menuPage ? { href: menuPage.href, label: menuPage.label } : otherHref ? { href: otherHref, label: OTHER_PAGES[otherHref] } : null;
+
   return (
+    <CrumbContext.Provider value={setCrumbLast}>
     <div className={`zq-shell${menuClass}`}>
       <header className="zq-appbar">
         <div className="zq-appbar-l">
@@ -179,15 +209,27 @@ export function AppShell({
             </span>
             <span className="zq-name">zeqqat</span>
           </a>
-          <span className="zq-crumb" aria-label="Current workspace">
-            <span className="zq-crumb-sep">/</span>@{currentOrg.slug}
-            {multiWs && (
+          <nav className="zq-bc" aria-label="You are here">
+            <a href={`/${currentOrg.slug}`}>@{currentOrg.slug}</a>
+            <span className="zq-bc-sep">/</span>
+            <a href="/app" className={page ? undefined : "is-cur"}>
+              {currentWorkspace.name}
+            </a>
+            {page && (
               <>
-                <span className="zq-crumb-sep">/</span>
-                {currentWorkspace.slug}
+                <span className="zq-bc-sep">/</span>
+                <a href={page.href} className={crumbLast ? undefined : "is-cur"}>
+                  {page.label}
+                </a>
               </>
             )}
-          </span>
+            {page && crumbLast && (
+              <>
+                <span className="zq-bc-sep">/</span>
+                <span className="zq-bc-last is-cur">{crumbLast}</span>
+              </>
+            )}
+          </nav>
         </div>
         <div className="zq-appbar-r">
           <div className="zq-user">
@@ -426,6 +468,7 @@ export function AppShell({
         </div>
       )}
     </div>
+    </CrumbContext.Provider>
   );
 }
 

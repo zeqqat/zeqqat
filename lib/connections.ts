@@ -133,7 +133,7 @@ export async function findConnectionByPath(orgSlug: string, name: string, shortI
 // The notice for a connection reached through an old URL.
 export function movedNotice(conn: ConnectionRow): string {
   return conn.movedTo
-    ? `This Zeqqat connection (${conn.name}) moved to a new URL: ${conn.movedTo}. The old URL keeps working for now; tell the user to update the connector.`
+    ? `This Zeqqat MCP URL (${conn.name}) moved to a new address: ${conn.movedTo}. The old URL keeps working for now; tell the user to update the connector.`
     : "";
 }
 
@@ -196,8 +196,8 @@ export async function sunsetNotice(conn: ConnectionRow, now = new Date()): Promi
   const custom = conn.sunsetMessage ? ` ${conn.sunsetMessage}` : "";
   const text =
     state === "warning"
-      ? `This Zeqqat connection (${conn.name}) turns off on ${date}. It keeps working until then.${where}${custom}`
-      : `This Zeqqat connection (${conn.name}) was turned off on ${date} and no longer serves tools.${where}${custom}`;
+      ? `This Zeqqat MCP URL (${conn.name}) turns off on ${date}. It keeps working until then.${where}${custom}`
+      : `This Zeqqat MCP URL (${conn.name}) was turned off on ${date} and no longer serves tools.${where}${custom}`;
   return { state, text, replacementUrl };
 }
 

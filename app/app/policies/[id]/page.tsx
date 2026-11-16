@@ -19,7 +19,7 @@ import { policyPagePath } from "../../../../lib/tool-names";
 const ERRORS: Record<string, string> = {
   name: "Name it with letters and numbers, for example read_plus_deploy.",
   taken: "You already have a policy with that name for this integration.",
-  in_use: "This policy is attached to a connection. Pick another policy there first.",
+  in_use: "This policy is attached to an MCP URL. Pick another policy there first.",
 };
 
 function Ok({ text }: { text: string }) {
@@ -185,7 +185,7 @@ export default async function PolicyPage({
               Delete this policy
             </button>
           </form>
-          <p className="zq-note">Copies others made stay theirs. A policy attached to a connection can&rsquo;t be deleted.</p>
+          <p className="zq-note">Copies others made stay theirs. A policy attached to an MCP URL can&rsquo;t be deleted.</p>
         </section>
       )}
     </div>

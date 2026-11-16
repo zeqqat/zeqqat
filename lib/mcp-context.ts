@@ -55,7 +55,7 @@ export type ZeqqatContext = {
   zeqqat?: ContextZeqqat;
   account: ContextAccount;
   workspace: string;
-  connection: string | null;
+  mcpUrl: string | null;
   integrations: ContextIntegration[];
   missing: string;
   notice: string | null;
@@ -72,7 +72,7 @@ export type ReachableInstance = {
 };
 
 const MISSING =
-  "Only the integrations listed here are connected. If the user needs another one, tell them it is not on this connection; they can add it in the Zeqqat dashboard.";
+  "Only the integrations listed here are connected. If the user needs another one, tell them it is not on this MCP URL; they can add it in the Zeqqat dashboard.";
 
 // Added to `missing` in the compact context, which has no categories.
 const CATEGORIES_HINT = " Call zeqqat_whoami to see each integration's tool categories.";
@@ -175,7 +175,7 @@ export function contextFrom(
   return {
     account: { username: ctx.organizationSlug, type: ctx.organizationKind },
     workspace: ctx.workspaceName,
-    connection: ctx.connectionName ?? null,
+    mcpUrl: ctx.connectionName ?? null,
     integrations,
     missing: opts.full || integrations.length === 0 ? MISSING : MISSING + CATEGORIES_HINT,
     notice: ctx.notice ?? null,

@@ -15,7 +15,7 @@ const SHIELD = (
 export { LookupLine } from "./LookupLine";
 
 export const CALL_SUMMARY_TEXT =
-  "What the agent sent to Zeqqat: the inputs it passed, the connection they came through, and the instance they acted on.";
+  "What the agent sent to Zeqqat: the inputs it passed, the MCP URL they came through, and the instance they acted on.";
 
 function why(call: ActivityCall): { tone: "blocked" | "error"; text: string } | null {
   if (call.state === "blocked") {

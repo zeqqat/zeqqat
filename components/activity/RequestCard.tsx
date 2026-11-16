@@ -18,9 +18,9 @@ export function RequestCard({ card, linked, heading }: { card: Card; linked: boo
 
   const views = [
     card.connections.length > 0 && {
-      label: plural(card.connections.length, "View connection", "View connections"),
+      label: plural(card.connections.length, "View MCP URL", "View MCP URLs"),
       count: card.connections.length,
-      href: card.connections.length === 1 ? `/app/connections/${card.connections[0].id}` : "/app/connections",
+      href: card.connections.length === 1 ? `/app/mcp-urls/${card.connections[0].id}` : "/app/mcp-urls",
     },
     card.integrations.length > 0 && {
       label: plural(card.integrations.length, "View integration", "View integrations"),
@@ -37,7 +37,7 @@ export function RequestCard({ card, linked, heading }: { card: Card; linked: boo
   const review = card.blocked
     ? {
         label: `Review ${card.blocked.op}${card.blocked.instanceAlias ? ` on ${card.blocked.instanceAlias}` : ""}`,
-        href: card.blocked.connectionId ? `/app/connections/${card.blocked.connectionId}` : "/app/connections",
+        href: card.blocked.connectionId ? `/app/mcp-urls/${card.blocked.connectionId}` : "/app/mcp-urls",
       }
     : null;
 
@@ -56,7 +56,7 @@ export function RequestCard({ card, linked, heading }: { card: Card; linked: boo
       <Avatar person={p} />
       <div className="zq-rc-body">
         <div className="zq-rc-top">
-          <b>{p?.name ?? "Public connection"}</b>
+          <b>{p?.name ?? "Public MCP URL"}</b>
           {p?.username && <span className="zq-rc-handle">@{p.username}</span>}
           <span className="zq-rc-sep">·</span>
           <RelTime iso={card.lastAt} />

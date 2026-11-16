@@ -22,7 +22,7 @@ import { getUserWorkspace, workspaceRoleFor } from "../../../../../lib/workspace
 
 type Props = { params: Promise<{ org: string; name: string; id: string }> };
 
-export const metadata: Metadata = { title: "Connection", robots: { index: false } };
+export const metadata: Metadata = { title: "MCP URL", robots: { index: false } };
 
 const KINDS: { k: Kind; label: string }[] = [
   { k: "read", label: "Read" },
@@ -79,7 +79,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
       <PublicHeader right={<a className="zq-link" href="/app">Dashboard</a>} />
       <main className="zq-body" style={{ maxWidth: 860 }}>
         <p className="zq-kicker">
-          <a href={`/${conn.orgSlug}`}>@{conn.orgSlug}</a> / Connection
+          <a href={`/${conn.orgSlug}`}>@{conn.orgSlug}</a> / MCP URL
         </p>
         <h1 className="zq-h">
           {conn.name}
@@ -118,14 +118,14 @@ export default async function ConnectionUrlPage({ params }: Props) {
             {isAdmin ? "What it gives" : "What it gives you"}
           </h2>
           {reachable.length === 0 ? (
-            <p className="zq-empty">No instances yet. A workspace admin adds them to this connection.</p>
+            <p className="zq-empty">No instances yet. A workspace admin adds them to this MCP URL.</p>
           ) : (
             <div className="zq-matrix-wrap">
               <table className="zq-matrix zq-policy">
                 <thead>
                   <tr>
                     <th>Instance</th>
-                    {isAdmin && <th>Connection allows</th>}
+                    {isAdmin && <th>MCP URL allows</th>}
                     <th>{isAdmin ? "Your role" : `You (${isPublic ? "public" : role})`}</th>
                   </tr>
                 </thead>
@@ -157,7 +157,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
               <>
                 <p className="zq-note" style={{ marginTop: 0 }}>
                   Every member of {ws?.name ?? "the workspace"} who signs in, narrowed by their role: viewers read, members read,
-                  create and edit, admins can do everything the connection allows.
+                  create and edit, admins can do everything the MCP URL allows.
                 </p>
                 {people.length === 0 ? (
                   <p className="zq-empty">Nobody has signed in yet.</p>
@@ -183,7 +183,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
         {isAdmin && (
           <section className="zq-block">
             {inCurrentWorkspace ? (
-              <a className="zq-action zq-action-primary" href={`/app/connections/${conn.id}`}>
+              <a className="zq-action zq-action-primary" href={`/app/mcp-urls/${conn.id}`}>
                 Manage in the dashboard
               </a>
             ) : (

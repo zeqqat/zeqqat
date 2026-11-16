@@ -7,7 +7,7 @@ describe("openWithoutDokploy", () => {
   });
   it("holds every other dashboard page back", () => {
     for (const p of [
-      "/app/connections",
+      "/app/mcp-urls",
       "/app/integrations",
       "/app/instances/abc",
       "/app/tools",

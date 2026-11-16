@@ -282,8 +282,8 @@ export async function runEndpoint(
     });
     const names = (await reachableInstances(ctx)).map((i) => i.alias);
     return toolError(
-      `No instance called "${params.instanceAlias}" on this connection. ` +
-        (names.length ? `Instances you can use: ${names.join(", ")}.` : "This connection has no instances yet; the user adds them in the Zeqqat dashboard."),
+      `No instance called "${params.instanceAlias}" on this MCP URL. ` +
+        (names.length ? `Instances you can use: ${names.join(", ")}.` : "This MCP URL has no instances yet; the user adds them in the Zeqqat dashboard."),
     );
   }
 
@@ -307,10 +307,10 @@ export async function runEndpoint(
     const byPolicy = access.mode === "policy" && !access.policy.allow.includes(endpoint.name);
     const why = byPolicy
       ? `${endpoint.name} isn't on the policy ${access.mode === "policy" ? access.policy.canonical : ""} attached to "${inst.alias}"`
-      : `${endpoint.kind} on "${inst.alias}" isn't allowed through this connection${ctx.callerRole === "public" ? " (public connections are read only)" : ctx.callerRole !== "admin" ? ` for your role (${ctx.callerRole})` : ""}`;
+      : `${endpoint.kind} on "${inst.alias}" isn't allowed through this MCP URL${ctx.callerRole === "public" ? " (public MCP URLs are read only)" : ctx.callerRole !== "admin" ? ` for your role (${ctx.callerRole})` : ""}`;
     await logCall(ctx, { ...base, outcome: "blocked", durationMs: Date.now() - start, errorMessage: `Not sent: ${why}.` });
     return toolError(
-      `Not sent: ${why}. Tell the user; a workspace admin can change it in Connections${byPolicy ? `, and ${policyEditors(ctx)} can edit the policy in Policies` : ""}. ` +
+      `Not sent: ${why}. Tell the user; a workspace admin can change it in MCP URLs${byPolicy ? `, and ${policyEditors(ctx)} can edit the policy in Policies` : ""}. ` +
         `Call zeqqat_policy to see what is allowed, or zeqqat_docs (question: "why was my call denied").`,
     );
   }

@@ -23,7 +23,7 @@ export const REASON_DESCRIPTION =
   "Required. One line saying what the user asked you to do, in plain words (e.g. \"Redeploy My App so the new env vars take effect\"). Use exactly the same wording on every call you make for the same request. People read it in the Zeqqat activity log.";
 
 export const REASON_MISSING =
-  "reason is required: one line saying what the user asked you to do, worded the same on every call for this request (e.g. \"Redeploy My App so the new env vars take effect\"). Call again with reason set. Zeqqat shows it to the people who audit this connection.";
+  "reason is required: one line saying what the user asked you to do, worded the same on every call for this request (e.g. \"Redeploy My App so the new env vars take effect\"). Call again with reason set. Zeqqat shows it to the people who audit this MCP URL.";
 
 // Trimmed, single-spaced, scrubbed and capped, or null when there is
 // nothing left. Pure, so it is tested directly.

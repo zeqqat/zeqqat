@@ -182,7 +182,7 @@ export const REPLAYS: Replay[] = [
           },
         ],
         answer: [
-          "I can't. Clearing the cache counts as a delete, and deletes aren't allowed on this connection, so Zeqqat stopped the call before it reached Dokploy. Nothing was removed.",
+          "I can't. Clearing the cache counts as a delete, and deletes aren't allowed on this MCP URL, so Zeqqat stopped the call before it reached Dokploy. Nothing was removed.",
           "If you want me to do it, allow this one tool in Zeqqat and ask again. Or click Clean in Dokploy's Docker settings.",
         ],
       },

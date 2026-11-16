@@ -19,7 +19,7 @@ export const DOC_PAGES: { id: string; title: string; description: string }[] = [
     id: "overview",
     title: "How Zeqqat works",
     description:
-      "How an AI agent reaches your Dokploy through Zeqqat: one connection URL, eleven built-in tools, and the context every result carries.",
+      "How an AI agent reaches your Dokploy through Zeqqat: one MCP URL, eleven built-in tools, and the context every result carries.",
   },
   {
     id: "tools",
@@ -40,10 +40,10 @@ export const DOC_PAGES: { id: string; title: string; description: string }[] = [
       "What integrations and instances are in Zeqqat: Dokploy is the integration, and each Dokploy server you add is an instance.",
   },
   {
-    id: "connections",
-    title: "Connections",
+    id: "mcp-urls",
+    title: "MCP URLs",
     description:
-      "How a Zeqqat connection gives one agent its own URL, its own Dokploy servers and its own permissions, and when it ends.",
+      "How a Zeqqat MCP URL gives one agent its own address, its own Dokploy servers and its own permissions, and when it ends.",
   },
   {
     id: "secrets",
@@ -64,10 +64,10 @@ export const AGENT_DOCS: DocSection[] = [
     page: "overview",
     title: "How Zeqqat works",
     text:
-      "Zeqqat is an MCP gateway. One connection URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
+      "Zeqqat is an MCP gateway. One MCP URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
       "The agent sees eleven built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat, zeqqat_feedback suggests a better summary for a tool, zeqqat_check tests from the internet whether an address loads or a Dokploy server's port (22, 80, 443, 3000) is open, zeqqat_activity reads the activity log (what agents did, what was blocked). " +
       "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
-      "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the connection. A call without a reason is refused.",
+      "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the MCP URL. A call without a reason is refused.",
   },
   {
     id: "feedback",
@@ -82,8 +82,8 @@ export const AGENT_DOCS: DocSection[] = [
     page: "overview",
     title: "The context object",
     text:
-      "Every tool result starts with a context object: account (the account that owns this connection), workspace, connection name, the integrations this connection reaches with their instances, and a notice. " +
-      "account has a username and a type: personal (one person, the only owner) or organization (owned by a group with owners). It is the owner of the connection, not necessarily the person calling. " +
+      "Every tool result starts with a context object: account (the account that owns this MCP URL), workspace, mcpUrl (its name), the integrations this MCP URL reaches with their instances, and a notice. " +
+      "account has a username and a type: personal (one person, the only owner) or organization (owned by a group with owners). It is the owner of the MCP URL, not necessarily the person calling. " +
       "Each integration is named @author/slug, which tells you whose tool set it is, and carries toolCount, how many tools it has. zeqqat_whoami also lists its categories, the kinds of tools it has (for example application, docker, project); search a category to see its tools. zeqqat_whoami also carries zeqqat: the version of Zeqqat answering, the latest release, and updateAvailable, so you can tell the user when their install is behind. " +
       "Instance names are chosen by the user, for example prod or staging. " +
       "An integration that is not listed is not connected: tell the user, they can add it in the Zeqqat dashboard.",
@@ -102,11 +102,11 @@ export const AGENT_DOCS: DocSection[] = [
     page: "permissions",
     title: "Why a call was denied",
     text:
-      "Each instance on a connection either has a policy attached or allows tools by kind (read, create, edit, delete). " +
-      "With a policy, only the tools on its allow list can run; everything else is denied, including tools a later spec adds. Without one, the connection allows whole kinds. " +
-      "On top of either, the caller's role limits by kind: admin can do everything, member cannot delete, viewer can only read. Public connections are always read only. " +
+      "Each instance on an MCP URL either has a policy attached or allows tools by kind (read, create, edit, delete). " +
+      "With a policy, only the tools on its allow list can run; everything else is denied, including tools a later spec adds. Without one, the MCP URL allows whole kinds. " +
+      "On top of either, the caller's role limits by kind: admin can do everything, member cannot delete, viewer can only read. Public MCP URLs are always read only. " +
       "Each instance's policySummary in the context says what is allowed; zeqqat_policy returns the full allow list; zeqqat_search marks each tool with allowedOn, the instances it can run on. " +
-      "A denied call was not sent. Tell the user; a workspace admin can change it in Connections. Policies are edited in Policies by the account's owner: the one owner of a personal account, or an owner of an organization.",
+      "A denied call was not sent. Tell the user; a workspace admin can change it in MCP URLs. Policies are edited in Policies by the account's owner: the one owner of a personal account, or an owner of an organization.",
   },
   {
     id: "policies",
@@ -114,7 +114,7 @@ export const AGENT_DOCS: DocSection[] = [
     title: "What a policy is",
     text:
       "A policy is an explicit list of tools (operationIds) an agent may run. It is owned by an account and written for one integration, so its name reads @username/integration.policy.name, for example @gaita/dokploy.policy.read_plus_deploy. " +
-      "It is attached to an instance inside a connection, one policy per instance. It works on any instance whose integration has the same spec, whoever imported it. " +
+      "It is attached to an instance inside an MCP URL, one policy per instance. It works on any instance whose integration has the same spec, whoever imported it. " +
       "Policies can be public: anyone can copy one into their own account. A copy is theirs and never changes when the original does; they get an update note instead. " +
       "A policy records the spec release it was written for; when the spec changes, the dashboard warns the owner to review it.",
   },
@@ -128,13 +128,13 @@ export const AGENT_DOCS: DocSection[] = [
       "If an instance name is not found, check the instance names in the context; the user adds instances in the dashboard under Integrations.",
   },
   {
-    id: "connections",
-    page: "connections",
-    title: "Connections and sunsets",
+    id: "mcp-urls",
+    page: "mcp-urls",
+    title: "MCP URLs and turn-off dates",
     text:
-      "A connection is one MCP URL, zeqqat.com/<username>/mcp/<name>/<id>, belonging to one workspace. It decides which instances an agent can reach and what it may do on each. " +
-      "A connection can be replaced. During the warning period every result carries a notice with the new URL and the cutoff date; tell the user to switch. After the cutoff the connection lists no tools. " +
-      "When a workspace moves from a personal account to an organization, its connections get new URLs. The old URL keeps working and every result carries a notice with the new one; tell the user to update the connector.",
+      "An MCP URL is zeqqat.com/<username>/mcp/<name>/<id>, belonging to one workspace. It decides which instances an agent can reach and what it may do on each. " +
+      "An MCP URL can be replaced. During the warning period every result carries a notice with the new URL and the cutoff date; tell the user to switch. After the cutoff the MCP URL lists no tools. " +
+      "When a workspace moves from a personal account to an organization, its MCP URLs get new addresses. The old URL keeps working and every result carries a notice with the new one; tell the user to update the connector.",
   },
   {
     id: "errors",
@@ -169,7 +169,7 @@ export const AGENT_DOCS: DocSection[] = [
     title: "Where handles work",
     text:
       "A handle only resolves in fields meant for secrets: an env block (env, previewEnv, buildArgs, buildSecrets) or a field whose name says it holds a secret (password, token, key, secret). Anywhere else, such as a webhook URL, a notification target or a description, the call is refused. " +
-      "A handle works only on the connection it came from, and on one instance: the one its value came from, or for a zeqqat_secret handle, the first instance it is used on. An unknown or expired handle is refused with nothing sent. When handles were filled in, the result starts with \"Filled in N secrets before sending\", so you know the app got the real values.",
+      "A handle works only on the MCP URL it came from, and on one instance: the one its value came from, or for a zeqqat_secret handle, the first instance it is used on. An unknown or expired handle is refused with nothing sent. When handles were filled in, the result starts with \"Filled in N secrets before sending\", so you know the app got the real values.",
   },
 ];
 

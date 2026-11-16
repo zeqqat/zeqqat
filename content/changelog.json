@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.87",
+    "date": "2026-11-16",
+    "at": "2026-11-16T17:01:35Z",
+    "changes": [
+      "MCP URLs: Connections is now MCP URLs, with a new list (calls, sparklines, turn-off and public icons) and a page per URL (Instances, Connected, Manage)",
+      "Breadcrumb shows @org / workspace / page, and every part is a link"
+    ]
+  },
+  {
     "version": "0.3.86",
     "date": "2026-11-16",
     "at": "2026-11-16T07:26:53Z",

@@ -4,16 +4,16 @@
     "date": "2026-11-15"
   },
   "/docs": {
-    "hash": "7100cfde3ac062b1",
-    "date": "2026-11-14"
+    "hash": "ede28eb53b4e3c56",
+    "date": "2026-11-16"
   },
   "/docs/self-host": {
     "hash": "eb7d74cf825103a9",
     "date": "2026-11-14"
   },
   "/docs/agents": {
-    "hash": "9a986b1bc7fcba5d",
-    "date": "2026-11-12"
+    "hash": "31221e63c66754be",
+    "date": "2026-11-16"
   },
   "/terms": {
     "hash": "330c2485d5d9c375",
@@ -24,40 +24,40 @@
     "date": "2026-11-15"
   },
   "/demo/database": {
-    "hash": "85ecb3c4bc455624",
-    "date": "2026-11-15"
+    "hash": "f030ed231d0f0346",
+    "date": "2026-11-16"
   },
   "/demo/deploy-logs": {
-    "hash": "a1ef922651577b74",
-    "date": "2026-11-15"
+    "hash": "6414d856e665af9b",
+    "date": "2026-11-16"
   },
   "/demo/disk": {
-    "hash": "0676bd23e136a207",
-    "date": "2026-11-15"
+    "hash": "5f5e0c6662c4344c",
+    "date": "2026-11-16"
   },
   "/docs/agents/overview": {
-    "hash": "b1e7a4a1a66d6840",
-    "date": "2026-11-13"
+    "hash": "dc6cc2e9254ef755",
+    "date": "2026-11-16"
   },
   "/docs/agents/tools": {
     "hash": "c61264ff8812e698",
     "date": "2026-11-10"
   },
   "/docs/agents/permissions": {
-    "hash": "2bd70e5ed3026479",
-    "date": "2026-11-10"
+    "hash": "010b4e7cfb74ba72",
+    "date": "2026-11-16"
   },
   "/docs/agents/integrations": {
     "hash": "3f833b7284a4a331",
     "date": "2026-11-10"
   },
-  "/docs/agents/connections": {
-    "hash": "bbd7805382378e9c",
-    "date": "2026-11-10"
+  "/docs/agents/mcp-urls": {
+    "hash": "5db1df2cd8c90739",
+    "date": "2026-11-16"
   },
   "/docs/agents/secrets": {
-    "hash": "a9f0b9cb42a660f8",
-    "date": "2026-11-10"
+    "hash": "320bd69e55ab1f73",
+    "date": "2026-11-16"
   },
   "/docs/agents/errors": {
     "hash": "79fdb24023f18ca1",

@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 // pages don't open: a click says to connect first (lib/setup-gate.ts). The
 // overview (the connect screen) and Releases stay open.
 
-const HELD = ["Connections", "Integrations", "Tools", "Policies", "Activity", "Members", "Settings"];
+const HELD = ["MCP URLs", "Integrations", "Tools", "Policies", "Activity", "Members", "Settings"];
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -33,7 +33,7 @@ test("the modal's button shakes the heading and puts the cursor in the form", as
 });
 
 test("a held-back page opened by its address goes to the overview and says why", async ({ page }) => {
-  await page.goto("/app/connections");
+  await page.goto("/app/mcp-urls");
   await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole("dialog", { name: /Connect your\s+Dokploy first/ })).toBeVisible();
 });
