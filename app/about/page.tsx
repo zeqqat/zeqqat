@@ -12,6 +12,9 @@ export const metadata: Metadata = pageMeta({
 // person behind a product and its posts; blog bylines link here.
 // Public copy rule: say what he builds, never "founder", "solo" or where he
 // lives, and never promise features Zeqqat doesn't have today.
+// zq-steps numbers its items; these are short lines, not steps.
+const PLAIN = { listStyle: "none", paddingLeft: 0 } as const;
+
 export default function About() {
   const person = {
     "@context": "https://schema.org",
@@ -40,7 +43,7 @@ export default function About() {
 
         <section className="zq-block">
           <h2 className="zq-block-t">The blog</h2>
-          <ul className="zq-steps">
+          <ul className="zq-steps" style={PLAIN}>
             <li>
               I write every post on the <a href={SITE_LINKS.blog}>blog</a>. Most of them are things I did on my own
               Dokploy server, with the real numbers.
@@ -50,7 +53,7 @@ export default function About() {
 
         <section className="zq-block">
           <h2 className="zq-block-t">The code</h2>
-          <ul className="zq-steps">
+          <ul className="zq-steps" style={PLAIN}>
             <li>
               Zeqqat is free and open source. Self-host it or use zeqqat.com. The code is on{" "}
               <a href={SITE_LINKS.github} rel="noreferrer noopener">GitHub</a>.
@@ -60,7 +63,7 @@ export default function About() {
 
         <section className="zq-block">
           <h2 className="zq-block-t">Talk to me</h2>
-          <ul className="zq-steps">
+          <ul className="zq-steps" style={PLAIN}>
             {SITE_LINKS.discord ? (
               <li>
                 <a href={SITE_LINKS.discord} rel="noreferrer noopener">Discord</a>, where I answer questions about
