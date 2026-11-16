@@ -3,8 +3,11 @@ title: "I Asked Claude Which of My Dokploy Domains Actually Load. Five Never Cou
 seoTitle: "Dokploy Domain Not Working? How I Had Claude Check Every Domain on My Server"
 description: "I asked Claude to check every domain on my Dokploy server through Zeqqat. Six loaded. Five were sslip.io domains that could never load, and three services had nothing else."
 date: "2026-11-10"
+updated: "2026-11-16"
 keywords: "dokploy domain not working, dokploy sslip.io, dokploy domain not loading, dokploy cloudflare tunnel, dokploy generate domain, dokploy app not accessible, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **a Dokploy domain can say "done" and still not load.** All six domains I added myself worked. All five sslip.io domains Dokploy generated didn't, because sslip.io points straight at the server's IP and my server only takes traffic through Cloudflare. If yours is behind Cloudflare, add your own domain instead of the generated one.
 
 Dokploy tells you a service deployed. It shows a green "done". It does not tell you whether anyone on the internet can open it.
 

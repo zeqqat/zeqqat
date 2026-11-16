@@ -3,8 +3,11 @@ title: "I Asked Claude Which of My Dokploy Containers Have a Memory Limit. Not O
 seoTitle: "Dokploy Memory and CPU Limits: How I Had Claude Check Every Container"
 description: "I asked Claude, through Zeqqat, which of my Dokploy apps and databases have memory or CPU limits. 21 running containers, zero limits. Here's how it checked, and what a limit actually does."
 date: "2026-11-13"
+updated: "2026-11-16"
 keywords: "dokploy memory limit, dokploy cpu limit, dokploy resource limits, dokploy container out of memory, dokploy server crashed memory, docker swarm memory limit, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **Dokploy sets no memory or CPU limits by default.** All 21 of my running containers were allowed to use the server's whole 7.6 GB. Set a limit per service under Advanced, then Resources, at about 2 to 4 times its normal usage, so one runaway app gets restarted instead of taking the whole server down.
 
 I run everything on one Dokploy server with about 7.6 GB of memory. Apps, their databases, a few test installs, an analytics stack, and Dokploy itself.
 

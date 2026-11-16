@@ -3,8 +3,11 @@ title: "I Asked Claude Why My Dokploy Deploys Failed. It Found Three Different R
 seoTitle: "Dokploy Deploy Failed? How I Had Claude Read the Build Logs and Find the Cause"
 description: "I asked Claude to find my failed Dokploy deployments through Zeqqat. Dokploy only said 'error'. The build logs said Node 18, a full disk and a missing repo."
 date: "2026-11-08"
+updated: "2026-11-16"
 keywords: "dokploy deploy failed, dokploy build failed, dokploy deployment logs, nixpacks build failed, dokploy no space left on device, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **the reason a Dokploy deploy failed is in the build log, not the deployment status.** All three of my failed deployments said `errorMessage: null`. The logs said Node 18 was too old for sharp, the disk was full, and the repo couldn't be found. The real error is usually a few dozen lines above the last one.
 
 Every time a Dokploy deploy fails I do the same thing. Open the app, open Deployments, click the red one, scroll a few hundred lines of build output, find the line that matters.
 

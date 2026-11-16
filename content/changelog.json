@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.92",
+    "date": "2026-11-16",
+    "at": "2026-11-16T18:42:21Z",
+    "changes": [
+      "Eight blog posts now open with a short answer before the story"
+    ]
+  },
+  {
     "version": "0.3.91",
     "date": "2026-11-16",
     "at": "2026-11-16T18:00:45Z",

@@ -3,8 +3,11 @@ title: "I Asked Claude Which of My Dokploy Containers Have a Health Check. Only 
 seoTitle: "Dokploy Health Checks: How I Had Claude Check Every Container"
 description: "I asked Claude, through Zeqqat, which of my Dokploy apps and databases have a health check. 18 running containers, 7 with one, and every one of those came from a compose file. Here's how it checked and what a health check changes."
 date: "2026-11-14"
+updated: "2026-11-16"
 keywords: "dokploy health check, dokploy healthcheck, dokploy swarm health check, dokploy zero downtime deploy, dokploy container unhealthy, docker swarm healthcheck, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **apps and databases you create in Dokploy have no health check by default, while compose services usually get one from their compose file.** Of my 18 running containers, 7 had one, and all 7 came from compose files. For an app, you set it under Advanced, in the Swarm settings.
 
 When a deploy in Dokploy finishes, the status goes green and the container says "Up". I've always read that as "the app works".
 

@@ -3,8 +3,11 @@ title: "I Asked Claude Which of My Dokploy Databases Are Backed Up. Three Weren'
 seoTitle: "Are My Dokploy Database Backups Working? How I Had Claude Check Every One"
 description: "I asked Claude to check backups on every database in my Dokploy through Zeqqat. Three had none, and one had failed every night for six days with no alert."
 date: "2026-11-09"
+updated: "2026-11-16"
 keywords: "dokploy backups, dokploy database backup, dokploy backup failed, dokploy container not found, dokploy s3 backup, dokploy r2 backup, dokploy compose backup, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **check three things for every database: a schedule exists, the runs succeed, and the files in your bucket actually have data in them.** On my Dokploy, three databases had no backup at all, and one had failed every night for six days with "Container not found" and no alert.
 
 I set up backups in Dokploy a few weeks ago. Cloudflare R2 as the destination, daily at midnight, keep the last seven. Then I stopped thinking about it.
 

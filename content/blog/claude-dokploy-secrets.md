@@ -3,8 +3,11 @@ title: "I Gave Claude My Dokploy and It Couldn't See My Secrets"
 seoTitle: "I Gave Claude My Dokploy and It Couldn't See My Secrets"
 description: "I connected Claude to my Dokploy through Zeqqat and pulled my app's full config. Every password and key came back as a handle the agent could use but never read."
 date: "2026-11-07"
+updated: "2026-11-16"
 keywords: "dokploy mcp, dokploy ai agent, dokploy environment variables, dokploy secrets, claude dokploy, mcp gateway"
 ---
+
+Short answer: **through Zeqqat, Claude can manage my Dokploy without seeing a single secret.** Every password and key in my app's config came back as a handle like `{{zq_secret_...}}`. Claude can pass a handle into a later call but never read it, and Zeqqat swaps in the real value just before the request reaches Dokploy.
 
 I wanted my AI agent to manage my Dokploy. Deploy, check logs, wire up a database. The things I do every day.
 

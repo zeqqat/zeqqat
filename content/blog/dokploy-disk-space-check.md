@@ -3,8 +3,11 @@ title: "I Asked Claude What's Filling My Dokploy Server's Disk. Cleanup Could Fr
 seoTitle: "Dokploy Disk Space Full? How I Had Claude Find What's Using It"
 description: "I asked Claude to check what's using disk on my Dokploy server through Zeqqat. 8.4 GB in Docker, and a cleanup could free about 420 MB. The rest belongs to things that are still running."
 date: "2026-11-11"
+updated: "2026-11-16"
 keywords: "dokploy disk space, dokploy disk full, dokploy docker cleanup, dokploy no space left on device, docker system df, dokploy unused volumes, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **on my Dokploy server, a Docker cleanup could free only about 420 MB of 8.4 GB.** Automatic cleanup was already on. Almost all of the space was images that running containers use, mostly old test installs I'd forgotten about. The fix was stopping what I no longer need, not pruning.
 
 A few days ago I wrote about [a Dokploy build that failed](/blog/dokploy-deploy-failed-ask-claude) with `No space left on device`. I found the failure. I never found out what was actually filling the disk.
 

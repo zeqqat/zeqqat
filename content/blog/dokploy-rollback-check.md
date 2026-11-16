@@ -3,8 +3,11 @@ title: "I Asked Claude Which of My Dokploy Apps I Could Roll Back. None of Them 
 seoTitle: "Dokploy Rollback Not Working? How I Had Claude Check Every App's Rollback Setup"
 description: "I asked Claude to check, through Zeqqat, which of my Dokploy apps I could roll back after a bad deploy. Six apps, 42 deployments, zero rollback images. Here's why, and what it takes to fix."
 date: "2026-11-12"
+updated: "2026-11-16"
 keywords: "dokploy rollback, dokploy rollback not working, dokploy rollback registry, dokploy rollback button missing, dokploy revert deployment, dokploy swarm rollback, dokploy ai agent, dokploy mcp"
 ---
+
+Short answer: **Dokploy rollbacks only work if you turned them on, with a container registry, before the deploy you want to undo.** None of my six apps had either, so 42 deployments left zero images to roll back to. And Redeploy isn't a rollback: it rebuilds whatever is on the branch now.
 
 Every app I run on Dokploy deploys on push. I push to main, Dokploy builds, the new version goes live. That's great until a push breaks something.
 
