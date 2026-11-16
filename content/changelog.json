@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.86",
+    "date": "2026-11-16",
+    "at": "2026-11-16T07:26:53Z",
+    "changes": [
+      "Blog: How to Self-Host n8n on a VPS with Docker Compose (the Cheap Way)"
+    ]
+  },
+  {
     "version": "0.3.85",
     "date": "2026-11-15",
     "at": "2026-11-15T18:47:50Z",
