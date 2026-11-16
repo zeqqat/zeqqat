@@ -120,6 +120,13 @@
       "when": 1794392892118,
       "tag": "0016_username_alias",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794851942017,
+      "tag": "0017_signup_reported_at",
+      "breakpoints": true
     }
   ]
 }

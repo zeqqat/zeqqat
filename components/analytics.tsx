@@ -1,4 +1,6 @@
 import { connection } from "next/server";
+import { signupToReport } from "../lib/signup-report";
+import { SignupBeacon } from "./SignupBeacon";
 
 /**
  * The Umami tracker tag, or nothing at all.
@@ -11,6 +13,11 @@ import { connection } from "next/server";
  * in the page source of any Umami site). `connection()` keeps them from being
  * baked into a build that never had them. Unset means no tag, so a local or
  * self-hosted install reports nothing.
+ *
+ * With the tag comes SignupBeacon: it sends one "signup" event, carrying
+ * where the person first came from and the page they landed on, the first
+ * time a new account loads any page. That is how Umami counts sign-ups by
+ * source.
  */
 export async function Analytics({ nonce }: { nonce?: string }) {
   await connection();
@@ -21,5 +28,11 @@ export async function Analytics({ nonce }: { nonce?: string }) {
 
   // A plain deferred tag, matching Umami's own install snippet. The nonce lets
   // it past the Content-Security-Policy set in proxy.ts.
-  return <script defer src={src} data-website-id={websiteId} nonce={nonce} />;
+  const report = await signupToReport();
+  return (
+    <>
+      <script defer src={src} data-website-id={websiteId} nonce={nonce} />
+      <SignupBeacon report={report} />
+    </>
+  );
 }

@@ -26,6 +26,10 @@ export const user = pgTable("user", {
   image: text("image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  // When zeqqat.com's Umami got this person's "signup" event (see
+  // components/SignupBeacon.tsx). Null until then; set once, so a sign-up
+  // is counted exactly once whatever device or tab they come back on.
+  signupReportedAt: timestamp("signup_reported_at", { withTimezone: true }),
 });
 
 export const session = pgTable("session", {

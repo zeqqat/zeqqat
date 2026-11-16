@@ -46,7 +46,8 @@ export default function Privacy() {
             <li>We do not sell your data and we do not use it to train AI models.</li>
             <li>
               Website analytics use a self-hosted Umami instance that sets no cookies and does not track you across
-              sites.
+              sites. When you sign up, it also records the site you first came from and the first page you saw, so we
+              know which pages and links bring people in.
             </li>
           </ul>
         </section>

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.91",
+    "date": "2026-11-16",
+    "at": "2026-11-16T18:00:45Z",
+    "changes": [
+      "Umami now gets a signup event with where each new user first came from and the page they landed on"
+    ]
+  },
+  {
     "version": "0.3.90",
     "date": "2026-11-16",
     "at": "2026-11-16T17:50:18Z",

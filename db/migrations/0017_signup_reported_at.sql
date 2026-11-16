@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "signup_reported_at" timestamp with time zone;
