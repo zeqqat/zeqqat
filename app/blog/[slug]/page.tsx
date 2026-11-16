@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     ...meta,
     keywords: post.keywords,
+    authors: [{ name: "Gaita", url: `${SITE_URL}/about` }],
     openGraph: { ...meta.openGraph, title: post.title },
     twitter: { ...meta.twitter, title: post.title },
   };
@@ -56,7 +57,7 @@ export default async function PostPage({ params }: Props) {
       mainEntityOfPage: url,
       url,
       keywords: post.keywords.join(", "),
-      author: { "@type": "Organization", name: "Zeqqat", url: SITE_URL },
+      author: { "@type": "Person", name: "Gaita", url: `${SITE_URL}/about` },
       publisher: { "@type": "Organization", name: "Zeqqat", url: SITE_URL },
     },
     {
@@ -91,7 +92,7 @@ export default async function PostPage({ params }: Props) {
       </p>
       <h1 className="bl-h1">{post.title}</h1>
       <p className="bl-meta">
-        <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingMinutes} min read
+        By <Link href="/about" rel="author">Gaita</Link> · <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingMinutes} min read
       </p>
       <div className="bl-prose" dangerouslySetInnerHTML={{ __html: post.html }} />
       {others.length > 0 && (

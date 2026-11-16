@@ -38,6 +38,7 @@ export function pageFingerprints(): Record<string, string> {
       JSON.stringify(AGENT_DOCS.map((s) => [s.page, s.title])),
     ),
     "/terms": sha(read("app/terms/page.tsx")),
+    "/about": sha(read("app/about/page.tsx")),
     "/privacy": sha(read("app/privacy/page.tsx")),
   };
   for (const r of REPLAYS) {

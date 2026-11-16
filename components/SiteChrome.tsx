@@ -12,6 +12,7 @@ export const SITE_LINKS = {
   docs: "/docs/agents",
   selfHost: "/docs/self-host",
   blog: "/blog",
+  about: "/about",
   releases: "/releases",
   terms: "/terms",
   privacy: "/privacy",
@@ -87,6 +88,7 @@ export function SiteFooter() {
             <li><a href={SITE_LINKS.selfHost}>Self-hosting</a></li>
             <li><a href={SITE_LINKS.blog}>Blog</a></li>
             <li><a href={SITE_LINKS.releases}>Releases</a></li>
+            <li><a href={SITE_LINKS.about}>About</a></li>
           </ul>
         </nav>
         <nav aria-label="Community">

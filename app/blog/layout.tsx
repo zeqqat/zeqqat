@@ -31,6 +31,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       </main>
       <footer className="bl-foot">
         <span>© {new Date().getFullYear()} Zeqqat</span>
+        <Link href="/about">About</Link>
       </footer>
     </div>
   );

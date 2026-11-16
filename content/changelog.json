@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.89",
+    "date": "2026-11-16",
+    "at": "2026-11-16T17:44:02Z",
+    "changes": [
+      "New About page: who builds Zeqqat and writes the blog",
+      "Blog posts now say they are by Gaita, with a link to the About page"
+    ]
+  },
+  {
     "version": "0.3.88",
     "date": "2026-11-16",
     "at": "2026-11-16T17:24:00Z",
