@@ -1,4 +1,5 @@
 import { dokploy, findDeep, InstallError, type Target } from "./selfhost-install";
+import { SELFHOST_COMPOSE } from "./selfhost-compose";
 
 // In-app updates for a self-hosted install. The Dokploy template and the
 // one-button install both run the "latest" image with pull_policy: always,
@@ -107,7 +108,22 @@ export async function findSelfCompose(targets: Target[], host: string): Promise<
   return null;
 }
 
+// The first Dokploy template (still served by templates.dokploy.com until
+// its next redeploy) pinned ghcr.io/zeqqat/zeqqat:0.1.0 with no
+// pull_policy, so deploying it again would never fetch a newer image. That
+// tag follows latest now; before an update, swap the old file for the
+// current one, which keeps the same services, volume and variables.
+export function isFirstTemplate(composeFile: unknown): boolean {
+  return typeof composeFile === "string" && composeFile.includes("ghcr.io/zeqqat/zeqqat:0.1.0");
+}
+
 export async function deploySelf(self: SelfCompose, toVersion: string, host: string) {
+  const one = (await dokploy(self.target, "compose.one", undefined, { composeId: self.composeId })) as {
+    composeFile?: unknown;
+  } | null;
+  if (isFirstTemplate(one?.composeFile)) {
+    await dokploy(self.target, "compose.update", { composeId: self.composeId, composeFile: SELFHOST_COMPOSE });
+  }
   await dokploy(self.target, "compose.deploy", {
     composeId: self.composeId,
     title: `Update Zeqqat to v${toVersion}`,

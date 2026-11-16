@@ -31,6 +31,20 @@ describe("sign-in providers", () => {
   });
 
   it("self-hosted can combine password with GitHub", async () => {
-    expect(await providersWith({ ZEQQAT_EDITION: undefined, ENABLED_AUTH_PROVIDERS: "github, password" })).toEqual(["github", "password"]);
+    expect(
+      await providersWith({ ZEQQAT_EDITION: undefined, ENABLED_AUTH_PROVIDERS: "github, password", GITHUB_CLIENT_ID: "id", GITHUB_CLIENT_SECRET: "secret" }),
+    ).toEqual(["github", "password"]);
+  });
+
+  it("self-hosted with GitHub listed but no keys falls back to password (first Dokploy template)", async () => {
+    expect(
+      await providersWith({ ZEQQAT_EDITION: undefined, ENABLED_AUTH_PROVIDERS: "github", GITHUB_CLIENT_ID: "", GITHUB_CLIENT_SECRET: "" }),
+    ).toEqual(["password"]);
+  });
+
+  it("self-hosted keeps GitHub when its keys are set", async () => {
+    expect(
+      await providersWith({ ZEQQAT_EDITION: undefined, ENABLED_AUTH_PROVIDERS: "github", GITHUB_CLIENT_ID: "id", GITHUB_CLIENT_SECRET: "secret" }),
+    ).toEqual(["github"]);
   });
 });

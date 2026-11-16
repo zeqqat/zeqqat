@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.88",
+    "date": "2026-11-16",
+    "at": "2026-11-16T17:24:00Z",
+    "changes": [
+      "Installs from the first Dokploy template now get the latest Zeqqat and can sign in with a password",
+      "Old /app/connections links removed"
+    ]
+  },
+  {
     "version": "0.3.87",
     "date": "2026-11-16",
     "at": "2026-11-16T17:01:35Z",

@@ -22,3 +22,13 @@ describe("self-host compose", () => {
     expect(meta.version).toBe("latest");
   });
 });
+
+describe("first Dokploy template", () => {
+  it("is recognised by its pinned 0.1.0 image, and the current file is not", async () => {
+    const { isFirstTemplate } = await import("../../lib/self-update");
+    const { SELFHOST_COMPOSE } = await import("../../lib/selfhost-compose");
+    expect(isFirstTemplate("services:\n  zeqqat:\n    image: ghcr.io/zeqqat/zeqqat:0.1.0\n")).toBe(true);
+    expect(isFirstTemplate(SELFHOST_COMPOSE)).toBe(false);
+    expect(isFirstTemplate(undefined)).toBe(false);
+  });
+});

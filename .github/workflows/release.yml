@@ -132,6 +132,9 @@ jobs:
             type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.version.outputs.version }}
             type=raw,value=latest,enable=${{ !contains(needs.version.outputs.version, '-') }}
+            # The first Dokploy template pinned 0.1.0, and templates.dokploy.com may
+            # still serve it, so 0.1.0 follows latest too.
+            type=raw,value=0.1.0,enable=${{ !contains(needs.version.outputs.version, '-') }}
       - name: Join the platform images into one tag
         working-directory: /tmp/digests
         run: |

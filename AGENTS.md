@@ -131,8 +131,7 @@ need an org on zeqqat.com, not a local one (planned, not built).
 
 **MCP URL, not connection.** What the code calls a `connection` (table,
 files, `lib/connections.ts`) is an **MCP URL** everywhere a person or an
-agent reads it: the dashboard (`/app/mcp-urls`, the old `/app/connections`
-redirects), tool descriptions, errors, the context (`mcpUrl`), the docs
+agent reads it: the dashboard (`/app/mcp-urls`), tool descriptions, errors, the context (`mcpUrl`), the docs
 and the plugin. "Connection" was misleading: a URL is not connected to
 anything until someone pastes it into an agent. People whose agent signed
 in through one are "connected".
@@ -425,7 +424,12 @@ straight to Dokploy, deploy, poll, then `checkAddress`);
 them in order and shows each one. Secrets never reach the browser.
 `deploy/dokploy/docker-compose.yml` (the Dokploy template) must equal
 `SELFHOST_COMPOSE` (a unit test checks), and the template follows `latest`,
-so a release needs no template PR.
+so a release needs no template PR. The first template (still on
+templates.dokploy.com until Dokploy redeploys that site) pinned `0.1.0`
+with GitHub sign-in and empty keys: the release workflow moves `0.1.0`
+along with `latest`, a self-hosted install with no usable sign-in method
+falls back to password, and Update now swaps that old compose file for
+`SELFHOST_COMPOSE` before deploying.
 `pnpm exec tsx tests/e2e/selfhost-install-flow.ts` runs the steps against a
 stand-in Dokploy.
 
