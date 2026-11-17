@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.95",
+    "date": "2026-11-17",
+    "at": "2026-11-17T05:24:57Z",
+    "changes": [
+      "MCP URLs: the calls total at the top is bigger on wider screens (42px)"
+    ]
+  },
+  {
     "version": "0.3.94",
     "date": "2026-11-17",
     "at": "2026-11-17T03:27:47Z",
