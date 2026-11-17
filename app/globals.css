@@ -6188,3 +6188,210 @@ button.zq-demo-open {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Dokploy Instances cards (components/InstanceCards.tsx). Three rows per
+   side that line up: name / graph, domain / calls, counts / version. The
+   ring around the app's logo is the instance's health. */
+.zq-di-list {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  container-type: inline-size;
+}
+.zq .zq-di-add {
+  border-radius: 10px 10px 0 0;
+}
+.zq .zq-di-add:only-child {
+  border-radius: 10px;
+}
+.zq-di-empty {
+  padding: 16px;
+  margin: 0;
+}
+.zq-di-card {
+  --ring: 40px;
+  --gap: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gap);
+  padding: 16px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+  color: inherit;
+}
+.zq-di-list > .zq-di-card:first-child {
+  border-top: 0;
+  border-radius: 10px 10px 0 0;
+}
+.zq-di-card:last-child {
+  border-radius: 0 0 10px 10px;
+}
+.zq-di-list > .zq-di-card:only-child {
+  border-radius: 10px;
+}
+.zq-di-card:hover {
+  background: color-mix(in srgb, var(--fg) 2.5%, transparent);
+}
+.zq-di-card:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: -2px;
+}
+.zq-di-ring {
+  position: relative;
+  width: var(--ring);
+  height: var(--ring);
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--line2);
+  display: grid;
+  place-items: center;
+}
+.zq-di-ring.is-ok {
+  border-color: var(--mint);
+}
+.zq-di-ring.is-bad {
+  border-color: var(--amber);
+}
+.zq-di-badge {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--panel);
+  display: grid;
+  place-items: center;
+  color: var(--amber);
+}
+.zq-di-badge svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.zq-di-g {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name use" "host use" "counts ver";
+  column-gap: 14px;
+  row-gap: 3px;
+  align-items: start;
+  font-size: 13px;
+}
+.zq-di-name {
+  grid-area: name;
+  min-width: 0;
+  font-size: 15px;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zq-di-host {
+  grid-area: host;
+  min-width: 0;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zq-di-counts {
+  grid-area: counts;
+  margin-top: 8px;
+}
+.zq-di-use {
+  grid-area: use;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.zq-di-ver {
+  grid-area: ver;
+  justify-self: end;
+  align-self: center;
+  margin-top: 8px;
+}
+.zq-di-pw {
+  position: relative;
+  display: inline-flex;
+}
+.zq-di-vp {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line2);
+  color: var(--dim);
+  white-space: nowrap;
+}
+.zq-di-vp:hover,
+.zq-di-vp:focus-visible,
+.zq-di-vp[aria-expanded="true"] {
+  border-color: var(--dim);
+  color: var(--fg);
+}
+/* The part of the version that a newer release changed: a faint amber line
+   on the pill's bottom edge, right under it. */
+.zq-di-ch {
+  position: relative;
+}
+.zq-di-ch::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: -4px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--amber);
+  opacity: 0.5;
+}
+.zq-di-pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  white-space: nowrap;
+  padding: 7px 10px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px var(--shadow);
+  font-size: 12px;
+  color: var(--fg);
+  cursor: default;
+}
+.zq-di-pop b {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--amber) 80%, var(--fg));
+}
+@container (max-width: 480px) {
+  .zq-di-card {
+    --ring: 34px;
+    --gap: 12px;
+    padding: 14px;
+  }
+  .zq-di-ring .zq-mark-ic {
+    transform: scale(0.88);
+  }
+  .zq-di-name {
+    font-size: 14px;
+  }
+  .zq-di-use .zq-mu-spark {
+    width: 64px !important;
+  }
+}

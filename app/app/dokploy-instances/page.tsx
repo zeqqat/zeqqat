@@ -1,16 +1,20 @@
-import { and, asc, desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { ConnectAppForm } from "../../../components/ConnectAppForm";
 import { ConnectDokployForm } from "../../../components/ConnectDokployForm";
 import { ImportAppForm } from "../../../components/ImportAppForm";
+import { InstanceCards, type InstanceCard } from "../../../components/InstanceCards";
 import { IntegrationMark } from "../../../components/Marks";
-import { StatusBadge } from "../../../components/StatusBadge";
 import { db } from "../../../db";
-import { instance, integration, oauthGrant, organization } from "../../../db/schema";
+import { instance, integration } from "../../../db/schema";
 import { requireWorkspace } from "../../../lib/guard";
+import { freshDokploy, instanceCounts, usageByInstance } from "../../../lib/instance-cards";
 
-// Each server someone adds with a key is an instance of an app (Dokploy).
-// This page lists this workspace's instances, grouped under each app.
-export default async function InstancesPage({
+// Every server someone added with a key is an instance of an app (Dokploy).
+// This page lists this workspace's instances as cards (components/
+// InstanceCards.tsx) with "+ Add an instance" as the list's first row. No
+// heading, kicker or explanation: the menu says where you are (UI
+// principles 6 and 9). Designed 2026-11-17, variant 32 of the card designs.
+export default async function DokployInstancesPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -22,96 +26,82 @@ export default async function InstancesPage({
   const importing = params.add === "app";
   const connectId = typeof params.connect === "string" ? params.connect : null;
 
-  const [offered, rows, liveAgents] = await Promise.all([
-    db
-      .select({
-        id: integration.id,
-        slug: integration.slug,
-        name: integration.name,
-        official: integration.official,
-        logoUrl: integration.logoUrl,
-        specUrl: integration.specUrl,
-        docsUrl: integration.docsUrl,
-        defaultBaseUrl: integration.defaultBaseUrl,
-        orgSlug: organization.slug,
-      })
-      .from(integration)
-      .innerJoin(organization, eq(organization.id, integration.organizationId))
-      .where(or(eq(integration.official, true), eq(integration.organizationId, ws.organizationId)))
-      .orderBy(asc(integration.name)),
+  const [rows, connecting] = await Promise.all([
     db
       .select({
         id: instance.id,
         alias: instance.alias,
         baseUrl: instance.baseUrl,
+        credential: instance.credential,
         lastStatus: instance.lastStatus,
         lastVersion: instance.lastVersion,
-        integrationId: integration.id,
-        integrationSlug: integration.slug,
-        integrationName: integration.name,
-        integrationLogo: integration.logoUrl,
-        integrationOfficial: integration.official,
-        integrationSpecUrl: integration.specUrl,
-        integrationDocsUrl: integration.docsUrl,
-        integrationBaseUrl: integration.defaultBaseUrl,
-        integrationOrgSlug: organization.slug,
+        lastValidatedAt: instance.lastValidatedAt,
+        appSlug: integration.slug,
+        appName: integration.name,
+        appLogo: integration.logoUrl,
       })
       .from(instance)
       .innerJoin(integration, eq(integration.id, instance.integrationId))
-      .innerJoin(organization, eq(organization.id, integration.organizationId))
       .where(eq(instance.workspaceId, ws.workspaceId))
       .orderBy(desc(instance.createdAt)),
-    db
-      .selectDistinct({ id: oauthGrant.oauthClientId })
-      .from(oauthGrant)
-      .where(and(eq(oauthGrant.workspaceId, ws.workspaceId), isNull(oauthGrant.revokedAt))),
+    connectId
+      ? db
+          .select({
+            id: integration.id,
+            slug: integration.slug,
+            name: integration.name,
+            logoUrl: integration.logoUrl,
+            official: integration.official,
+            defaultBaseUrl: integration.defaultBaseUrl,
+          })
+          .from(integration)
+          .where(
+            and(
+              eq(integration.id, connectId),
+              or(eq(integration.official, true), eq(integration.organizationId, ws.organizationId)),
+            ),
+          )
+          .then((r) => r.find((g) => !(g.official && g.slug === "dokploy")))
+      : Promise.resolve(undefined),
   ]);
 
-  // Every offered integration shows, plus any other integration this
-  // workspace already has instances of.
-  const groups = [...offered];
-  for (const r of rows) {
-    if (!groups.some((g) => g.id === r.integrationId)) {
-      groups.push({
-        id: r.integrationId,
-        slug: r.integrationSlug,
-        name: r.integrationName,
-        official: r.integrationOfficial,
-        logoUrl: r.integrationLogo,
-        specUrl: r.integrationSpecUrl,
-        docsUrl: r.integrationDocsUrl,
-        defaultBaseUrl: r.integrationBaseUrl,
-        orgSlug: r.integrationOrgSlug,
-      });
+  const ids = rows.map((r) => r.id);
+  const [usage, counts, fresh] = await Promise.all([
+    usageByInstance(ws.workspaceId, ids),
+    instanceCounts(ids),
+    freshDokploy(rows.filter((r) => r.appSlug === "dokploy")),
+  ]);
+
+  const cards: InstanceCard[] = rows.map((r) => {
+    const f = fresh.get(r.id);
+    let host = r.baseUrl;
+    try {
+      host = new URL(r.baseUrl).host;
+    } catch {
+      // keep the stored address as typed
     }
-  }
-  const dokployCount = rows.filter((r) => r.integrationSlug === "dokploy").length;
-  const connecting = connectId ? groups.find((g) => g.id === connectId && !(g.official && g.slug === "dokploy")) : undefined;
+    return {
+      id: r.id,
+      name: r.alias,
+      host,
+      appName: r.appName,
+      appSlug: r.appSlug,
+      appLogo: r.appLogo,
+      status: f?.status ?? r.lastStatus,
+      version: f?.version ?? r.lastVersion,
+      latest: f?.latest ?? null,
+      urls: counts.urls.get(r.id) ?? 0,
+      people: counts.people.get(r.id) ?? 0,
+      usage: usage.get(r.id) ?? { days: Array(30).fill(0), hours: Array(24).fill(0) },
+    };
+  });
+  const dokployCount = rows.filter((r) => r.appSlug === "dokploy").length;
+  const formOpen = (adding || importing || !!connecting) && isOwner;
 
   return (
     <div>
-      <div className="zq-head-row">
-        <div>
-          <p className="zq-kicker">Dokploy Instances</p>
-          <h1 className="zq-h">
-            What this workspace connects to<span className="dot">.</span>
-          </h1>
-          <p className="zq-sub">
-            Each server you add is an instance, with its own API key, encrypted and never shown after saving.
-            MCP URLs decide which agents reach which instance, and how far.
-          </p>
-        </div>
-        {isOwner && !adding && !importing && !connecting && (
-          <div className="zq-row-actions">
-            <a className="zq-action" href="/app/dokploy-instances?add=1">
-              {dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}
-            </a>
-          </div>
-        )}
-      </div>
-
       {params.connected && (
-        <div className="zq-ok-box" role="status" style={{ marginTop: 20 }}>
+        <div className="zq-ok-box" role="status" style={{ marginBottom: 16 }}>
           <span className="ic" aria-hidden="true">
             ✓
           </span>
@@ -121,7 +111,7 @@ export default async function InstancesPage({
         </div>
       )}
       {params.imported && (
-        <div className="zq-ok-box" role="status" style={{ marginTop: 20 }}>
+        <div className="zq-ok-box" role="status" style={{ marginBottom: 16 }}>
           <span className="ic" aria-hidden="true">
             ✓
           </span>
@@ -133,7 +123,7 @@ export default async function InstancesPage({
         </div>
       )}
       {params.removed && (
-        <div className="zq-ok-box" role="status" style={{ marginTop: 20 }}>
+        <div className="zq-ok-box" role="status" style={{ marginBottom: 16 }}>
           <span className="ic" aria-hidden="true">
             ✓
           </span>
@@ -142,15 +132,19 @@ export default async function InstancesPage({
       )}
 
       {adding && isOwner && (
-        <section className="zq-block">
-          <h2 className="zq-block-t">{dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}</h2>
+        <section className="zq-panel-box" style={{ marginBottom: 16 }}>
+          <h2 className="zq-block-t" style={{ marginBottom: 14 }}>
+            {dokployCount ? "Add another Dokploy" : "Add a Dokploy"}
+          </h2>
           <ConnectDokployForm next="dokploy-instances" defaultAlias={dokployCount ? `my-dokploy-${dokployCount + 1}` : "my-dokploy"} />
         </section>
       )}
 
       {importing && isOwner && (
-        <section className="zq-block">
-          <h2 className="zq-block-t">Add an app</h2>
+        <section className="zq-panel-box" style={{ marginBottom: 16 }}>
+          <h2 className="zq-block-t" style={{ marginBottom: 14 }}>
+            Add an app
+          </h2>
           <ImportAppForm
             account={ws.organizationSlug}
             prefill={{
@@ -163,8 +157,8 @@ export default async function InstancesPage({
       )}
 
       {connecting && isOwner && (
-        <section className="zq-block">
-          <h2 className="zq-block-t" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <section className="zq-panel-box" style={{ marginBottom: 16 }}>
+          <h2 className="zq-block-t" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <IntegrationMark slug={connecting.slug} name={connecting.name} logo={connecting.logoUrl} size={20} />
             Connect {connecting.name}
           </h2>
@@ -172,77 +166,11 @@ export default async function InstancesPage({
         </section>
       )}
 
-      {groups.length === 0 && (
-        <div className="zq-block">
-          <p className="zq-empty">No apps are set up on this Zeqqat yet.</p>
-        </div>
-      )}
-
-      {groups.map((g) => {
-        const mine = rows.filter((r) => r.integrationId === g.id);
-        return (
-          <section className="zq-block" key={g.id}>
-            <h2 className="zq-block-t" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <IntegrationMark slug={g.slug} name={g.name} logo={g.logoUrl} size={20} />
-              {g.name}
-              <span className="zq-item-s" style={{ fontWeight: 400 }}>
-                @{g.orgSlug}/{g.slug} · {mine.length} {mine.length === 1 ? "instance" : "instances"}
-              </span>
-              {isOwner && !(g.official && g.slug === "dokploy") && (
-                <a className="zq-textlink" style={{ marginLeft: "auto", fontSize: 13, fontWeight: 500 }} href={`/app/dokploy-instances?connect=${g.id}`}>
-                  Add instance
-                </a>
-              )}
-            </h2>
-            {(g.specUrl || g.docsUrl) && (
-              <p className="zq-item-s" style={{ margin: "2px 0 10px" }}>
-                {g.specUrl && (
-                  <a className="zq-textlink" href={g.specUrl} rel="noreferrer" target="_blank">
-                    Spec
-                  </a>
-                )}
-                {g.specUrl && g.docsUrl && " · "}
-                {g.docsUrl && (
-                  <a className="zq-textlink" href={g.docsUrl} rel="noreferrer" target="_blank">
-                    Docs
-                  </a>
-                )}
-              </p>
-            )}
-            {mine.length === 0 ? (
-              <p className="zq-empty">
-                {isOwner
-                  ? `No ${g.name} connected yet.`
-                  : `No ${g.name} connected yet. An owner of this workspace adds it.`}
-              </p>
-            ) : (
-              <div className="zq-list">
-                {mine.map((r) => (
-                  <a className="zq-item" key={r.id} href={`/app/instances/${r.id}`}>
-                    <span className="zq-item-ic">
-                      <IntegrationMark slug={g.slug} name={g.name} logo={g.logoUrl} size={18} />
-                    </span>
-                    <div className="zq-item-main">
-                      <div className="zq-item-t">{r.alias}</div>
-                      <div className="zq-item-s">
-                        {[r.baseUrl, r.lastVersion ? `${g.name} ${r.lastVersion}` : null].filter(Boolean).join(" · ")}
-                      </div>
-                    </div>
-                    <div className="zq-item-r">
-                      <StatusBadge status={r.lastStatus} />
-                    </div>
-                  </a>
-                ))}
-              </div>
-            )}
-          </section>
-        );
-      })}
-
-      <p className="zq-note">
-        {liveAgents.length} {liveAgents.length === 1 ? "agent is" : "agents are"} signed in to this workspace. Set what
-        each URL can do on each instance in <a className="zq-textlink" href="/app/mcp-urls">MCP URLs</a>.
-      </p>
+      <InstanceCards
+        cards={cards}
+        addHref={isOwner && !formOpen ? "/app/dokploy-instances?add=1" : null}
+        emptyText={isOwner ? "No Dokploy connected yet." : "No Dokploy connected yet. An owner of this workspace adds it."}
+      />
     </div>
   );
 }

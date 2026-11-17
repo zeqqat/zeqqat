@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-11-17",
+    "at": "2026-11-17T17:00:40Z",
+    "changes": [
+      "Dokploy Instances is now a list of cards: health ring, name and domain, MCP URLs and people connected, calls over time, and the Dokploy version",
+      "A faint amber line under the version shows a newer Dokploy is out; click the version to see which",
+      "Add an instance is the first row of the list"
+    ]
+  },
+  {
     "version": "0.3.100",
     "date": "2026-11-17",
     "at": "2026-11-17T14:22:11Z",

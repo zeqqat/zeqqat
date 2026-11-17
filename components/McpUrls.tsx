@@ -52,7 +52,7 @@ function useOutside(open: boolean, close: () => void) {
   return ref;
 }
 
-export function Icon({ name }: { name: "copy" | "done" | "person" | "apps" | "clock" | "globe" }) {
+export function Icon({ name }: { name: "copy" | "done" | "person" | "apps" | "clock" | "globe" | "link" }) {
   const p = {
     copy: (
       <>
@@ -79,6 +79,12 @@ export function Icon({ name }: { name: "copy" | "done" | "person" | "apps" | "cl
       <>
         <circle cx="12" cy="12" r="9" />
         <path d="M12 7v5l3 2" />
+      </>
+    ),
+    link: (
+      <>
+        <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+        <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
       </>
     ),
     globe: (
@@ -160,14 +166,12 @@ export function StatusIcon({ icon, text, tone, below = false }: { icon: "clock" 
   );
 }
 
-function Spark({ values, label }: { values: number[]; label: string }) {
-  const w = 96;
-  const h = 24;
+export function Spark({ values, label, w = 96, h = 24 }: { values: number[]; label: string; w?: number; h?: number }) {
   const max = Math.max(...values, 1);
   const step = w / Math.max(values.length - 1, 1);
   const line = values.map((v, i) => `${i ? "L" : "M"}${(i * step).toFixed(1)} ${(h - 2 - (v / max) * (h - 4)).toFixed(1)}`).join(" ");
   return (
-    <svg className="zq-mu-spark" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={label}>
+    <svg className="zq-mu-spark" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={label} style={w === 96 && h === 24 ? undefined : { width: w, height: h }}>
       <path className="f" d={`${line} L${w} ${h} L0 ${h} Z`} />
       <path className="l" d={line} />
     </svg>
@@ -175,7 +179,7 @@ function Spark({ values, label }: { values: number[]; label: string }) {
 }
 
 // "this week" with a dotted line on hover; a click opens the choices.
-function PeriodPick({ value, onChange, align = "right" }: { value: Period; onChange: (p: Period) => void; align?: "left" | "right" }) {
+export function PeriodPick({ value, onChange, align = "right" }: { value: Period; onChange: (p: Period) => void; align?: "left" | "right" }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
   return (

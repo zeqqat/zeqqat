@@ -143,7 +143,18 @@ to be revisited). "Integration" is the code's
 word for a published tool set (`@zeqqat/dokploy`), not a menu label: people
 think "my Dokploy", not "my integration". Once Zeqqat leaves the Dokploy
 ecosystem the page becomes "Apps", each app listing its instances or
-accounts. Never label anything "Service": Dokploy uses "service" for an
+accounts. The page is one list (`components/InstanceCards.tsx`,
+`lib/instance-cards.ts`): "+ Add an instance" as the first row, then a card
+per instance with no heading above it. A card pairs three rows per side:
+name / calls graph, domain / calls with the period switch, MCP URLs and
+people connected / a grey version pill. Health is the ring around the app's
+logo (mint, or amber with a warning mark). When Dokploy's own update check
+(`settings.getUpdateData`) has a newer release, a faint amber line sits
+under the changed part of the version (`lib/version-diff.ts`) and a click
+says one line ("Dokploy v0.31.4 is out"); updating belongs on the
+instance's page, never on the list. The page re-checks a Dokploy older than
+10 minutes and its latest release (cached 30 minutes), but never waits more
+than 3 seconds for them. Never label anything "Service": Dokploy uses "service" for an
 app or database inside a project, so the word is ambiguous to users and
 agents.
 
