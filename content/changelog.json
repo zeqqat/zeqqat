@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.96",
+    "date": "2026-11-17",
+    "at": "2026-11-17T06:53:11Z",
+    "changes": [
+      "The Integrations page is now Instances, with the Dokploy logo in the menu"
+    ]
+  },
+  {
     "version": "0.3.95",
     "date": "2026-11-17",
     "at": "2026-11-17T05:24:57Z",

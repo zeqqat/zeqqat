@@ -25,12 +25,12 @@ export function RequestCard({ card, linked, heading }: { card: Card; linked: boo
     card.integrations.length > 0 && {
       label: plural(card.integrations.length, "View integration", "View integrations"),
       count: card.integrations.length,
-      href: "/app/integrations",
+      href: "/app/instances",
     },
     card.instances.length > 0 && {
       label: plural(card.instances.length, "View instance", "View instances"),
       count: card.instances.length,
-      href: card.instances.length === 1 ? `/app/instances/${card.instances[0].id}` : "/app/integrations",
+      href: card.instances.length === 1 ? `/app/instances/${card.instances[0].id}` : "/app/instances",
     },
   ].filter(Boolean) as { label: string; count: number; href: string }[];
 

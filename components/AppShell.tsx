@@ -10,14 +10,14 @@ import { DokployMark } from "./Marks";
 import { ThemeToggle } from "./ThemeToggle";
 import { VersionPill } from "./VersionPill";
 
-type Pane = "overview" | "mcp-urls" | "integrations" | "tools" | "policies" | "activity" | "members" | "settings";
+type Pane = "overview" | "mcp-urls" | "instances" | "tools" | "policies" | "activity" | "members" | "settings";
 
-// `also` lists other paths that belong to the same pane, so an instance
-// page (/app/instances/<id>) still highlights Integrations.
-const ITEMS: { pane: Pane; label: string; href: string; also?: string[] }[] = [
+// `also` lists other paths that belong to the same pane. `icon` sits before
+// the label: Instances carries the Dokploy logo while Dokploy is the only app.
+const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: React.ReactNode }[] = [
   { pane: "overview", label: "Overview", href: "/app" },
   { pane: "mcp-urls", label: "MCP URLs", href: "/app/mcp-urls" },
-  { pane: "integrations", label: "Integrations", href: "/app/integrations", also: ["/app/instances"] },
+  { pane: "instances", label: "Instances", href: "/app/instances", icon: <DokployMark size={15} /> },
   { pane: "tools", label: "Tools", href: "/app/tools" },
   { pane: "policies", label: "Policies", href: "/app/policies" },
   { pane: "activity", label: "Activity", href: "/app/activity" },
@@ -434,6 +434,7 @@ export function AppShell({
                       setDrawer(false);
                     }}
                   >
+                    {item.icon}
                     {item.label}
                   </a>
                 );

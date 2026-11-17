@@ -136,11 +136,15 @@ and the plugin. "Connection" was misleading: a URL is not connected to
 anything until someone pastes it into an agent. People whose agent signed
 in through one are "connected".
 
-**UI vocabulary matches the code.** The dashboard says Integrations and
-instances. Never label anything "Service": Dokploy uses "service" for an
+**Instances, not integrations, in the UI.** The menu item is the Dokploy
+logo plus "Instances" (`/app/instances`, instances grouped under their app;
+one instance's page is `/app/instances/<id>`). "Integration" is the code's
+word for a published tool set (`@zeqqat/dokploy`), not a menu label: people
+think "my Dokploy", not "my integration". Once Zeqqat leaves the Dokploy
+ecosystem the page becomes "Apps", each app listing its instances or
+accounts. Never label anything "Service": Dokploy uses "service" for an
 app or database inside a project, so the word is ambiguous to users and
-agents. The Integrations page (`/app/integrations`) groups instances under
-their integration; instance pages stay at `/app/instances/<id>`.
+agents.
 
 **Connect Dokploy first.** Until a workspace has its first instance,
 everyone in it can open only the overview and Releases
@@ -280,8 +284,8 @@ in the app.
 **Public site** (cloud edition only; self-hosted redirects into `/app`):
 `/` and `/releases` share `components/SiteChrome.tsx`. There is no public
 integrations page: Zeqqat is the MCP for Dokploy, and the list of apps lives
-only in the dashboard (`/app/integrations`). A link can still fill the
-import form in (`/app/integrations?add=app&spec=...`), through
+only in the dashboard (`/app/instances`). A link can still fill the
+import form in (`/app/instances?add=app&spec=...`), through
 `/signup?next=...` when signed out (`lib/next-path.ts` keeps `next` on-site).
 
 **SEO:** every public page gets its title, description, canonical URL and

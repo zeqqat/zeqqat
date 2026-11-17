@@ -181,7 +181,7 @@ export default async function McpUrlPage({
         {tab === "instances" && (
           <>
             {ws.role === "owner" && (
-              <a className="zq-mu-addrow" href="/app/integrations?add=1">
+              <a className="zq-mu-addrow" href="/app/instances?add=1">
                 <span aria-hidden="true">+</span>Add a Dokploy instance
               </a>
             )}

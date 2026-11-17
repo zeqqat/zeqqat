@@ -12,7 +12,7 @@ export function ConnectDokployForm({
   next,
   defaultAlias,
 }: {
-  next: "onboarding" | "integrations";
+  next: "onboarding" | "instances";
   defaultAlias: string;
 }) {
   const [state, action, pending] = useActionState<ConnectState, FormData>(connectDokployAction, {});

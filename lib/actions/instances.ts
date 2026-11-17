@@ -35,7 +35,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
   const alias = (formData.get("alias")?.toString() ?? "").trim().toLowerCase();
   const baseUrlRaw = (formData.get("base_url")?.toString() ?? "").trim();
   const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
-  const next = formData.get("next")?.toString() === "integrations" ? "/app/integrations" : "/app";
+  const next = formData.get("next")?.toString() === "instances" ? "/app/instances" : "/app";
   const values = { alias, baseUrl: baseUrlRaw };
 
   if (!alias || !baseUrlRaw || !apiKey) return { error: "Fill in the name, the URL and the API key.", values };
@@ -139,7 +139,7 @@ export async function connectAppAction(_prev: ConnectState, formData: FormData):
   }
 
   revalidatePath("/app", "layout");
-  redirect(`/app/integrations?connected=${encodeURIComponent(alias)}`);
+  redirect(`/app/instances?connected=${encodeURIComponent(alias)}`);
 }
 
 async function isDokploy(integrationId: string) {
@@ -158,7 +158,7 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
   const instanceId = formData.get("instance_id")?.toString() ?? "";
   const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
   const inst = await ownedInstance(ws.workspaceId, instanceId);
-  if (!inst) redirect("/app/integrations");
+  if (!inst) redirect("/app/instances");
   if (!apiKey) return { error: "Paste the new API key." };
 
   const result = (await isDokploy(inst.integrationId))
@@ -187,7 +187,7 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
 export async function retestInstanceAction(formData: FormData) {
   const { ws } = await requireOwner();
   const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
-  if (!inst) redirect("/app/integrations");
+  if (!inst) redirect("/app/instances");
 
   let status: string;
   let version = inst.lastVersion;
@@ -210,7 +210,7 @@ export async function retestInstanceAction(formData: FormData) {
     .where(eq(instance.id, inst.id));
 
   revalidatePath(`/app/instances/${inst.id}`);
-  revalidatePath("/app/integrations");
+  revalidatePath("/app/instances");
 }
 
 // Deleting the row removes the encrypted key and, by cascade, every grant
@@ -219,10 +219,10 @@ export async function retestInstanceAction(formData: FormData) {
 export async function removeInstanceAction(formData: FormData) {
   const { ws } = await requireOwner();
   const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
-  if (!inst) redirect("/app/integrations");
+  if (!inst) redirect("/app/instances");
 
   await deleteInstances(ws.workspaceId, [inst.id]);
 
   revalidatePath("/app", "layout");
-  redirect("/app/integrations?removed=1");
+  redirect("/app/instances?removed=1");
 }

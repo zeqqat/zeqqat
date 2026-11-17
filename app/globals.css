@@ -1502,6 +1502,10 @@ body {
   color: var(--dim);
   cursor: pointer;
 }
+.zq-menu-i .zq-mark-ic {
+  margin-right: 8px;
+  vertical-align: -2px;
+}
 .zq-menu-i:hover {
   background: color-mix(in srgb, var(--fg) 6%, var(--bg));
   color: var(--fg);
