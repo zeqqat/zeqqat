@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.94",
+    "date": "2026-11-17",
+    "at": "2026-11-17T03:27:47Z",
+    "changes": [
+      "The MCP URLs info bubble stays on screen on phones instead of running off the right edge",
+      "Policy on a URL's Instances tab is now a small dropdown under the field, not the phone's full-screen picker"
+    ]
+  },
+  {
     "version": "0.3.93",
     "date": "2026-11-17",
     "at": "2026-11-17T03:10:03Z",

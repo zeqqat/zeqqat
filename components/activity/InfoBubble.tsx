@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 // An ⓘ that opens a short explanation. By default it sits in a box's
 // top-right corner; `inline` puts it in the flow, e.g. beside a form label.
+// The bubble always stays on screen: if it would run past either edge it
+// slides back in, and its arrow still points at the ⓘ.
 export function InfoBubble({
   title,
   children,
@@ -16,6 +18,29 @@ export function InfoBubble({
   const [open, setOpen] = useState(false);
   const id = useId();
   const ref = useRef<HTMLSpanElement>(null);
+  const bubbleRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    const el = bubbleRef.current;
+    if (!open || !el) return;
+    const fit = () => {
+      el.style.transform = "";
+      el.style.removeProperty("--zq-bubble-shift");
+      const r = el.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+      const gap = 12;
+      let dx = 0;
+      if (r.right > vw - gap) dx = vw - gap - r.right;
+      if (r.left + dx < gap) dx = gap - r.left;
+      if (dx) {
+        el.style.transform = `translateX(${dx}px)`;
+        el.style.setProperty("--zq-bubble-shift", `${-dx}px`);
+      }
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -52,7 +77,7 @@ export function InfoBubble({
         </svg>
       </button>
       {open && (
-        <span className="zq-bubble" id={id} role="note">
+        <span className="zq-bubble" id={id} role="note" ref={bubbleRef}>
           <b>{title}</b>
           {children}
         </span>

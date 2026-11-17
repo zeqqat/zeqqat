@@ -27,6 +27,87 @@ export type InstanceRowData = {
 // kind that allows. With no policy, a kind is all or nothing and its pill
 // turns it on or off; with one, the policy's list decides and the pills
 // only show the count. Public URLs are capped at read.
+// A policy dropdown drawn by the page, so phones get a small menu under
+// the field instead of the system's full-screen picker. The choice is
+// submitted through the hidden input.
+function PolicyPicker({
+  name,
+  value,
+  options,
+  disabled,
+  label,
+  onChange,
+}: {
+  name: string;
+  value: string;
+  options: { id: string; name: string }[];
+  disabled: boolean;
+  label: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  const all = [{ id: "", name: "No policy" }, ...options];
+  const current = all.find((o) => o.id === value) ?? all[0];
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    ref.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  function onMenuKey(e: React.KeyboardEvent) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const items = [...(ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]') ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus();
+  }
+  return (
+    <span ref={ref} className="zq-mu-pol">
+      <input type="hidden" name={name} value={value} />
+      <button
+        type="button"
+        className="zq-mu-pol-b"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>{current.name}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <span className="zq-mu-per-m" role="menu" onKeyDown={onMenuKey}>
+          {all.map((o) => (
+            <button
+              key={o.id || "none"}
+              type="button"
+              role="menuitemradio"
+              aria-checked={o.id === value}
+              className={o.id === value ? "on" : undefined}
+              onClick={() => {
+                onChange(o.id);
+                setOpen(false);
+              }}
+            >
+              {o.name}
+            </button>
+          ))}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function InstanceRow({ row, admin, isPublic }: { row: InstanceRowData; admin: boolean; isPublic: boolean }) {
   const [on, setOn] = useState(row.enabled);
   const [policyId, setPolicyId] = useState(row.policyId ?? "");
@@ -47,23 +128,14 @@ function InstanceRow({ row, admin, isPublic }: { row: InstanceRowData; admin: bo
           />
           <span>{row.alias}</span>
         </label>
-        <select
-          className="zq-select"
+        <PolicyPicker
           name={`${id}:policy`}
           value={policyId}
+          options={row.policies}
           disabled={!admin || !on}
-          onChange={(e) => setPolicyId(e.target.value)}
-          aria-label={`Policy for ${row.alias}`}
-        >
-          <option value="">No policy</option>
-          {row.policies.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        {/* a disabled select doesn't submit; keep the choice */}
-        {(!admin || !on) && <input type="hidden" name={`${id}:policy`} value={policyId} />}
+          label={`Policy for ${row.alias}`}
+          onChange={setPolicyId}
+        />
       </div>
       <div className="zq-mu-pills">
         {KINDS.map(({ k, label }) => {

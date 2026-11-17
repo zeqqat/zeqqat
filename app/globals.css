@@ -4245,7 +4245,7 @@ a.zq-rel-v:hover {
   top: 38px;
   right: 6px;
   z-index: 3;
-  max-width: 240px;
+  max-width: min(240px, calc(100vw - 24px));
   padding: 8px 10px;
   border: 1px solid var(--line2);
   border-radius: 7px;
@@ -4266,7 +4266,8 @@ a.zq-rel-v:hover {
   background: var(--panel);
   border-left: 1px solid var(--line2);
   border-top: 1px solid var(--line2);
-  transform: rotate(45deg);
+  /* InfoBubble slides the bubble back on screen; the arrow stays on the ⓘ */
+  transform: translateX(var(--zq-bubble-shift, 0px)) rotate(45deg);
 }
 .zq-bubble b {
   display: block;
@@ -4713,7 +4714,7 @@ button.zq-look:focus-visible {
   top: 28px;
   left: -10px;
   right: auto;
-  width: 240px;
+  width: min(240px, calc(100vw - 24px));
 }
 .zq-info-inline .zq-bubble::before {
   left: 16px;
@@ -5729,9 +5730,9 @@ button.zq-demo-open {
   border-radius: 10px;
   background: var(--panel);
   container-type: inline-size;
-  overflow: hidden;
 }
 .zq-mu-appbox-h {
+  border-radius: 10px 10px 0 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -5780,6 +5781,62 @@ button.zq-demo-open {
 .zq-mu-iname span {
   overflow-wrap: break-word;
   min-width: 0;
+}
+/* the policy picker: our own menu, not the phone's native select sheet */
+.zq-mu-pol {
+  position: relative;
+  min-width: 0;
+}
+.zq-mu-pol-b {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 9px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+}
+.zq-mu-pol-b span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zq-mu-pol-b svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.zq-mu-pol-b:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 1px;
+}
+.zq-mu-pol-b:disabled {
+  cursor: default;
+  color: var(--faint);
+}
+.zq-mu-pol .zq-mu-per-m {
+  min-width: 100%;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+}
+.zq-mu-pol .zq-mu-per-m button {
+  gap: 12px;
+}
+.zq-mu-pol .zq-mu-per-m button:focus-visible {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
 }
 .zq-mu-ig .zq-select {
   width: 100%;
