@@ -93,7 +93,7 @@ export function OverviewTiles({
         </span>
       </a>
 
-      <a href="/app/instances" className="zq-stat zq-kpi">
+      <a href="/app/dokploy-instances" className="zq-stat zq-kpi">
         <span className="zq-kpi-l">Instances</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{instances.length}</span>

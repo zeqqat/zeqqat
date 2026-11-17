@@ -3,7 +3,7 @@ import { safeNext } from "../../lib/next-path";
 
 describe("safeNext", () => {
   it("keeps a path on this site", () => {
-    expect(safeNext("/app/instances?add=app&spec=https%3A%2F%2Fx")).toBe("/app/instances?add=app&spec=https%3A%2F%2Fx");
+    expect(safeNext("/app/dokploy-instances?add=app&spec=https%3A%2F%2Fx")).toBe("/app/dokploy-instances?add=app&spec=https%3A%2F%2Fx");
   });
   it("refuses other sites and junk", () => {
     for (const bad of ["//evil.com", "/\\evil.com", "https://evil.com", "evil", "", undefined, ["/app"]]) {

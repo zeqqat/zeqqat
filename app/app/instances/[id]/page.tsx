@@ -43,7 +43,7 @@ export default async function InstanceDetailPage({
     .leftJoin(user, eq(user.id, instance.createdByUserId))
     .where(and(eq(instance.id, id), eq(instance.workspaceId, ws.workspaceId)))
     .limit(1);
-  if (!inst) redirect("/app/instances");
+  if (!inst) redirect("/app/dokploy-instances");
 
   const [calls, agents, matrix] = await Promise.all([
     getCallsForInstance(ws.workspaceId, id, 50),
@@ -71,7 +71,7 @@ export default async function InstanceDetailPage({
   return (
     <div>
       <p className="zq-kicker">
-        <a href="/app/instances">Instances</a> / {inst.appName} / {inst.alias}
+        <a href="/app/dokploy-instances">Dokploy Instances</a> / {inst.appName} / {inst.alias}
       </p>
       <div className="zq-head-row">
         <h1 className="zq-h" style={{ display: "flex", alignItems: "center", gap: 12 }}>

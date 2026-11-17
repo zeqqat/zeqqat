@@ -10,14 +10,14 @@ import { DokployMark } from "./Marks";
 import { ThemeToggle } from "./ThemeToggle";
 import { VersionPill } from "./VersionPill";
 
-type Pane = "overview" | "mcp-urls" | "instances" | "tools" | "policies" | "activity" | "members" | "settings";
+type Pane = "overview" | "mcp-urls" | "dokploy-instances" | "tools" | "policies" | "activity" | "members" | "settings";
 
 // `also` lists other paths that belong to the same pane. `icon` sits before
-// the label: Instances carries the Dokploy logo while Dokploy is the only app.
+// the label. An instance page (/app/instances/<id>) highlights Dokploy Instances.
 const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: React.ReactNode }[] = [
   { pane: "overview", label: "Overview", href: "/app" },
   { pane: "mcp-urls", label: "MCP URLs", href: "/app/mcp-urls" },
-  { pane: "instances", label: "Instances", href: "/app/instances", icon: <DokployMark size={15} /> },
+  { pane: "dokploy-instances", label: "Dokploy Instances", href: "/app/dokploy-instances", also: ["/app/instances"], icon: <DokployMark size={15} /> },
   { pane: "tools", label: "Tools", href: "/app/tools" },
   { pane: "policies", label: "Policies", href: "/app/policies" },
   { pane: "activity", label: "Activity", href: "/app/activity" },

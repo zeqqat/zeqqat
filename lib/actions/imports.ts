@@ -40,5 +40,5 @@ export async function importAppAction(_prev: ImportState, formData: FormData): P
   }
 
   revalidatePath("/app", "layout");
-  redirect(`/app/instances?imported=${encodeURIComponent(slug)}&tools=${tools}${updated ? "&updated=1" : ""}`);
+  redirect(`/app/dokploy-instances?imported=${encodeURIComponent(slug)}&tools=${tools}${updated ? "&updated=1" : ""}`);
 }

@@ -92,7 +92,7 @@ export default async function InstancesPage({
     <div>
       <div className="zq-head-row">
         <div>
-          <p className="zq-kicker">Instances</p>
+          <p className="zq-kicker">Dokploy Instances</p>
           <h1 className="zq-h">
             What this workspace connects to<span className="dot">.</span>
           </h1>
@@ -103,10 +103,10 @@ export default async function InstancesPage({
         </div>
         {isOwner && !adding && !importing && !connecting && (
           <div className="zq-row-actions">
-            <a className="zq-action" href="/app/instances?add=1">
+            <a className="zq-action" href="/app/dokploy-instances?add=1">
               {dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}
             </a>
-            <a className="zq-action zq-action-primary" href="/app/instances?add=app">
+            <a className="zq-action zq-action-primary" href="/app/dokploy-instances?add=app">
               Add an app
             </a>
           </div>
@@ -147,7 +147,7 @@ export default async function InstancesPage({
       {adding && isOwner && (
         <section className="zq-block">
           <h2 className="zq-block-t">{dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}</h2>
-          <ConnectDokployForm next="instances" defaultAlias={dokployCount ? `my-dokploy-${dokployCount + 1}` : "my-dokploy"} />
+          <ConnectDokployForm next="dokploy-instances" defaultAlias={dokployCount ? `my-dokploy-${dokployCount + 1}` : "my-dokploy"} />
         </section>
       )}
 
@@ -192,7 +192,7 @@ export default async function InstancesPage({
                 @{g.orgSlug}/{g.slug} · {mine.length} {mine.length === 1 ? "instance" : "instances"}
               </span>
               {isOwner && !(g.official && g.slug === "dokploy") && (
-                <a className="zq-textlink" style={{ marginLeft: "auto", fontSize: 13, fontWeight: 500 }} href={`/app/instances?connect=${g.id}`}>
+                <a className="zq-textlink" style={{ marginLeft: "auto", fontSize: 13, fontWeight: 500 }} href={`/app/dokploy-instances?connect=${g.id}`}>
                   Add instance
                 </a>
               )}

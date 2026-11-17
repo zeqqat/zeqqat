@@ -103,7 +103,7 @@ export default async function ToolsPage({
       <div className="zq-block">
         {ids.length === 0 ? (
           <p className="zq-empty">
-            No instances connected yet. <a className="zq-textlink" href="/app/instances">Add one</a> and its tools appear here.
+            No instances connected yet. <a className="zq-textlink" href="/app/dokploy-instances">Add one</a> and its tools appear here.
           </p>
         ) : rows.length === 0 ? (
           <p className="zq-empty">No tools match &ldquo;{q}&rdquo;.</p>
