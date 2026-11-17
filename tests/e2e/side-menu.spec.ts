@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// The side menu sits beside the page and pushes it, with no overlay, and
-// can stay open while you work. It must animate in both directions. That
+// On wide screens the side menu sits beside the page and pushes it, with
+// no overlay, and can stay open while you work. Below 900px it is a drawer
+// over the page. It must animate in both directions. That
 // has regressed before, with one direction kept and the other dropped, so
 // each is tested on its own. getAnimations() reports CSS transitions, CSS
 // animations and Web Animations alike.
@@ -93,4 +94,24 @@ test("the menu stays the way you left it across pages", async ({ page }) => {
   await expect(menu).toBeHidden();
   await page.goto("/app");
   await expect(page.getByRole("complementary", { name: "Menu" })).toBeHidden();
+});
+
+test("on a narrow screen the menu slides over the page and closes from the backdrop", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/app");
+  const menu = page.getByRole("complementary", { name: "Menu" });
+  await expect(menu).toBeHidden();
+  const before = await page.locator("main.zq-main").boundingBox();
+
+  const opening = await clickAndReadPanelAnimations(page);
+  expect(opening.some((d) => d > 0), "no running animation on the panel while opening").toBe(true);
+  await expect(menu).toBeVisible();
+  await settle(page);
+  // Over the page, not beside it: the page hasn't moved.
+  const after = await page.locator("main.zq-main").boundingBox();
+  expect(after!.x).toBe(before!.x);
+  expect(after!.width).toBe(before!.width);
+
+  await page.locator(".zq-side-scrim").click({ position: { x: 370, y: 300 } });
+  await expect(menu).toBeHidden();
 });

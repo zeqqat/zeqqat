@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { CrumbLast } from "../../../../components/AppShell";
 import { IntegrationMark } from "../../../../components/Marks";
 import { AgentChips, InstanceRows, ManageRow, type InstanceRowData } from "../../../../components/McpUrlPage";
-import { CopyIcon, StatusIcon, UrlText } from "../../../../components/McpUrls";
+import { McpUrlCard, type UrlItem } from "../../../../components/McpUrls";
 import { db } from "../../../../db";
 import { instance, integration } from "../../../../db/schema";
 import {
@@ -16,7 +16,7 @@ import {
 } from "../../../../lib/actions/connections";
 import { connectionTokenHolders, formatCutoff, getConnection, getConnectionById, getConnectionPolicy, sunsetState } from "../../../../lib/connections";
 import { requireWorkspace } from "../../../../lib/guard";
-import { connectedPeople, cutoffLabel, policyCounts, toolTotals, type ConnectedPerson } from "../../../../lib/mcp-urls";
+import { connectedPeople, cutoffLabel, policyCounts, toolTotals, urlCounts, usageByUrl, type ConnectedPerson } from "../../../../lib/mcp-urls";
 import { pickablePolicies, type PolicySummary } from "../../../../lib/policies";
 import { eq, inArray } from "drizzle-orm";
 
@@ -87,12 +87,14 @@ export default async function McpUrlPage({
   const href = (t: Tab) => `/app/mcp-urls/${conn.id}${t === "instances" ? "" : `?tab=${t}`}`;
   const prefix = conn.url.slice(0, conn.url.length - `${conn.name}/${conn.shortId}`.length);
 
-  const [replacedBy, replaces, holders, people, rows] = await Promise.all([
+  const [replacedBy, replaces, holders, people, rows, usage, urlCount] = await Promise.all([
     conn.replacedByConnectionId ? getConnectionById(conn.replacedByConnectionId) : null,
     typeof query.replaced === "string" ? getConnection(ws.workspaceId, query.replaced) : null,
     state === "warning" && isAdmin ? connectionTokenHolders(conn.id) : [],
     isPublic ? Promise.resolve([] as ConnectedPerson[]) : connectedPeople(conn.id),
     getConnectionPolicy(conn.id, ws.workspaceId),
+    usageByUrl(ws.workspaceId, [conn.id]),
+    urlCounts([conn.id]),
   ]);
 
   // Instances, grouped by app, with tool counts per kind: what exists, and
@@ -129,7 +131,19 @@ export default async function McpUrlPage({
   });
 
   const { today, inAWeek, now } = dateDefaults();
-  const names = people.map((p) => p.name.split(" ")[0]);
+  const item: UrlItem = {
+    id: conn.id,
+    url: conn.url,
+    prefix,
+    name: conn.name,
+    shortId: conn.shortId,
+    isPublic,
+    state,
+    cutoff: conn.sunsetAt ? cutoffLabel(conn.sunsetAt) : null,
+    people: urlCount.people.get(conn.id) ?? 0,
+    instances: urlCount.instances.get(conn.id) ?? 0,
+    usage: usage.get(conn.id) ?? { days: Array(30).fill(0), hours: Array(24).fill(0) },
+  };
   const err = typeof query.error === "string" ? query.error : "";
 
   return (
@@ -147,58 +161,9 @@ export default async function McpUrlPage({
         </Ok>
       )}
 
-      <div className={`zq-mu-prof${state === "cutoff" ? " is-off" : ""}`}>
-        <div className="zq-mu-prof-in">
-          <div className="zq-mu-top">
-            <code className="zq-mu-url">
-              <UrlText item={{ prefix, name: conn.name, shortId: conn.shortId }} />
-              {state !== "live" && conn.sunsetAt && (
-                <StatusIcon
-                  icon="clock"
-                  tone={state === "cutoff" ? "off" : "warn"}
-                  text={state === "cutoff" ? `Turned off ${cutoffLabel(conn.sunsetAt)}` : `Turns off ${cutoffLabel(conn.sunsetAt)}`}
-                />
-              )}
-            </code>
-            {state !== "cutoff" && <CopyIcon text={conn.url} />}
-          </div>
-          {conn.description && <p className="zq-mu-bio">{conn.description}</p>}
-          <div className="zq-mu-fp">
-            {isPublic ? (
-              <>
-                <StatusIcon icon="globe" tone="warn" below text="Public: anyone with the URL can read, no sign-in" />
-                <span className="zq-mu-quiet">Public, no sign-in</span>
-              </>
-            ) : people.length === 0 ? (
-              <span className="zq-mu-quiet">No one connected yet</span>
-            ) : (
-              <>
-                <span className="zq-mu-avs">
-                  {people.slice(0, 3).map((p) => (
-                    <Avatar key={p.userId} p={p} />
-                  ))}
-                  {people.length > 3 && <span className="zq-mu-av is-more">+{people.length - 3}</span>}
-                </span>
-                <span className="zq-mu-fp-t">
-                  {names.length === 1 ? (
-                    <>
-                      <b>{names[0]}</b> connected
-                    </>
-                  ) : names.length === 2 ? (
-                    <>
-                      <b>{names[0]}</b> and <b>{names[1]}</b> connected
-                    </>
-                  ) : (
-                    <>
-                      <b>{names[0]}</b>, <b>{names[1]}</b> and {names.length - 2} other{names.length - 2 > 1 ? "s" : ""} connected
-                    </>
-                  )}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
+      <McpUrlCard item={item} description={conn.description} />
 
+      <div className="zq-mu-detail">
         <nav className="zq-mu-tabs" aria-label="MCP URL">
           {(
             [
@@ -256,7 +221,7 @@ export default async function McpUrlPage({
           ) : people.length === 0 ? (
             <p className="zq-empty zq-mu-pad">No one has connected to this URL yet.</p>
           ) : (
-            <div>
+            <div className="zq-mu-panel">
               {people.map((p) => (
                 <div className="zq-mu-person" key={p.userId}>
                   <Avatar p={p} />
@@ -280,7 +245,7 @@ export default async function McpUrlPage({
           ))}
 
         {tab === "manage" && isAdmin && (
-          <div>
+          <div className="zq-mu-panel">
             <ManageRow
               key={`row1-${now}`}
               title="Description"

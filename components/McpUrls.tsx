@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { InfoBubble } from "./activity/InfoBubble";
 
-// The MCP URLs list (app/app/mcp-urls/page.tsx) and the small parts its
-// URL page reuses. Each card: the URL with a clock beside it when it turns
+// The MCP URLs list (app/app/mcp-urls/page.tsx) and the parts its URL
+// page reuses, the card included. Each card: the URL with a clock beside it when it turns
 // off; under it, people (or a globe when public) and instances on the
 // left, the calls line and number on the right. Clicking the period
 // ("this week") switches between today, this week and this month.
@@ -217,23 +217,39 @@ function PeriodPick({ value, onChange, align = "right" }: { value: Period; onCha
   );
 }
 
-function Card({ item, period, onPeriod }: { item: UrlItem; period: Period; onPeriod: (p: Period) => void }) {
+function Card({
+  item,
+  period,
+  onPeriod,
+  description = null,
+  linked = true,
+}: {
+  item: UrlItem;
+  period: Period;
+  onPeriod: (p: Period) => void;
+  // Only the URL's own page shows the description, under the calls line.
+  description?: string | null;
+  // The list's cards open the URL's page; the page's own card doesn't.
+  linked?: boolean;
+}) {
   const router = useRouter();
   const values = series(item.usage, period);
   const off = item.state === "cutoff";
   const href = `/app/mcp-urls/${item.id}`;
   // A div, not a link: the card holds buttons (copy, period, status).
+  const link = linked
+    ? {
+        role: "link",
+        tabIndex: 0,
+        "aria-label": item.url,
+        onClick: () => router.push(href),
+        onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === "Enter" && e.target === e.currentTarget) router.push(href);
+        },
+      }
+    : {};
   return (
-    <div
-      className={`zq-mu-card${off ? " is-off" : ""}`}
-      role="link"
-      tabIndex={0}
-      aria-label={item.url}
-      onClick={() => router.push(href)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && e.target === e.currentTarget) router.push(href);
-      }}
-    >
+    <div className={`zq-mu-card${off ? " is-off" : ""}${linked ? "" : " is-static"}`} {...link}>
       <div className="zq-mu-l1">
         <code className="zq-mu-url">
           <UrlText item={item} />
@@ -266,6 +282,18 @@ function Card({ item, period, onPeriod }: { item: UrlItem; period: Period; onPer
           </span>
         </span>
       </div>
+      {description && <p className="zq-mu-bio">{description}</p>}
+    </div>
+  );
+}
+
+// The URL's page opens with the same card as the list, its description
+// under it, then the tabs.
+export function McpUrlCard({ item, description }: { item: UrlItem; description: string | null }) {
+  const [period, setPeriod] = useState<Period>("week");
+  return (
+    <div className="zq-mu-list is-one">
+      <Card item={item} period={period} onPeriod={setPeriod} description={description} linked={false} />
     </div>
   );
 }

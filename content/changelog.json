@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.3.93",
+    "date": "2026-11-17",
+    "at": "2026-11-17T03:10:03Z",
+    "changes": [
+      "On phones and small tablets the side menu slides over the page instead of pushing it; tap outside or pick a page to close it",
+      "On phones the path at the top scrolls sideways and starts at its right end, so the page you are on shows first",
+      "MCP URLs: bigger URL text (15px) and bigger people and instance icons, and the calls label lines up with the middle of its number",
+      "A URL's page now opens with the same card as the list, with the description under it",
+      "Instances: Read, Create, Edit and Delete stay on one row and scroll sideways when they don't fit; no box inside a box"
+    ]
+  },
+  {
     "version": "0.3.92",
     "date": "2026-11-16",
     "at": "2026-11-16T18:42:21Z",

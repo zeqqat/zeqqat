@@ -56,9 +56,11 @@ export type ShellDevTools = { pastUsers: { id: string; name: string; username: s
 
 const MENU_COOKIE = "zq_menu";
 
-// The side menu sits beside the page, not over it: opening it pushes the
-// page right, and it can stay open while you work. Both directions animate
-// (see components/AGENTS.md). The org and workspace switcher is at its top;
+// On wide screens (900px and up) the side menu sits beside the page:
+// opening it pushes the page right, and it can stay open while you work.
+// On narrower screens it slides over the page, with a dimmed backdrop, and
+// closes when you pick a page or tap outside it. Both directions animate
+// either way (see components/AGENTS.md). The org and workspace switcher is at its top;
 // the header keeps the brand, where you are, and the account menu.
 export function AppShell({
   user,
@@ -98,6 +100,10 @@ export function AppShell({
   const switchRef = useRef<HTMLDivElement>(null);
   const multiWs = workspaces.length > 1;
   const [crumbLast, setCrumbLast] = useState<string | null>(null);
+  // Narrow screens: the menu is a drawer over the page. Never remembered,
+  // so a phone always opens on the page itself.
+  const [drawer, setDrawer] = useState(false);
+  const bcRef = useRef<HTMLElement>(null);
   const [gateOpen, setGateOpen] = useState(false);
   // A held-back page opened by its address (a bookmark, a typed URL): show
   // nothing of it, go to the connect screen and say why.
@@ -134,6 +140,10 @@ export function AppShell({
   }
 
   // The menu is open right now, whatever produced that (choice or default).
+  function isWide() {
+    return typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches;
+  }
+
   function isOpenNow() {
     if (menu) return menu === "open";
     return typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches;
@@ -152,11 +162,39 @@ export function AppShell({
   const [openNow, setOpenNow] = useState(initialMenu === "open");
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 900px)");
-    const sync = () => setOpenNow(menu ? menu === "open" : mq.matches);
+    const sync = () => {
+      if (mq.matches) setDrawer(false);
+      setOpenNow(mq.matches ? (menu ? menu === "open" : true) : drawer);
+    };
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
-  }, [menu]);
+  }, [menu, drawer]);
+
+  // A new page closes the drawer.
+  useEffect(() => {
+    setDrawer(false);
+  }, [pathname]);
+
+  // Narrow screens: the path scrolls sideways and starts at its right end,
+  // so the page you're on shows first. The left edge fades while there's
+  // more to the left.
+  useEffect(() => {
+    const el = bcRef.current;
+    if (!el) return;
+    const fade = () => el.classList.toggle("has-more", el.scrollLeft > 2);
+    const toEnd = () => {
+      el.scrollLeft = el.scrollWidth;
+      fade();
+    };
+    toEnd();
+    el.addEventListener("scroll", fade, { passive: true });
+    window.addEventListener("resize", toEnd);
+    return () => {
+      el.removeEventListener("scroll", fade);
+      window.removeEventListener("resize", toEnd);
+    };
+  }, [pathname, crumbLast]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -164,6 +202,7 @@ export function AppShell({
       setPopOpen(false);
       setSwitchOpen(false);
       setGateOpen(false);
+      setDrawer(false);
     }
     function onDown(e: MouseEvent) {
       if (switchOpen && switchRef.current && !switchRef.current.contains(e.target as Node)) setSwitchOpen(false);
@@ -177,7 +216,7 @@ export function AppShell({
   }, [switchOpen]);
 
   const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
-  const menuClass = menu === "open" ? " is-open" : menu === "closed" ? " is-closed" : "";
+  const menuClass = (menu === "open" ? " is-open" : menu === "closed" ? " is-closed" : "") + (drawer ? " is-drawer" : "");
 
   // Where you are, for the top bar: the menu page this path belongs to.
   const menuPage = ITEMS.find((item) =>
@@ -197,7 +236,7 @@ export function AppShell({
             aria-label={openNow ? "Close menu" : "Open menu"}
             aria-expanded={openNow}
             aria-controls="zq-side"
-            onClick={() => setMenuChoice(isOpenNow() ? "closed" : "open")}
+            onClick={() => (isWide() ? setMenuChoice(isOpenNow() ? "closed" : "open") : setDrawer((v) => !v))}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 7h16M4 12h16M4 17h16" />
@@ -209,7 +248,7 @@ export function AppShell({
             </span>
             <span className="zq-name">zeqqat</span>
           </a>
-          <nav className="zq-bc" aria-label="You are here">
+          <nav className="zq-bc" aria-label="You are here" ref={bcRef}>
             <a href={`/${currentOrg.slug}`}>@{currentOrg.slug}</a>
             <span className="zq-bc-sep">/</span>
             <a href="/app" className={page ? undefined : "is-cur"}>
@@ -390,7 +429,10 @@ export function AppShell({
                     className={`zq-menu-i${isActive ? " is-active" : ""}${locked ? " is-locked" : ""}`}
                     aria-current={isActive ? "page" : undefined}
                     aria-haspopup={locked ? "dialog" : undefined}
-                    onClick={(e) => holdBack(e, item.href)}
+                    onClick={(e) => {
+                      holdBack(e, item.href);
+                      setDrawer(false);
+                    }}
                   >
                     {item.label}
                   </a>
@@ -403,6 +445,9 @@ export function AppShell({
             <div className="zq-side-pattern" aria-hidden="true" />
           </div>
         </aside>
+
+        {/* Narrow screens only (globals.css): tapping outside the drawer closes it. */}
+        <button className="zq-side-scrim" type="button" aria-label="Close menu" tabIndex={-1} onClick={() => setDrawer(false)} />
 
         <main className="zq-main">
           <div className="zq-body">{held ? null : children}</div>

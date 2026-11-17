@@ -1170,6 +1170,7 @@ body {
   align-items: center;
   gap: 14px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 .zq-burger {
   background: none;
@@ -1213,9 +1214,10 @@ body {
   cursor: pointer;
   padding: 0;
 }
-/* side menu (push, not overlay) */
-/* The menu sits in the page's own flow: opening it pushes the page right
-   and it can stay open while you work. Opening and closing both animate;
+/* side menu (push on wide screens, drawer below 900px) */
+/* At 900px and up the menu sits in the page's own flow: opening it pushes
+   the page right and it can stay open while you work. Below 900px it is a
+   drawer over the page (.is-drawer, see the max-width: 899px block below). Opening and closing both animate;
    that's a requirement (see components/AGENTS.md). While closed it's hidden
    with visibility, not display:none, and the hide waits until the width
    transition has finished. visibility: hidden also keeps it out of the tab
@@ -1267,6 +1269,58 @@ body {
 @media (max-width: 480px) {
   .zq-side {
     --zq-side-w: 212px;
+  }
+}
+/* Below 900px: a drawer that slides over the page, with a dimmed backdrop.
+   The cookie choice (.is-open / .is-closed) is for wide screens only; here
+   only .is-drawer opens it. Both directions animate. */
+.zq-side-scrim {
+  display: none;
+}
+@media (max-width: 899px) {
+  .zq-frame {
+    position: relative;
+  }
+  .zq-side,
+  .zq-shell.is-open .zq-side {
+    --zq-side-w: min(280px, 82vw);
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: var(--zq-side-w);
+    visibility: hidden;
+    transform: translateX(-100%);
+    border-right-color: var(--line);
+    box-shadow: none;
+    transition:
+      transform 0.26s cubic-bezier(0.22, 0.61, 0.36, 1),
+      box-shadow 0.26s ease,
+      visibility 0s linear 0.26s;
+  }
+  .zq-shell.is-drawer .zq-side {
+    visibility: visible;
+    transform: none;
+    box-shadow: 0 20px 50px -10px var(--shadow);
+    transition-delay: 0s, 0s, 0s;
+  }
+  .zq-side-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 39;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.26s ease;
+  }
+  .zq-shell.is-drawer .zq-side-scrim {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 /* Fixed-width content, so it slides in with the edge instead of reflowing
@@ -5224,7 +5278,7 @@ button.zq-demo-open {
 }
 .zq-mu-total {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   min-width: 0;
 }
@@ -5281,9 +5335,9 @@ button.zq-demo-open {
   flex: 1 1 auto;
   min-width: 0;
   font-family: inherit;
-  font-size: 12.5px;
-  line-height: 1.5;
-  padding-top: 5px;
+  font-size: 15px;
+  line-height: 1.45;
+  padding-top: 3px;
   color: var(--fg);
   overflow-wrap: break-word;
 }
@@ -5339,19 +5393,19 @@ button.zq-demo-open {
 .zq-mu-counts {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 11px;
   flex: 0 0 auto;
 }
 .zq-mu-ic {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
+  gap: 3px;
+  font-size: 13.5px;
   color: var(--dim);
 }
 .zq-mu-ic svg {
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
   stroke-width: 1.8;
 }
 .zq-mu-ic b {
@@ -5387,7 +5441,7 @@ button.zq-demo-open {
 }
 .zq-mu-calls {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   font-size: 12px;
   color: var(--dim);
@@ -5467,13 +5521,13 @@ button.zq-demo-open {
   cursor: pointer;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
 }
 .zq-mu-st-b svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
 }
 .zq-mu-st-b:focus-visible {
   outline: 2px solid var(--cobalt);
@@ -5512,7 +5566,7 @@ button.zq-demo-open {
     width: 60px;
   }
   .zq-mu-counts {
-    gap: 10px;
+    gap: 11px;
   }
 }
 @media (max-width: 600px) {
@@ -5521,7 +5575,31 @@ button.zq-demo-open {
   }
 }
 
-/* the URL's page: one card, then tabs */
+/* the URL's page: the list's card (with its description), then tabs */
+.zq-mu-list.is-one {
+  margin-top: 0;
+}
+.zq-mu-card.is-static {
+  cursor: default;
+}
+.zq-mu-card.is-static:hover {
+  background: none;
+}
+.zq-mu-card .zq-mu-bio {
+  margin: 10px 0 0;
+  display: block;
+  line-height: 1.55;
+  -webkit-line-clamp: unset;
+}
+.zq-mu-detail {
+  margin-top: 14px;
+}
+.zq-mu-panel {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
 .zq-mu-page {
   container-type: inline-size;
 }
@@ -5636,12 +5714,15 @@ button.zq-demo-open {
   background: color-mix(in srgb, var(--cobalt) 7%, transparent);
 }
 .zq-mu-apps {
-  padding: 0 14px 14px;
+  padding: 0;
   display: grid;
   gap: 10px;
 }
 .zq-mu-apps.is-first {
   padding-top: 14px;
+}
+.zq-mu-apps + .zq-mu-save {
+  padding: 14px 0 0;
 }
 .zq-mu-appbox {
   border: 1px solid var(--line);
@@ -5706,12 +5787,27 @@ button.zq-demo-open {
   padding: 5px 26px 5px 9px;
   min-height: 0;
 }
+/* One row; when it doesn't fit, it scrolls sideways and fades at the
+   right edge. It runs to the box's edge so nothing looks cut short. */
 .zq-mu-pills {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   margin-top: 8px;
+  margin-right: -14px;
   padding-left: 26px;
+  padding-right: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 18px);
+  mask-image: linear-gradient(to left, transparent 0, #000 18px);
+}
+.zq-mu-pills::-webkit-scrollbar {
+  display: none;
+}
+.zq-mu-pill {
+  flex: 0 0 auto;
 }
 .zq-mu-irow.is-out .zq-mu-pills {
   opacity: 0.38;
@@ -5993,6 +6089,27 @@ button.zq-demo-open {
   }
   .zq-bc-sep {
     margin: 0 5px;
+  }
+  /* The path scrolls sideways instead of cutting names short; AppShell
+     scrolls it to the right end, so the current page shows first. */
+  .zq-bc {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .zq-bc::-webkit-scrollbar {
+    display: none;
+  }
+  .zq .zq-bc a,
+  .zq-bc-last {
+    flex: 0 0 auto;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .zq-bc.has-more {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22px);
+    mask-image: linear-gradient(to right, transparent 0, #000 22px);
   }
 }
 .zq-mu-mform[hidden] {
