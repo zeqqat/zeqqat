@@ -106,9 +106,6 @@ export default async function InstancesPage({
             <a className="zq-action" href="/app/dokploy-instances?add=1">
               {dokployCount ? "Connect another Dokploy" : "Connect a Dokploy"}
             </a>
-            <a className="zq-action zq-action-primary" href="/app/dokploy-instances?add=app">
-              Add an app
-            </a>
           </div>
         )}
       </div>

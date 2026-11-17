@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.100",
+    "date": "2026-11-17",
+    "at": "2026-11-17T14:22:11Z",
+    "changes": [
+      "Removed the Add an app button from Dokploy Instances"
+    ]
+  },
+  {
     "version": "0.3.99",
     "date": "2026-11-17",
     "at": "2026-11-17T07:30:11Z",
