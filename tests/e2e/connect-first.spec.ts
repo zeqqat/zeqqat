@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 // pages don't open: a click says to connect first (lib/setup-gate.ts). The
 // overview (the connect screen) and Releases stay open.
 
-const HELD = ["MCP URLs", "Integrations", "Tools", "Policies", "Activity", "Members", "Settings"];
+const HELD = ["MCP URLs", "Dokploy Instances", "Tools", "Policies", "Activity", "Members", "Settings"];
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
