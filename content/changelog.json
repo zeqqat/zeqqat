@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.98",
+    "date": "2026-11-17",
+    "at": "2026-11-17T07:25:32Z",
+    "changes": [
+      "Blog: Self-Hosted Supabase on Your Own VPS (with Backups That Actually Work)"
+    ]
+  },
+  {
     "version": "0.3.97",
     "date": "2026-11-17",
     "at": "2026-11-17T07:05:21Z",
