@@ -6519,3 +6519,141 @@ button.zq-demo-open {
     width: 64px !important;
   }
 }
+
+/* ---------- One Dokploy instance's page (components/InstancePage.tsx) ---------- */
+.zq-di-list.zq-ip-one { margin-top: 0; }
+.zq-di-card.is-static { cursor: default; }
+.zq-di-card.is-static:hover { background: none; }
+
+/* MCP URLs tab: the list's URL cards, with the policy line between the URL and the counts */
+.zq-mu-list.zq-ip-urls { margin-top: 14px; }
+.zq .zq-ip-addrow { border-radius: 10px 10px 0 0; }
+.zq-ip-urls .zq-mu-card:first-of-type { border-radius: 0; }
+.zq-ip-urls .zq-mu-l2 { margin-top: 10px; }
+.zq-ip-pol {
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(to left, transparent 0, #000 18px);
+  mask-image: linear-gradient(to left, transparent 0, #000 18px);
+}
+.zq-ip-pol::-webkit-scrollbar { display: none; }
+.zq-ip-pol::after { content: ""; flex: 0 0 18px; }
+.zq-ip-pol > span { flex: 0 0 auto; }
+.zq-ip-pol b { color: var(--fg); font-weight: 500; }
+.zq-ip-pol svg { width: 13px; height: 13px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Calls tab: All, the chosen filters as pills, the sliders icon */
+.zq-ip-cfilters { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.zq .zq-ip-pill { flex: 0 0 auto; font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--dim); cursor: pointer; }
+.zq .zq-ip-pill:hover { color: var(--fg); }
+.zq .zq-ip-pill.is-on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.zq-ip-fchosen { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.zq-ip-fsel, .zq-ip-full { display: contents; }
+.zq .zq-ip-fpill.zq-ip-short { display: none; }
+.zq-ip-fchosen.short-s [data-g="s"] .zq-ip-full,
+.zq-ip-fchosen.short-u [data-g="u"] .zq-ip-full,
+.zq-ip-fchosen.short-p [data-g="p"] .zq-ip-full { display: none; }
+.zq .zq-ip-fchosen.short-s [data-g="s"] .zq-ip-fpill.zq-ip-short,
+.zq .zq-ip-fchosen.short-u [data-g="u"] .zq-ip-fpill.zq-ip-short,
+.zq .zq-ip-fchosen.short-p [data-g="p"] .zq-ip-fpill.zq-ip-short { display: inline-flex; }
+.zq .zq-ip-fpill { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 999px; font: inherit; font-size: 12px; color: var(--fg); background: color-mix(in srgb, var(--fg) 7%, transparent); border: 1px solid var(--line2); white-space: nowrap; }
+.zq-ip-fpill code { font-size: 11.5px; }
+.zq .zq-ip-fpill.zq-ip-short { padding: 3px 10px; gap: 5px; cursor: pointer; }
+.zq-ip-fpill svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.zq .zq-ip-fpill button:not(.zq-ip-short) { all: unset; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: var(--dim); cursor: pointer; }
+.zq .zq-ip-fpill button:not(.zq-ip-short):hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 8%, transparent); }
+.zq .zq-ip-fav { width: 16px; height: 16px; font-size: 7.5px; box-shadow: none; flex: 0 0 auto; }
+.zq-ip-filter { position: relative; flex: 0 0 auto; margin-left: auto; }
+.zq .zq-ip-filter-b { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line2); border-radius: 8px; background: transparent; color: var(--dim); cursor: pointer; padding: 0; }
+.zq .zq-ip-filter-b:hover, .zq .zq-ip-filter-b[aria-expanded="true"] { color: var(--fg); }
+.zq-ip-filter-b svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.zq-ip-filter-m { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: min(300px, calc(100vw - 40px)); max-height: 380px; overflow-y: auto; padding: 6px; border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); box-shadow: 0 8px 24px var(--shadow); }
+.zq-ip-fg + .zq-ip-fg { border-top: 1px solid var(--line); }
+.zq .zq-ip-fg-h { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 8px; padding: 9px 8px; font-size: 12.5px; color: var(--fg); cursor: pointer; }
+.zq-ip-fg-h > span:first-child { flex: 1 1 auto; }
+.zq-ip-fg-n { font-size: 11px; font-weight: 600; padding: 0 7px; border-radius: 999px; background: var(--fg); color: var(--bg); }
+.zq-ip-fg-chev svg { width: 14px; height: 14px; fill: none; stroke: var(--dim); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: block; transition: transform 0.15s; }
+.zq-ip-fg-chev.is-open svg { transform: rotate(180deg); }
+.zq-ip-fg-opts { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 8px 10px; }
+.zq .zq-ip-opt { font: inherit; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--dim); cursor: pointer; }
+.zq .zq-ip-opt:hover { color: var(--fg); }
+.zq .zq-ip-opt.is-on { color: var(--fg); border-color: var(--fg); background: color-mix(in srgb, var(--fg) 6%, transparent); padding-left: 8px; }
+.zq-ip-opt code { font-size: 11.5px; }
+.zq-ip-opt-tick svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.zq-ip-none { font-size: 12px; color: var(--faint); }
+
+/* Calls tab: one card per call. Name / tool, kind, duration / agent, MCP URL and outcome as pills */
+.zq-ip-calls { margin-top: 10px; }
+.zq .zq-ip-c { display: flex; gap: 12px; padding: 13px 14px; align-items: flex-start; color: var(--fg); text-decoration: none; }
+.zq .zq-ip-c:hover { background: color-mix(in srgb, var(--fg) 3%, transparent); }
+.zq-ip-c + .zq-ip-c { border-top: 1px solid var(--line); }
+.zq .zq-ip-cav { width: 36px; height: 36px; font-size: 12.5px; flex: 0 0 auto; box-shadow: none; }
+.zq-ip-cav svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.zq-ip-cb { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.zq-ip-cl { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; }
+.zq-ip-cl > *, .zq-ip-cg > * { flex: 0 0 auto; }
+.zq-ip-cl > .zq-ip-cn, .zq-ip-cl > .zq-ip-cg:first-child { flex: 0 1 auto; min-width: 0; }
+.zq-ip-c.is-measuring .zq-ip-cn, .zq-ip-c.is-measuring .zq-ip-cg { flex: 0 0 auto !important; }
+.zq-ip-cg { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.zq-ip-cq { justify-content: flex-start; }
+.zq-ip-cn { overflow: hidden; text-overflow: ellipsis; }
+.zq-ip-cn b { color: var(--fg); font-weight: 600; }
+.zq-ip-cn span { color: var(--faint); }
+.zq-ip-tool { color: var(--fg); font-weight: 500; font-size: 12.5px; }
+.zq-ip-kind { color: var(--dim); font-size: 11.5px; }
+.zq-ip-dot { color: var(--ghost); }
+.zq-ip-time { color: var(--faint); font-size: 11.5px; }
+.zq .zq-ip-agp { padding: 2px 8px 2px 6px; font-size: 11px; }
+.zq-ip-agp .zq-mono-logo { width: 12px; height: 12px; }
+.zq-mu-agent.is-cursor { --c: var(--fg); }
+.zq-ip-cl.is-icons .zq-ip-agp:has(.zq-mono-logo) .zq-ip-agn { display: none; }
+.zq .zq-ip-cl.is-icons .zq-ip-agp:has(.zq-mono-logo) { padding: 3px 5px; }
+.zq-ip-urlp { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line2); color: var(--fg); font-family: var(--font-mono); font-size: 11px; background: color-mix(in srgb, var(--fg) 3%, transparent); }
+.zq-ip-cq .zq-ip-cg > .zq-ip-urlp { flex: 0 1 auto; min-width: 0; }
+.zq-ip-sp { --s: var(--mint); display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; border: 1px solid var(--line2); color: var(--dim); }
+.zq-ip-sp svg { width: 12px; height: 12px; fill: none; stroke: var(--s); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.zq-ip-sp.s-blocked { --s: var(--amber); }
+.zq-ip-sp.s-error { --s: var(--danger); }
+.zq-ip-sp.s-running { --s: var(--dim); }
+.zq-ip-cl.is-stshort .zq-ip-spt { display: none; }
+.zq-ip-cl.is-stshort .zq-ip-sp { padding: 3px; }
+
+/* Connected tab: via the MCP URLs; shrinks only when the URLs and the agents would touch */
+.zq-ip-prow { gap: 4px; }
+.zq-ip-prow .zq-mu-agents, .zq-ip-prow .zq-ip-via { flex: 0 0 auto; }
+.zq-ip-prow .zq-mu-agents { flex-wrap: nowrap; }
+.zq-ip-prow.is-icons .zq-mu-agents { gap: 4px; }
+.zq-ip-prow.is-icons .zq-mu-agent:has(.zq-mono-logo) .zq-ip-agn { display: none; }
+.zq .zq-ip-prow.is-icons .zq-mu-agent:has(.zq-mono-logo) { padding: 4px 6px; }
+.zq-ip-via { white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--dim); }
+.zq-ip-urlchip { font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 5px; color: var(--fg); background: color-mix(in srgb, var(--fg) 3%, transparent); white-space: nowrap; }
+.zq-ip-popw { position: relative; display: inline-flex; }
+.zq-ip-popw.zq-ip-via-short { display: none; }
+.zq-ip-popw.zq-ip-via-short.is-always { display: inline-flex; }
+.zq-ip-prow.is-short .zq-ip-via-full { display: none; }
+.zq-ip-prow.is-short .zq-ip-popw.zq-ip-via-short { display: inline-flex; }
+.zq .zq-ip-urlcount { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--fg) 3%, transparent); color: var(--fg); font: inherit; font-size: 11px; cursor: pointer; }
+.zq-ip-urlcount svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; }
+.zq-ip-urlcount b { font-weight: 600; }
+.zq .zq-ip-agb { all: unset; cursor: pointer; display: inline-flex; }
+.zq-ip-pop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; padding: 6px 10px; border: 1px solid var(--line2); border-radius: 8px; background: var(--panel); color: var(--fg); font-size: 11.5px; white-space: nowrap; box-shadow: 0 6px 20px var(--shadow); }
+.zq-ip-pop-list { left: 0; right: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; }
+.zq-ip-pop-list code { font-size: 11.5px; }
+
+/* Manage tab */
+.zq-ip-added { display: flex; flex-direction: column; gap: 6px; }
+.zq-ip-added-l { font-size: 11.5px; color: var(--dim); padding-left: 52px; }
+.zq-ip-addedby { display: flex; align-items: center; gap: 12px; }
+.zq .zq-ip-added-av { width: 40px; height: 40px; font-size: 13px; box-shadow: none; flex: 0 0 auto; }
+.zq-ip-addedby-t { display: flex; flex-direction: column; gap: 3px; }
+.zq-ip-added-d { font-size: 11.5px; color: var(--faint); }
+.zq-ip-amber { color: var(--amber); }
+.zq-ip-note { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.5; }

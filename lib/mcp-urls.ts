@@ -22,12 +22,18 @@ function dayStart(d = new Date()) {
   return x;
 }
 
-export async function usageByUrl(workspaceId: string, connectionIds: string[]): Promise<Map<string, Usage>> {
+// With instanceId, only calls through each URL to that one instance.
+export async function usageByUrl(workspaceId: string, connectionIds: string[], instanceId?: string): Promise<Map<string, Usage>> {
   const out = new Map<string, Usage>(connectionIds.map((id) => [id, { days: Array(30).fill(0), hours: Array(24).fill(0) }]));
   if (connectionIds.length === 0) return out;
   const today = dayStart();
   const from = new Date(today.getTime() - 29 * 86_400_000);
-  const scope = and(eq(callLog.workspaceId, workspaceId), inArray(callLog.connectionId, connectionIds), appCallsOnly);
+  const scope = and(
+    eq(callLog.workspaceId, workspaceId),
+    inArray(callLog.connectionId, connectionIds),
+    instanceId ? eq(callLog.instanceId, instanceId) : undefined,
+    appCallsOnly,
+  );
   const [dayRows, hourRows] = await Promise.all([
     db
       .select({

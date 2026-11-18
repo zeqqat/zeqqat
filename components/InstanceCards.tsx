@@ -102,8 +102,16 @@ function VersionPill({ version, latest, appName }: { version: string; latest: st
 }
 
 function Card({ c }: { c: InstanceCard }) {
-  const router = useRouter();
   const [period, setPeriod] = useState<Period>("week");
+  return <InstanceCardView c={c} period={period} onPeriod={setPeriod} />;
+}
+
+// One instance's card. The list's cards open the instance's page; the
+// page's own card (linked=false) doesn't, and its period switch drives the
+// whole page.
+export function InstanceCardView({ c, period, onPeriod, linked = true }: { c: InstanceCard; period: Period; onPeriod: (p: Period) => void; linked?: boolean }) {
+  const router = useRouter();
+  const setPeriod = onPeriod;
   const values = series(c.usage, period);
   const href = `/app/dokploy-instances/${c.id}`;
   const bad = c.status !== null && c.status !== "ok";
@@ -111,14 +119,18 @@ function Card({ c }: { c: InstanceCard }) {
   const word = c.status ? (STATUS_WORDS[c.status] ?? c.status) : "Not checked yet";
   return (
     <div
-      className="zq-di-card"
-      role="link"
-      tabIndex={0}
-      aria-label={`${c.name}, ${c.host}`}
-      onClick={() => router.push(href)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && e.target === e.currentTarget) router.push(href);
-      }}
+      className={`zq-di-card${linked ? "" : " is-static"}`}
+      {...(linked
+        ? {
+            role: "link",
+            tabIndex: 0,
+            "aria-label": `${c.name}, ${c.host}`,
+            onClick: () => router.push(href),
+            onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+              if (e.key === "Enter" && e.target === e.currentTarget) router.push(href);
+            },
+          }
+        : {})}
     >
       <span className={`zq-di-ring${tone}`} title={word} aria-label={word}>
         <IntegrationMark slug={c.appSlug} name={c.appName} logo={c.appLogo} size={18} />

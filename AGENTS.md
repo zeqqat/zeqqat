@@ -146,7 +146,19 @@ ecosystem the page becomes "Apps", each app listing its instances or
 accounts. The page is one list (`components/InstanceCards.tsx`,
 `lib/instance-cards.ts`), headed like the MCP URLs page: the instance
 count on the left ("1 instance", "2 instances"), "Add an instance" on the
-right, then a card per instance. A card pairs three rows per side:
+right, then a card per instance. **One instance's page**
+(`components/InstancePage.tsx`, data in `lib/instance-page.ts`) opens with
+the same card (its period switch drives the whole page), then four tabs:
+MCP URLs (the URL cards that reach it, each with a shield-tick line naming
+the policy it applies there, or "Default policy"), Calls (one card per call:
+person, tool with kind and duration, then agent, MCP URL and outcome as
+pills; "All" plus a sliders filter of Status, MCP URLs and People, chosen
+filters shown as pills that merge into icon + count when they don't fit),
+Connected (people through any of those URLs) and Manage (added by, URL,
+version with Update via Dokploy's `settings.updateServer`, key, last checked,
+secrets, remove with the name typed to confirm). Access belongs to an MCP
+URL, so there is no per-instance "what agents can do". Lines shrink only when
+they would overflow, never at a fixed width. A card pairs three rows per side:
 name / calls graph, domain / calls with the period switch, MCP URLs and
 people connected / a grey version pill. Health is the ring around the app's
 logo (mint, or amber with a warning mark). When Dokploy's own update check
@@ -257,8 +269,8 @@ with its first instance (`primaryConnection`).
 The bare `/mcp` endpoint is **gone**, and so is the old `/c/<org>/...`
 connection URL (`/c/` is reserved for collections). Every token belongs to
 exactly one connection. `instance_grant` (the old per-agent permissions)
-is no longer consulted by the MCP path; the per-agent matrices still shown
-on the agent and instance pages are leftovers to remove.
+is no longer consulted by the MCP path; the per-agent matrix still shown
+on the agent page is a leftover to remove.
 
 **Activity: requests and calls.**
 `zeqqat_search`, `zeqqat_describe` and `zeqqat_run` require a one-line

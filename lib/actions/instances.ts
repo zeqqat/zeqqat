@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { instance, instanceGrant, integration } from "../../db/schema";
 import { decryptCredential, encryptCredential } from "../crypto";
-import { CONNECTION_MESSAGES, testDokployConnection } from "../dokploy-check";
+import { CONNECTION_MESSAGES, normalizeBaseUrl, testDokployConnection } from "../dokploy-check";
 import { addInstanceToPrimaryConnection, primaryConnection } from "../connections";
 import { requireOwner } from "../guard";
 import { newId } from "../id";
@@ -179,7 +179,7 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
     .where(eq(instance.id, inst.id));
 
   revalidatePath(`/app/dokploy-instances/${inst.id}`);
-  redirect(`/app/dokploy-instances/${inst.id}?key=replaced`);
+  redirect(`/app/dokploy-instances/${inst.id}?tab=manage&key=replaced`);
 }
 
 // Re-runs the connection test with the stored key, so the status badge
@@ -211,6 +211,36 @@ export async function retestInstanceAction(formData: FormData) {
 
   revalidatePath(`/app/dokploy-instances/${inst.id}`);
   revalidatePath("/app/dokploy-instances");
+  redirect(`/app/dokploy-instances/${inst.id}?tab=manage&checked=1`);
+}
+
+// Asks Dokploy to update itself to its latest release (its own
+// settings.updateServer, the same as its Update button). Dokploy pulls the
+// new image and restarts, so agents get errors for a minute or two. Owners
+// only, behind a confirm on the instance's Manage tab.
+export async function updateDokployAction(formData: FormData) {
+  const { ws } = await requireOwner();
+  const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
+  if (!inst) redirect("/app/dokploy-instances");
+  const page = `/app/dokploy-instances/${inst.id}?tab=manage`;
+  const base = (await isDokploy(inst.integrationId)) ? normalizeBaseUrl(inst.baseUrl) : null;
+  if (!base) redirect(`${page}&error=update`);
+  let ok = false;
+  try {
+    const res = await fetch(`${base}/api/settings.updateServer`, {
+      method: "POST",
+      headers: { "x-api-key": decryptCredential(inst.credential), accept: "application/json", "content-type": "application/json" },
+      body: "{}",
+      redirect: "manual",
+      signal: AbortSignal.timeout(20_000),
+    });
+    ok = res.ok;
+  } catch {
+    // Dokploy can drop the connection as it restarts: that still means it started.
+    ok = true;
+  }
+  revalidatePath(`/app/dokploy-instances/${inst.id}`);
+  redirect(ok ? `${page}&updating=1` : `${page}&error=update`);
 }
 
 // Deleting the row removes the encrypted key and, by cascade, every grant
@@ -220,6 +250,10 @@ export async function removeInstanceAction(formData: FormData) {
   const { ws } = await requireOwner();
   const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
   if (!inst) redirect("/app/dokploy-instances");
+  // The Manage tab asks for the instance's name before removing it.
+  if ((formData.get("confirm")?.toString() ?? "").trim() !== inst.alias) {
+    redirect(`/app/dokploy-instances/${inst.id}?tab=manage&error=confirm`);
+  }
 
   await deleteInstances(ws.workspaceId, [inst.id]);
 

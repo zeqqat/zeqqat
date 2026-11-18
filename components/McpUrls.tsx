@@ -179,6 +179,8 @@ export function Spark({ values, label, w = 96, h = 24 }: { values: number[]; lab
 }
 
 // "this week" with a dotted line on hover; a click opens the choices.
+export { PERIOD_LABEL, series as urlSeries };
+
 export function PeriodPick({ value, onChange, align = "right" }: { value: Period; onChange: (p: Period) => void; align?: "left" | "right" }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
@@ -221,16 +223,20 @@ export function PeriodPick({ value, onChange, align = "right" }: { value: Period
   );
 }
 
-function Card({
+export function McpUrlItemCard({
   item,
   period,
   onPeriod,
   description = null,
   linked = true,
+  policy,
 }: {
   item: UrlItem;
   period: Period;
   onPeriod: (p: Period) => void;
+  // On an instance's page: the policy this URL applies there (null = the
+  // default policy), on its own line between the URL and the counts.
+  policy?: string | null;
   // Only the URL's own page shows the description, under the calls line.
   description?: string | null;
   // The list's cards open the URL's page; the page's own card doesn't.
@@ -263,6 +269,15 @@ function Card({
         </code>
         {!off && <CopyIcon text={item.url} />}
       </div>
+      {policy !== undefined && (
+        <div className="zq-ip-pol" title={policy ?? "Default policy"}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" />
+            <path d="M8.5 12l2.5 2.5 4.5-5" />
+          </svg>
+          <span>{policy ? <>Policy <b>{policy}</b></> : "Default policy"}</span>
+        </div>
+      )}
       <div className="zq-mu-l2">
         <span className="zq-mu-counts">
           {item.isPublic && !off ? (
@@ -297,7 +312,7 @@ export function McpUrlCard({ item, description }: { item: UrlItem; description: 
   const [period, setPeriod] = useState<Period>("week");
   return (
     <div className="zq-mu-list is-one">
-      <Card item={item} period={period} onPeriod={setPeriod} description={description} linked={false} />
+      <McpUrlItemCard item={item} period={period} onPeriod={setPeriod} description={description} linked={false} />
     </div>
   );
 }
@@ -343,7 +358,7 @@ export function McpUrlList({ items, newHref, children }: { items: UrlItem[]; new
       {items.length > 0 && (
         <div className="zq-mu-list">
           {items.map((item) => (
-            <Card key={item.id} item={item} period={own[item.id] ?? period} onPeriod={(p) => setOwn((o) => ({ ...o, [item.id]: p }))} />
+            <McpUrlItemCard key={item.id} item={item} period={own[item.id] ?? period} onPeriod={(p) => setOwn((o) => ({ ...o, [item.id]: p }))} />
           ))}
         </div>
       )}

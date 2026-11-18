@@ -1,16 +1,58 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { CallLogList } from "../../../../components/CallLogList";
-import { AgentMark, IntegrationMark } from "../../../../components/Marks";
-import { PermMatrix, type MatrixRow } from "../../../../components/PermMatrix";
-import { ReplaceKeyForm } from "../../../../components/ReplaceKeyForm";
-import { StatusBadge } from "../../../../components/StatusBadge";
+import { CrumbLast } from "../../../../components/AppShell";
+import type { InstanceCard } from "../../../../components/InstanceCards";
+import { KeyRow } from "../../../../components/InstanceManage";
+import { Avatar, InstancePage, type Tab } from "../../../../components/InstancePage";
+import { ManageRow } from "../../../../components/McpUrlPage";
 import { db } from "../../../../db";
-import { instance, integration, user } from "../../../../db/schema";
-import { removeInstanceAction, retestInstanceAction } from "../../../../lib/actions/instances";
-import { getCallsForInstance, toCallView } from "../../../../lib/calls";
+import { instance, integration } from "../../../../db/schema";
+import { removeInstanceAction, retestInstanceAction, updateDokployAction } from "../../../../lib/actions/instances";
 import { requireWorkspace } from "../../../../lib/guard";
-import { getPermissionMatrix, listConnectedAgents } from "../../../../lib/permissions";
+import { freshDokploy, instanceCounts, usageByInstance } from "../../../../lib/instance-cards";
+import { addedBy, instanceCalls, instancePeople, instanceUrls } from "../../../../lib/instance-page";
+import { changedPart } from "../../../../lib/version-diff";
+
+// One Dokploy instance's page, designed 2026-11-18 (canvas "Dokploy instance
+// page"): the same card as on the list, then MCP URLs, Calls, Connected and
+// Manage. The page's client part is components/InstancePage.tsx; Manage is
+// drawn here because its rows submit server actions.
+
+const TABS: Tab[] = ["urls", "calls", "connected", "manage"];
+
+// A server component renders once per request, so reading the clock here
+// is fine; the client gets this time so "2m ago" matches on both sides.
+function requestTime() {
+  return Date.now();
+}
+
+function Ok({ children, warn = false }: { children: React.ReactNode; warn?: boolean }) {
+  return (
+    <div className={warn ? "zq-warn-box" : "zq-ok-box"} role="status" style={{ marginBottom: 14 }}>
+      <span className="ic" aria-hidden="true">
+        {warn ? "!" : "✓"}
+      </span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function ago(d: Date | null, now: number) {
+  if (!d) return "Never";
+  const m = Math.round((now - d.getTime()) / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} minute${m === 1 ? "" : "s"} ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} hour${h === 1 ? "" : "s"} ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+}
+
+const STATUS_WORD: Record<string, string> = {
+  ok: "reachable",
+  bad_key: "key rejected",
+  unreachable: "unreachable",
+  not_dokploy: "not answering as Dokploy",
+};
 
 export default async function InstanceDetailPage({
   params,
@@ -23,137 +65,219 @@ export default async function InstanceDetailPage({
   const query = await searchParams;
   const { ws } = await requireWorkspace();
   const isOwner = ws.role === "owner";
+  const isAdmin = ws.wsRole === "admin";
 
   const [inst] = await db
     .select({
       id: instance.id,
       alias: instance.alias,
       baseUrl: instance.baseUrl,
+      credential: instance.credential,
       lastStatus: instance.lastStatus,
       lastVersion: instance.lastVersion,
       lastValidatedAt: instance.lastValidatedAt,
       createdAt: instance.createdAt,
-      createdBy: user.email,
+      createdByUserId: instance.createdByUserId,
       appSlug: integration.slug,
       appName: integration.name,
       appLogo: integration.logoUrl,
     })
     .from(instance)
     .innerJoin(integration, eq(integration.id, instance.integrationId))
-    .leftJoin(user, eq(user.id, instance.createdByUserId))
     .where(and(eq(instance.id, id), eq(instance.workspaceId, ws.workspaceId)))
     .limit(1);
   if (!inst) redirect("/app/dokploy-instances");
 
-  const [calls, agents, matrix] = await Promise.all([
-    getCallsForInstance(ws.workspaceId, id, 50),
-    listConnectedAgents(ws.workspaceId),
-    getPermissionMatrix(ws.workspaceId),
+  const isDokploy = inst.appSlug === "dokploy";
+  const [usage, counts, fresh, urls, calls, owner] = await Promise.all([
+    usageByInstance(ws.workspaceId, [inst.id]),
+    instanceCounts([inst.id]),
+    isDokploy ? freshDokploy([inst]) : Promise.resolve(new Map()),
+    instanceUrls(ws.workspaceId, inst.id),
+    instanceCalls(ws.workspaceId, inst.id),
+    addedBy(inst.createdByUserId),
   ]);
+  const people = await instancePeople(ws.workspaceId, inst.id, urls);
 
-  const rows: MatrixRow[] = [
-    { key: "default", instanceId: id, oauthClientId: null, label: "Workspace default", hint: "New agents start here", perm: matrix.cell(id, null).perm, own: true },
-    ...agents.map((a) => {
-      const c = matrix.cell(id, a.oauthClientId);
-      return {
-        key: a.oauthClientId,
-        instanceId: id,
-        oauthClientId: a.oauthClientId,
-        label: a.host,
-        hint: a.connectedBy ?? undefined,
-        icon: <AgentMark host={a.host} />,
-        perm: c.perm,
-        own: c.own,
-      };
-    }),
-  ];
+  const f = fresh.get(inst.id);
+  let host = inst.baseUrl;
+  try {
+    host = new URL(inst.baseUrl).host;
+  } catch {
+    // keep the stored address as typed
+  }
+  const status: string | null = f?.status ?? inst.lastStatus;
+  const version: string | null = f?.version ?? inst.lastVersion;
+  const latest: string | null = f?.latest ?? null;
+  const card: InstanceCard = {
+    id: inst.id,
+    name: inst.alias,
+    host,
+    appName: inst.appName,
+    appSlug: inst.appSlug,
+    appLogo: inst.appLogo,
+    status,
+    version,
+    latest,
+    urls: counts.urls.get(inst.id) ?? 0,
+    people: counts.people.get(inst.id) ?? 0,
+    usage: usage.get(inst.id) ?? { days: Array(30).fill(0), hours: Array(24).fill(0) },
+  };
+
+  const now = requestTime();
+  const asked = typeof query.tab === "string" ? query.tab : "";
+  const initialTab: Tab = (TABS as string[]).includes(asked) ? (asked as Tab) : "urls";
+  const err = typeof query.error === "string" ? query.error : "";
+  const v = (s: string) => (s.startsWith("v") ? s : `v${s}`);
+  const behind = !!version && !!latest && changedPart(version, latest) !== null;
+
+  const manage = (
+    <>
+      {query.key === "replaced" && <Ok>New key tested and saved. The old one is gone from Zeqqat.</Ok>}
+      {query.checked && <Ok>Checked just now.</Ok>}
+      {query.updating && (
+        <Ok>
+          {inst.appName} is updating{latest ? ` to ${v(latest)}` : ""}. It restarts in a minute or two, and agents get errors until it&rsquo;s back.
+        </Ok>
+      )}
+      {err === "update" && (
+        <Ok warn>
+          {inst.appName} didn&rsquo;t start the update. Check that the key belongs to an admin, or update from {inst.appName} itself.
+        </Ok>
+      )}
+      <div className="zq-mu-panel">
+        <div className="zq-mu-mrow">
+          <div className="zq-ip-added">
+            <span className="zq-ip-added-l">Added by</span>
+            <span className="zq-ip-addedby">
+              {owner ? <Avatar p={owner} className="zq-mu-av zq-ip-added-av" /> : <span className="zq-mu-av zq-ip-added-av is-more" aria-hidden="true" />}
+              <span className="zq-ip-addedby-t">
+                <span className="zq-mu-pn">
+                  <b>{owner?.name ?? "Someone on your team"}</b> {owner?.username && <span>@{owner.username}</span>}
+                </span>
+                <span className="zq-ip-added-d">
+                  {inst.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}
+                </span>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div className="zq-mu-mrow">
+          <div className="zq-mu-mrow-h">
+            <span className="zq-mu-mrow-t">
+              <b>{inst.appName} URL</b>
+              <small>{inst.baseUrl}</small>
+            </span>
+          </div>
+        </div>
+
+        {isDokploy && isOwner && behind ? (
+          <ManageRow
+            title="Version"
+            value={
+              <>
+                {inst.appName} {v(version!)} · <span className="zq-ip-amber">{v(latest!)} is out</span>
+              </>
+            }
+            button="Update"
+            submit={`Update to ${v(latest!)}`}
+            formId="ip-update"
+          >
+            <form action={updateDokployAction} id="ip-update">
+              <input type="hidden" name="instance_id" value={inst.id} />
+              <p className="zq-ip-note">
+                {inst.appName} updates itself to {v(latest!)} and restarts. Agents get errors for a minute or two while it does.
+              </p>
+            </form>
+          </ManageRow>
+        ) : (
+          <div className="zq-mu-mrow">
+            <div className="zq-mu-mrow-h">
+              <span className="zq-mu-mrow-t">
+                <b>Version</b>
+                <small>
+                  {version ? `${inst.appName} ${v(version)}` : "Not known yet"}
+                  {version && latest && !behind ? " · latest" : ""}
+                  {behind ? (
+                    <>
+                      {" "}
+                      · <span className="zq-ip-amber">{v(latest!)} is out</span>
+                    </>
+                  ) : null}
+                </small>
+              </span>
+            </div>
+          </div>
+        )}
+
+        <KeyRow instanceId={inst.id} canEdit={isOwner} />
+
+        <div className="zq-mu-mrow">
+          <div className="zq-mu-mrow-h">
+            <span className="zq-mu-mrow-t">
+              <b>Last checked</b>
+              <small>
+                {ago(inst.lastValidatedAt, now)}
+                {status ? ` · ${STATUS_WORD[status] ?? status}` : ""}
+              </small>
+            </span>
+            {isOwner && (
+              <form action={retestInstanceAction}>
+                <input type="hidden" name="instance_id" value={inst.id} />
+                <button type="submit" className="zq-action zq-action-sm zq-mu-mbtn">
+                  Check now
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        <div className="zq-mu-mrow">
+          <div className="zq-mu-mrow-h">
+            <span className="zq-mu-mrow-t">
+              <b>Secrets</b>
+              <small>
+                Agents never see them. Env vars, database URLs and tokens in {inst.appName}&rsquo;s answers are swapped for placeholders the agent can pass on but not read
+              </small>
+            </span>
+          </div>
+        </div>
+
+        {isOwner && (
+          <ManageRow
+            title="Remove"
+            value="Deletes the key from Zeqqat. Every MCP URL stops reaching it. Past calls stay in Activity"
+            button="Remove"
+            submit={`Remove ${inst.alias}`}
+            formId="ip-remove"
+            danger
+            open={err === "confirm"}
+          >
+            <form action={removeInstanceAction} id="ip-remove">
+              <input type="hidden" name="instance_id" value={inst.id} />
+              <input className="zq-input" name="confirm" placeholder={`Type ${inst.alias} to confirm`} autoComplete="off" aria-label={`Type ${inst.alias} to confirm`} />
+              {err === "confirm" && <p className="zq-form-err">Type {inst.alias} to confirm.</p>}
+            </form>
+          </ManageRow>
+        )}
+      </div>
+    </>
+  );
 
   return (
-    <div>
-      <p className="zq-kicker">
-        <a href="/app/dokploy-instances">Dokploy Instances</a> / {inst.appName} / {inst.alias}
-      </p>
-      <div className="zq-head-row">
-        <h1 className="zq-h" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <IntegrationMark slug={inst.appSlug} name={inst.appName} logo={inst.appLogo} size={24} />
-          {inst.alias}
-        </h1>
-        <StatusBadge status={inst.lastStatus} />
-      </div>
-
-      {query.key === "replaced" && (
-        <div className="zq-ok-box" role="status" style={{ marginTop: 12 }}>
-          <span className="ic" aria-hidden="true">
-            ✓
-          </span>
-          <span>New key tested and saved. The old one is gone from Zeqqat.</span>
-        </div>
-      )}
-
-      <dl className="zq-kv" style={{ marginTop: 16 }}>
-        <dt>{inst.appName} URL</dt>
-        <dd>{inst.baseUrl}</dd>
-        <dt>Version</dt>
-        <dd>{inst.lastVersion ? `${inst.appName} ${inst.lastVersion}` : "Not known yet"}</dd>
-        <dt>API key</dt>
-        <dd style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-          <span>Saved and encrypted. It can&rsquo;t be shown again.</span>
-          {isOwner && <ReplaceKeyForm instanceId={inst.id} />}
-        </dd>
-        <dt>Last checked</dt>
-        <dd style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-          <span>{inst.lastValidatedAt ? inst.lastValidatedAt.toUTCString() : "Never"}</span>
-          {isOwner && (
-            <form action={retestInstanceAction}>
-              <input type="hidden" name="instance_id" value={inst.id} />
-              <button type="submit" className="zq-action zq-action-sm">
-                Check now
-              </button>
-            </form>
-          )}
-        </dd>
-        <dt>Connected by</dt>
-        <dd>
-          {inst.createdBy ?? "Someone on your team"}, {inst.createdAt.toUTCString().slice(5, 16)}
-        </dd>
-        <dt>Secrets</dt>
-        <dd>Env vars, database URLs and tokens are hidden from the agent in every response</dd>
-      </dl>
-
-      <section className="zq-block">
-        <div className="zq-block-h">
-          <h2 className="zq-block-t">What agents can do on {inst.alias}</h2>
-          <a href="/app/permissions" className="zq-block-a">
-            All permissions
-          </a>
-        </div>
-        <PermMatrix rows={rows} firstCol="Agent" editable={isOwner} />
-      </section>
-
-      <section className="zq-block">
-        <div className="zq-block-h">
-          <h2 className="zq-block-t">Calls on {inst.alias}</h2>
-        </div>
-        <CallLogList calls={calls.map(toCallView)} showAgent filters />
-      </section>
-
-      {isOwner && (
-        <section className="zq-block">
-          <div className="zq-confirm">
-            <h2 className="zq-block-t">Remove this instance</h2>
-            <p className="zq-note" style={{ marginTop: 8 }}>
-              Deletes the API key from Zeqqat and removes every agent&rsquo;s access to {inst.alias}. Past activity stays
-              in the log. To be thorough, also revoke the key in {inst.appName}.
-            </p>
-            <form action={removeInstanceAction} className="zq-row-actions" style={{ marginTop: 14 }}>
-              <input type="hidden" name="instance_id" value={inst.id} />
-              <button type="submit" className="zq-action zq-action-danger">
-                Remove {inst.alias}
-              </button>
-            </form>
-          </div>
-        </section>
-      )}
-    </div>
+    <>
+      <CrumbLast text={inst.alias} />
+      <InstancePage
+        card={card}
+        urls={urls}
+        calls={calls}
+        people={people}
+        manage={manage}
+        initialTab={initialTab}
+        addUrlHref={isAdmin ? "/app/mcp-urls" : null}
+        now={now}
+      />
+    </>
   );
 }
