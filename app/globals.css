@@ -3766,6 +3766,115 @@ a.zq-rel-v:hover {
   color: var(--amber);
 }
 
+/* the pills under "via": instances reached, MCP URLs used. One shows its
+   name; more show the icon and a count, and a click lists them. */
+.zq-pills {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 3px;
+}
+.zq-pill-w {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+}
+.zq .zq-pill {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 8px 0 7px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  font-size: 11.5px;
+  line-height: 1;
+  color: var(--dim);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.zq .zq-pill.is-static {
+  cursor: default;
+}
+.zq .zq-pill:not(.is-static):hover,
+.zq .zq-pill:focus-visible,
+.zq .zq-pill[aria-expanded="true"] {
+  border-color: var(--dim);
+  color: var(--fg);
+}
+.zq-pill:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 1px;
+}
+.zq-pill-t {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zq-pill-n {
+  font-weight: 600;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.zq-pill-ic {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+}
+svg.zq-pill-ic {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+span.zq-pill-ic {
+  height: 12px;
+}
+.zq-pill-pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 180px;
+  max-width: min(320px, 80vw);
+  padding: 4px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px var(--shadow);
+  font-size: 12.5px;
+}
+.zq .zq-pill-pop > * {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--fg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.zq .zq-pill-pop > a:hover {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+.zq-pill-pop small {
+  margin-left: auto;
+  padding-left: 12px;
+  color: var(--faint);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* the strip: dots up to 12 calls, ticks up to 40, then one bar */
 .zq-strip {
   display: inline-flex;

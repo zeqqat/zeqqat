@@ -2,6 +2,7 @@ import type { RequestCard as Card } from "../../lib/activity";
 import { publicUrl } from "../../lib/env";
 import { AgentMark, agentName } from "../Marks";
 import { Avatar, Strip, Tally } from "./Parts";
+import { Pills } from "./Pills";
 import { RequestMenu } from "./RequestMenu";
 import { RelTime } from "./Time";
 
@@ -79,6 +80,20 @@ export function RequestCard({ card, linked, heading }: { card: Card; linked: boo
           <Strip states={card.states} />
           <Tally states={card.states} lookups={card.lookups} />
         </div>
+        <Pills
+          instances={card.instances.map((i) => ({
+            key: i.id,
+            label: i.alias,
+            calls: i.calls,
+            href: `/app/dokploy-instances/${i.id}`,
+          }))}
+          urls={card.connections.map((c) => ({
+            key: c.id,
+            label: c.shortId ? `${c.name}/${c.shortId}` : c.name,
+            calls: c.calls,
+            href: `/app/mcp-urls/${c.id}`,
+          }))}
+        />
       </div>
     </div>
   );

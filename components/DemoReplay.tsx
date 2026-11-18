@@ -15,6 +15,7 @@ import {
 } from "../lib/demo-replays";
 import { CallCard, LookupLine } from "./activity/CallCard";
 import { Avatar, Strip, Tally } from "./activity/Parts";
+import { Pills } from "./activity/Pills";
 import { DateBar, RelTime } from "./activity/Time";
 import { AgentMark } from "./Marks";
 
@@ -68,6 +69,7 @@ const BASE: Omit<ActivityCall, "id" | "at" | "state" | "lookup" | "lookupTool" |
   instanceBaseUrl: null,
   connectionId: null,
   connectionName: DEMO_CONNECTION,
+  connectionShortId: null,
   connectionUrl: null,
   workspaceName: "Default",
   account: { username: DEMO_PERSON.username, type: "personal" },
@@ -278,6 +280,12 @@ export function DemoReplay({ replay }: { replay: Replay }) {
                     <Strip states={r.states} />
                     {r.calls.length > 0 && <Tally states={r.states} lookups={r.lookups} />}
                   </div>
+                  {r.states.length > 0 && (
+                    <Pills
+                      instances={[{ key: "i", label: DEMO_INSTANCE, calls: r.states.length, href: null }]}
+                      urls={[{ key: "u", label: DEMO_CONNECTION, calls: r.states.length, href: null }]}
+                    />
+                  )}
                 </div>
               </div>
             );

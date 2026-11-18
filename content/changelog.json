@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.4.4",
+    "date": "2026-11-18",
+    "at": "2026-11-18T16:47:08Z",
+    "changes": [
+      "Activity cards show which Dokploy instances a request reached and which MCP URLs it came through, as pills under the agent. More than one shows a count; click it to see each with its calls."
+    ]
+  },
+  {
     "version": "0.4.3",
     "date": "2026-11-18",
     "at": "2026-11-18T08:55:27Z",

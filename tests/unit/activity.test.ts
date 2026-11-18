@@ -131,6 +131,7 @@ function call(over: Partial<ActivityCall>): ActivityCall {
     instanceBaseUrl: "https://d.example.net",
     connectionId: "k1",
     connectionName: "deployment",
+    connectionShortId: "a39f",
     connectionUrl: "http://localhost/gaita/mcp/deployment/a39f",
     workspaceName: "Default",
     account: { username: "gaita", type: "personal" },
@@ -161,8 +162,8 @@ describe("a request card", () => {
     expect(card.lookups).toBe(1);
     expect(card.note).toEqual({ tone: "blocked", text: "Stopped: application.stop is not on the read_plus_deploy policy." });
     expect(card.blocked).toEqual({ op: "application.stop", instanceAlias: "dokploy-production", connectionId: "k1" });
-    expect(card.instances).toEqual([{ id: "i1", alias: "dokploy-production" }]);
-    expect(card.connections).toEqual([{ id: "k1", name: "deployment" }]);
+    expect(card.instances).toEqual([{ id: "i1", alias: "dokploy-production", calls: 2 }]);
+    expect(card.connections).toEqual([{ id: "k1", name: "deployment", shortId: "a39f", calls: 2 }]);
     expect(card.href).toBe("/app/activity/r1");
   });
 

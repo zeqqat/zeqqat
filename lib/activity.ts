@@ -129,6 +129,7 @@ export type ActivityCall = {
   instanceBaseUrl: string | null;
   connectionId: string | null;
   connectionName: string | null;
+  connectionShortId: string | null;
   connectionUrl: string | null;
   workspaceName: string;
   account: { username: string; type: string };
@@ -173,6 +174,7 @@ function toCall(r: CallRow): ActivityCall {
     instanceBaseUrl: r.instanceBaseUrl,
     connectionId: r.connectionId,
     connectionName: r.connectionName,
+    connectionShortId: r.connectionShortId,
     connectionUrl:
       r.connectionOrgSlug && r.connectionName && r.connectionShortId ? connectionUrl(r.connectionOrgSlug, r.connectionName, r.connectionShortId) : null,
     workspaceName: r.workspaceName,
@@ -208,10 +210,20 @@ export type RequestCard = {
   lookups: number;
   note: { tone: "blocked" | "error"; text: string } | null;
   blocked: { op: string; instanceAlias: string | null; connectionId: string | null } | null;
-  connections: { id: string; name: string }[];
+  // Each with how many of the request's integration calls went through it.
+  connections: { id: string; name: string; shortId: string | null; calls: number }[];
   integrations: { ref: string }[];
-  instances: { id: string; alias: string }[];
+  instances: { id: string; alias: string; calls: number }[];
 };
+
+function countBy(calls: ActivityCall[], key: (c: ActivityCall) => string | null): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const c of calls) {
+    const k = key(c);
+    if (k) m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return m;
+}
 
 function uniqBy<T>(items: T[], key: (t: T) => string | null): T[] {
   const seen = new Set<string>();
@@ -250,6 +262,8 @@ export function buildCard(id: string, reason: string, calls: ActivityCall[], leg
   const work = calls.filter((c) => !c.lookup);
   const first = calls[0];
   const blocked = work.find((c) => c.state === "blocked");
+  const perConnection = countBy(work, (c) => c.connectionId);
+  const perInstance = countBy(work, (c) => c.instanceId);
   return {
     id,
     href: legacy ? `/app/activity/call/${calls[0].id}` : `/app/activity/${id}`,
@@ -264,12 +278,21 @@ export function buildCard(id: string, reason: string, calls: ActivityCall[], leg
     note: noteFor(work),
     blocked: blocked ? { op: blocked.op ?? blocked.toolName, instanceAlias: blocked.instanceAlias, connectionId: blocked.connectionId } : null,
     connections: uniqBy(
-      calls.filter((c) => c.connectionId && c.connectionName).map((c) => ({ id: c.connectionId!, name: c.connectionName! })),
+      calls
+        .filter((c) => c.connectionId && c.connectionName)
+        .map((c) => ({
+          id: c.connectionId!,
+          name: c.connectionName!,
+          shortId: c.connectionShortId,
+          calls: perConnection.get(c.connectionId!) ?? 0,
+        })),
       (c) => c.id,
     ),
     integrations: uniqBy(work.filter((c) => c.integrationRef).map((c) => ({ ref: c.integrationRef! })), (c) => c.ref),
     instances: uniqBy(
-      work.filter((c) => c.instanceId && c.instanceAlias).map((c) => ({ id: c.instanceId!, alias: c.instanceAlias! })),
+      work
+        .filter((c) => c.instanceId && c.instanceAlias)
+        .map((c) => ({ id: c.instanceId!, alias: c.instanceAlias!, calls: perInstance.get(c.instanceId!) ?? 0 })),
       (c) => c.id,
     ),
   };
