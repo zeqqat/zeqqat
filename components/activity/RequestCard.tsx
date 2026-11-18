@@ -30,7 +30,7 @@ export function RequestCard({ card, linked, heading }: { card: Card; linked: boo
     card.instances.length > 0 && {
       label: plural(card.instances.length, "View instance", "View instances"),
       count: card.instances.length,
-      href: card.instances.length === 1 ? `/app/instances/${card.instances[0].id}` : "/app/dokploy-instances",
+      href: card.instances.length === 1 ? `/app/dokploy-instances/${card.instances[0].id}` : "/app/dokploy-instances",
     },
   ].filter(Boolean) as { label: string; count: number; href: string }[];
 

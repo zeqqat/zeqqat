@@ -6193,20 +6193,11 @@ button.zq-demo-open {
    side that line up: name / graph, domain / calls, counts / version. The
    ring around the app's logo is the instance's health. */
 .zq-di-list {
+  margin-top: 16px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--panel);
   container-type: inline-size;
-}
-.zq .zq-di-add {
-  border-radius: 10px 10px 0 0;
-}
-.zq .zq-di-add:only-child {
-  border-radius: 10px;
-}
-.zq-di-empty {
-  padding: 16px;
-  margin: 0;
 }
 .zq-di-card {
   --ring: 40px;

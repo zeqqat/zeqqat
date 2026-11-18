@@ -105,7 +105,7 @@ function Card({ c }: { c: InstanceCard }) {
   const router = useRouter();
   const [period, setPeriod] = useState<Period>("week");
   const values = series(c.usage, period);
-  const href = `/app/instances/${c.id}`;
+  const href = `/app/dokploy-instances/${c.id}`;
   const bad = c.status !== null && c.status !== "ok";
   const tone = c.status === "ok" ? " is-ok" : bad ? " is-bad" : "";
   const word = c.status ? (STATUS_WORDS[c.status] ?? c.status) : "Not checked yet";
@@ -162,17 +162,32 @@ function Card({ c }: { c: InstanceCard }) {
 }
 
 export function InstanceCards({ cards, addHref, emptyText }: { cards: InstanceCard[]; addHref: string | null; emptyText: string }) {
+  // Same head as the MCP URLs page: the count on the left, the add button on the right.
   return (
-    <div className="zq-di-list">
-      {addHref && (
-        <a className="zq-mu-addrow zq-di-add" href={addHref}>
-          <span aria-hidden="true">+</span>Add an instance
-        </a>
+    <div>
+      <div className="zq-mu-head">
+        {cards.length > 0 && (
+          <div className="zq-mu-total">
+            <span className="zq-mu-total-n">{cards.length}</span>
+            <span className="zq-mu-total-l">{cards.length === 1 ? "instance" : "instances"}</span>
+          </div>
+        )}
+        <span className="zq-mu-head-r">
+          {addHref && (
+            <a className="zq-action zq-action-primary" href={addHref}>
+              Add an instance
+            </a>
+          )}
+        </span>
+      </div>
+      {cards.length === 0 && <p className="zq-empty">{emptyText}</p>}
+      {cards.length > 0 && (
+        <div className="zq-di-list">
+          {cards.map((c) => (
+            <Card key={c.id} c={c} />
+          ))}
+        </div>
       )}
-      {cards.length === 0 && !addHref && <p className="zq-empty zq-di-empty">{emptyText}</p>}
-      {cards.map((c) => (
-        <Card key={c.id} c={c} />
-      ))}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { freshDokploy, instanceCounts, usageByInstance } from "../../../lib/inst
 
 // Every server someone added with a key is an instance of an app (Dokploy).
 // This page lists this workspace's instances as cards (components/
-// InstanceCards.tsx) with "+ Add an instance" as the list's first row. No
+// InstanceCards.tsx) under a head with the count and "Add an instance". No
 // heading, kicker or explanation: the menu says where you are (UI
 // principles 6 and 9). Designed 2026-11-17, variant 32 of the card designs.
 export default async function DokployInstancesPage({

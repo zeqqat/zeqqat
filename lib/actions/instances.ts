@@ -178,8 +178,8 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
     })
     .where(eq(instance.id, inst.id));
 
-  revalidatePath(`/app/instances/${inst.id}`);
-  redirect(`/app/instances/${inst.id}?key=replaced`);
+  revalidatePath(`/app/dokploy-instances/${inst.id}`);
+  redirect(`/app/dokploy-instances/${inst.id}?key=replaced`);
 }
 
 // Re-runs the connection test with the stored key, so the status badge
@@ -209,7 +209,7 @@ export async function retestInstanceAction(formData: FormData) {
     .set({ lastValidatedAt: new Date(), lastStatus: status, lastVersion: version })
     .where(eq(instance.id, inst.id));
 
-  revalidatePath(`/app/instances/${inst.id}`);
+  revalidatePath(`/app/dokploy-instances/${inst.id}`);
   revalidatePath("/app/dokploy-instances");
 }
 

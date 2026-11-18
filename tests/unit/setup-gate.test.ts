@@ -9,7 +9,7 @@ describe("openWithoutDokploy", () => {
     for (const p of [
       "/app/mcp-urls",
       "/app/dokploy-instances",
-      "/app/instances/abc",
+      "/app/dokploy-instances/abc",
       "/app/tools",
       "/app/policies/new",
       "/app/activity",

@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.4.2",
+    "date": "2026-11-18",
+    "at": "2026-11-18T07:59:33Z",
+    "changes": [
+      "One instance's page now lives at /app/dokploy-instances/<id> (old links redirect)",
+      "Dokploy Instances page shows the instance count on the left and Add an instance on the right, like MCP URLs"
+    ]
+  },
+  {
     "version": "0.4.1",
     "date": "2026-11-18",
     "at": "2026-11-18T07:27:21Z",

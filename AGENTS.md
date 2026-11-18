@@ -138,14 +138,15 @@ in through one are "connected".
 
 **Dokploy Instances, not integrations, in the UI.** The menu item is the
 Dokploy logo plus "Dokploy Instances" (`/app/dokploy-instances`, instances
-grouped under their app; one instance's page is still `/app/instances/<id>`,
-to be revisited). "Integration" is the code's
+grouped under their app; one instance's page is
+`/app/dokploy-instances/<id>`, and the old `/app/instances/<id>` redirects there). "Integration" is the code's
 word for a published tool set (`@zeqqat/dokploy`), not a menu label: people
 think "my Dokploy", not "my integration". Once Zeqqat leaves the Dokploy
 ecosystem the page becomes "Apps", each app listing its instances or
 accounts. The page is one list (`components/InstanceCards.tsx`,
-`lib/instance-cards.ts`): "+ Add an instance" as the first row, then a card
-per instance with no heading above it. A card pairs three rows per side:
+`lib/instance-cards.ts`), headed like the MCP URLs page: the instance
+count on the left ("1 instance", "2 instances"), "Add an instance" on the
+right, then a card per instance. A card pairs three rows per side:
 name / calls graph, domain / calls with the period switch, MCP URLs and
 people connected / a grey version pill. Health is the ring around the app's
 logo (mint, or amber with a warning mark). When Dokploy's own update check
