@@ -7,6 +7,22 @@ import { useEffect, useRef, useState } from "react";
 // count, and a click lists them with their calls.
 export type PillItem = { key: string; label: string; calls: number; href: string | null };
 
+// Names like prod_eu: the font's underscore renders thinner than the
+// letters at this size, so each one is drawn as a bar of the letters' weight.
+function Name({ text }: { text: string }) {
+  const parts = text.split("_");
+  return (
+    <span className="zq-pill-t">
+      {parts.map((p, i) => (
+        <span key={i}>
+          {i > 0 && <span className="zq-us">_</span>}
+          {p}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function DokployIcon() {
   return <span className="zq-mono-logo zq-mark-ic zq-mark-dokploy zq-pill-ic" aria-hidden="true" />;
 }
@@ -46,7 +62,7 @@ function Pill({ kind, items }: { kind: "instance" | "url"; items: PillItem[] }) 
     const inner = (
       <>
         <Icon />
-        <span className="zq-pill-t">{it.label}</span>
+        <Name text={it.label} />
       </>
     );
     return (
@@ -88,7 +104,7 @@ function Pill({ kind, items }: { kind: "instance" | "url"; items: PillItem[] }) 
             const row = (
               <>
                 <Icon />
-                <span className="zq-pill-t">{it.label}</span>
+                <Name text={it.label} />
                 <small>{it.calls === 1 ? "1 call" : `${it.calls} calls`}</small>
               </>
             );

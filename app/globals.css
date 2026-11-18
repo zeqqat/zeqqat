@@ -3819,6 +3819,22 @@ a.zq-rel-v:hover {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* tall enough that the underscore isn't clipped */
+  line-height: 1.4;
+}
+/* an underscore as thick as the letters (see Pills.tsx) */
+.zq-us {
+  position: relative;
+  -webkit-text-fill-color: transparent;
+}
+.zq-us::after {
+  content: "";
+  position: absolute;
+  left: 0.04em;
+  right: 0.04em;
+  bottom: 0.1em;
+  height: max(1px, 0.085em);
+  background: currentColor;
 }
 .zq-pill-n {
   font-weight: 600;
