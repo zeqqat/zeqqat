@@ -155,7 +155,9 @@ under the changed part of the version (`lib/version-diff.ts`) and a click
 says one line ("Dokploy v0.31.4 is out"); updating belongs on the
 instance's page, never on the list. The page re-checks a Dokploy older than
 10 minutes and its latest release (cached 30 minutes), but never waits more
-than 3 seconds for them. Never label anything "Service": Dokploy uses "service" for an
+than 3 seconds for them. Tabs (`.zq-mu-tabs`, `.zq-tabbar`) never wrap onto a
+second line or squeeze into each other: they stay on one line and scroll
+sideways. Never label anything "Service": Dokploy uses "service" for an
 app or database inside a project, so the word is ambiguous to users and
 agents.
 

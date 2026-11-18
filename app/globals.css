@@ -5680,15 +5680,23 @@ button.zq-demo-open {
   background: var(--line);
   color: var(--dim);
 }
+/* Tabs never wrap or squeeze: they keep one line and scroll sideways. */
 .zq-mu-tabs {
   display: flex;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.zq-mu-tabs::-webkit-scrollbar {
+  display: none;
 }
 .zq .zq-mu-tab {
-  flex: 1 1 0;
+  flex: 1 0 auto;
+  white-space: nowrap;
   text-align: center;
-  padding: 13px 8px 11px;
+  padding: 13px 14px 11px;
   font-size: 12.5px;
   color: var(--dim);
   text-decoration: none;

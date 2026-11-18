@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.4.3",
+    "date": "2026-11-18",
+    "at": "2026-11-18T08:55:27Z",
+    "changes": [
+      "Tabs stay on one line and scroll sideways on narrow screens instead of wrapping"
+    ]
+  },
+  {
     "version": "0.4.2",
     "date": "2026-11-18",
     "at": "2026-11-18T07:59:33Z",
