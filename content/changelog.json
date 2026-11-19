@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.4.8",
+    "date": "2026-11-19",
+    "at": "2026-11-19T07:25:48Z",
+    "changes": [
+      "Blog: A Portainer Alternative That Deploys From Git With SSL"
+    ]
+  },
+  {
     "version": "0.4.7",
     "date": "2026-11-19",
     "at": "2026-11-19T05:12:00Z",
