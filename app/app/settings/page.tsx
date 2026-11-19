@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { CreateOrgForm, CreateWorkspaceForm } from "../../../components/ConnectionForms";
 import { db } from "../../../db";
 import { workspace } from "../../../db/schema";
 import { deleteWorkspaceAction, renameWorkspaceAction, transferWorkspaceAction } from "../../../lib/actions/workspace";
@@ -47,15 +46,13 @@ export default async function SettingsPage({
         {isOrgOwner ? " and an org owner" : ""}.
       </p>
 
-      {(params.saved || params.created || params.deleted || params.transferred) && (
+      {(params.saved || params.deleted || params.transferred) && (
         <div className="zq-ok-box" role="status" style={{ marginTop: 20 }}>
           <span className="ic" aria-hidden="true">
             ✓
           </span>
           <span>
-            {params.created
-              ? "Workspace created. You're in it now."
-              : params.deleted
+            {params.deleted
                 ? "Workspace deleted."
                 : params.transferred
                   ? "Workspace transferred. Its MCP URLs have new addresses; the old ones keep working and tell agents the new one."
@@ -87,33 +84,6 @@ export default async function SettingsPage({
         </section>
       )}
 
-      <section className="zq-block" id="new">
-        <h2 className="zq-block-t" style={{ marginBottom: 6 }}>
-          New workspace in @{ws.organizationSlug}
-        </h2>
-        <p className="zq-note" style={{ marginTop: 0, marginBottom: 12 }}>
-          Workspaces split one org by team: their own instances and keys, their own MCP URLs, their own members. For
-          example Engineering gets the deploy tools and Marketing gets social media.
-        </p>
-        {isOrgOwner ? (
-          <CreateWorkspaceForm />
-        ) : (
-          <p className="zq-empty">Only owners of @{ws.organizationSlug} create workspaces.</p>
-        )}
-      </section>
-
-      <section className="zq-block">
-        <h2 className="zq-block-t" style={{ marginBottom: 6 }}>
-          New organization
-        </h2>
-        <p className="zq-note" style={{ marginTop: 0, marginBottom: 12 }}>
-          An organization has its own username, used in every MCP URL: /&lt;username&gt;/mcp/&hellip; Lowercase with
-          underscores, e.g. acme_corp. Your personal account @{personal ? ws.organizationSlug : "you"} has one owner, you;
-          an organization can have several.
-        </p>
-        <CreateOrgForm />
-      </section>
-
       {isAdmin && (
         <section className="zq-block">
           <h2 className="zq-block-t" style={{ marginBottom: 12 }}>
@@ -144,7 +114,7 @@ export default async function SettingsPage({
             Its MCP URLs change; the old ones keep working and tell agents the new URL. Type {ws.workspaceSlug} to confirm.
           </p>
           {teamOrgs.length === 0 ? (
-            <p className="zq-empty">Create an organization first (above), then transfer this workspace to it.</p>
+            <p className="zq-empty">Create an organization first (open @{ws.organizationSlug} in the top bar), then transfer this workspace to it.</p>
           ) : (
             <form action={transferWorkspaceAction} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <select className="zq-select" name="to_org" aria-label="Organization" style={{ flex: "1 1 180px" }}>

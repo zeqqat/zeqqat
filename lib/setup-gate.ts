@@ -1,10 +1,11 @@
 // Until a workspace has its first Dokploy, its admin can open only the
-// overview (which is the connect screen then), Releases and their own
-// account page (/app/account). Everything else
+// overview (which is the connect screen then), Releases, their own
+// profile (/app/account) and the account level (/app/org: workspaces,
+// members, settings), which isn't about one workspace's Dokploy. Everything else
 // in the dashboard is about a Dokploy that isn't there yet, so the side menu
 // asks them to connect first instead of opening an empty page.
 // components/AppShell.tsx applies it; app/app/layout.tsx decides who is gated.
-const OPEN_WITHOUT_DOKPLOY = ["/app/releases", "/app/account"];
+const OPEN_WITHOUT_DOKPLOY = ["/app/releases", "/app/account", "/app/org"];
 
 export function openWithoutDokploy(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, "") || "/";

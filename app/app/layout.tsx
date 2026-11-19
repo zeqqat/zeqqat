@@ -12,12 +12,15 @@ import { canGetCertificate } from "../../lib/self-https";
 import { APP_VERSION } from "../../lib/version";
 import { requireWorkspace } from "../../lib/guard";
 import { firstAdminOf } from "../../lib/overview";
-import { listUserWorkspaces, orgsOf } from "../../lib/workspace";
+import { accountsFor, ownersOf } from "../../lib/accounts";
+import { listUserWorkspaces } from "../../lib/workspace";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, ws } = await requireWorkspace();
   const all = await listUserWorkspaces(user.id);
-  const orgs = orgsOf(all).map((o) => ({ id: o.id, slug: o.slug, name: o.name }));
+  // Your own account first, then the organizations you're in.
+  const accounts = accountsFor(all, user.id, await ownersOf([...new Set(all.map((w) => w.organizationId))]));
+  const currentAccount = accounts.find((a) => a.id === ws.organizationId) ?? accounts[0];
   const inOrg = all
     .filter((w) => w.organizationId === ws.organizationId)
     .map((w) => ({ id: w.workspaceId, slug: w.workspaceSlug, name: w.workspaceName, role: w.wsRole }));
@@ -49,9 +52,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         user={{ name: user.name, email: user.email, image: user.image ?? null, username }}
         edition={edition()}
         version={APP_VERSION}
-        orgs={orgs}
-        currentOrg={{ id: ws.organizationId, slug: ws.organizationSlug, name: ws.organizationName }}
+        accounts={accounts}
+        currentAccount={currentAccount}
         workspaces={inOrg}
+        canCreateWorkspace={ws.orgRole === "owner"}
         currentWorkspace={{ id: ws.workspaceId, slug: ws.workspaceSlug, name: ws.workspaceName, role: ws.wsRole }}
         initialMenu={initialMenu}
         devTools={devTools}

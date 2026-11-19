@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.4.7",
+    "date": "2026-11-19",
+    "at": "2026-11-19T05:12:00Z",
+    "changes": [
+      "The path in the top bar is now the switcher: click @username or the workspace to open it or switch to another",
+      "Your own account sits at the top of the list, then the organizations you're in",
+      "Each account has its own pages: Workspaces, Members and Settings. New workspaces are made right there"
+    ]
+  },
+  {
     "version": "0.4.6",
     "date": "2026-11-18",
     "at": "2026-11-18T17:16:22Z",

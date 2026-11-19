@@ -43,6 +43,22 @@ export async function switchWorkspaceAction(formData: FormData) {
   redirect("/app");
 }
 
+// The account level (/app/org): an account's workspaces, members and
+// settings. Keeps the current workspace if it's in that account, else the
+// first one there you can open.
+export async function openAccountAction(formData: FormData) {
+  const user = await requireUser();
+  const orgId = formData.get("organization_id")?.toString() ?? "";
+  const all = await listUserWorkspaces(user.id);
+  const jar = await cookies();
+  const curWs = jar.get(CURRENT_WS_COOKIE)?.value;
+  const target = all.find((w) => w.organizationId === orgId && w.workspaceId === curWs) ?? all.find((w) => w.organizationId === orgId);
+  if (!target) redirect("/app/org");
+  await setCurrent(target.organizationId, target.workspaceId);
+  revalidatePath("/app", "layout");
+  redirect("/app/org");
+}
+
 // Workspace slugs are internal only (never in a URL or tool name), so they
 // keep their old shape. Org handles follow the org slug rules.
 function toSlug(raw: string) {
@@ -85,7 +101,7 @@ export async function createWorkspaceAction(_prev: FormState, formData: FormData
   }
   await setCurrent(ws.organizationId, id);
   revalidatePath("/app", "layout");
-  redirect("/app/settings?created=workspace");
+  redirect("/app");
 }
 
 // A new organization, owned by whoever creates it, with one workspace.
@@ -112,7 +128,7 @@ export async function createOrgAction(_prev: FormState, formData: FormData): Pro
   }
   await setCurrent(orgId, wsId);
   revalidatePath("/app", "layout");
-  redirect("/app?created=org");
+  redirect("/app/org");
 }
 
 export async function renameWorkspaceAction(formData: FormData) {

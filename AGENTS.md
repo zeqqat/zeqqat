@@ -183,6 +183,21 @@ the admin to ask (`firstAdminOf`, "Name @username"). It is a nudge, not
 access control: the server actions keep their own checks.
 `tests/e2e/connect-first.spec.ts` covers the admin side.
 
+**Accounts and the path switcher.** An account is a personal account
+(`organization.kind = 'personal'`, created at sign-up, its slug is the
+user's username, one owner forever) or an organization. The top bar's path
+is the switcher (`components/PathSwitch.tsx`): one click on `@username` or
+the workspace opens a list whose first row opens it ("Open ›"), then the
+others to switch to, then + New. Your own account is first, with a "you"
+pill, then "Organizations". People are circles, organizations rounded
+squares. Each account has its own level at `/app/org` (Workspaces,
+Members, Settings, `lib/accounts.ts`), with its own side menu; everything
+else under `/app` is one workspace. The current account and workspace are
+the `zq_org` / `zq_ws` cookies, set by `openAccountAction` and
+`switchWorkspaceAction`. A personal account has members too (people in its
+workspaces), but nobody else can ever be its owner.
+`pnpm exec tsx tests/e2e/accounts-seed.ts` runs it locally with three accounts.
+
 **Org → workspace → connection** is the access model:
 
 - **`organization`** owns members (`membership`, `owner` | `member`) and

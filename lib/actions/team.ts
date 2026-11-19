@@ -11,7 +11,7 @@ import { requireOrgOwner, requireOwner, requireUser } from "../guard";
 import { newId } from "../id";
 import { INVITE_TTL_MS, findOpenInvite } from "../invites";
 import { randomToken, sha256Hex } from "../oauth-crypto";
-import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, type WsRole } from "../workspace";
+import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, listUserWorkspaces, type WsRole } from "../workspace";
 
 export type InviteState = { error?: string; link?: string; email?: string };
 
@@ -30,8 +30,20 @@ function wsRole(raw: FormDataEntryValue | null): WsRole {
 // In a personal namespace (@gaita) only its owner invites, and nobody else
 // can become an owner: others only ever help inside a workspace. The handle
 // is a person's name, so everything above the workspace stays theirs.
+// From the account's Members page the inviter picks the workspace
+// (workspace_id); it must be one they're an admin of. Otherwise it's the
+// current workspace.
+async function inviteTarget(formData: FormData) {
+  const wanted = formData.get("workspace_id")?.toString();
+  if (!wanted) return requireOwner();
+  const user = await requireUser();
+  const ws = (await listUserWorkspaces(user.id)).find((w) => w.workspaceId === wanted && w.wsRole === "admin");
+  if (!ws) redirect("/app/org/members?error=owner_only");
+  return { user, ws };
+}
+
 export async function createInviteAction(_prev: InviteState, formData: FormData): Promise<InviteState> {
-  const { user, ws } = await requireOwner();
+  const { user, ws } = await inviteTarget(formData);
   const personal = ws.organizationKind === "personal";
   if (personal && ws.orgRole !== "owner") return { error: "Only the owner of this personal namespace can invite people." };
   const email = (formData.get("email")?.toString() ?? "").trim().toLowerCase();
@@ -75,6 +87,7 @@ export async function createInviteAction(_prev: InviteState, formData: FormData)
   });
 
   revalidatePath("/app/team");
+  revalidatePath("/app/org/members");
   return { link: `${publicUrl()}/invite/${token}`, email };
 }
 

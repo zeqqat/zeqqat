@@ -4,9 +4,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
-import { switchWorkspaceAction } from "../lib/actions/workspace";
+import type { ShellAccount } from "../lib/accounts";
 import { openWithoutDokploy } from "../lib/setup-gate";
+import { CreateOrgForm, CreateWorkspaceForm } from "./ConnectionForms";
 import { DokployMark } from "./Marks";
+import { PathSwitch } from "./PathSwitch";
 import { ThemeToggle } from "./ThemeToggle";
 import { VersionPill } from "./VersionPill";
 
@@ -24,6 +26,18 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: 
   { pane: "members", label: "Members", href: "/app/team" },
   { pane: "settings", label: "Settings", href: "/app/settings" },
 ];
+
+// The account level (/app/org): the account's own pages, with its own menu.
+// The same for your personal account and an organization.
+const ACCOUNT_ITEMS: { label: string; href: string }[] = [
+  { label: "Workspaces", href: "/app/org" },
+  { label: "Members", href: "/app/org/members" },
+  { label: "Settings", href: "/app/org/settings" },
+];
+
+function atAccountLevel(pathname: string) {
+  return pathname === "/app/org" || pathname.startsWith("/app/org/");
+}
 
 // Pages outside the menu that still get a name in the top bar.
 const OTHER_PAGES: Record<string, string> = {
@@ -46,7 +60,6 @@ export function CrumbLast({ text }: { text: string }) {
   return null;
 }
 
-export type ShellOrg = { id: string; slug: string; name: string };
 export type ShellWorkspace = { id: string; slug: string; name: string; role: "admin" | "member" | "viewer" };
 // "open" / "closed" come from the person's last choice (a cookie, so the
 // first paint is already right). null means they never chose: open on wide
@@ -60,16 +73,18 @@ const MENU_COOKIE = "zq_menu";
 // opening it pushes the page right, and it can stay open while you work.
 // On narrower screens it slides over the page, with a dimmed backdrop, and
 // closes when you pick a page or tap outside it. Both directions animate
-// either way (see components/AGENTS.md). The org and workspace switcher is at its top;
-// the header keeps the brand, where you are, and the account menu.
+// either way (see components/AGENTS.md). The header keeps the brand, the
+// path (which is also the account and workspace switcher, PathSwitch.tsx)
+// and the account menu.
 export function AppShell({
   user,
   edition,
   version,
-  orgs,
-  currentOrg,
+  accounts,
+  currentAccount,
   workspaces,
   currentWorkspace,
+  canCreateWorkspace = false,
   initialMenu,
   devTools = null,
   needsDokploy = false,
@@ -79,10 +94,12 @@ export function AppShell({
   user: { name: string; email: string; image: string | null; username: string };
   edition: "cloud" | "self-hosted";
   version: string;
-  orgs: ShellOrg[];
-  currentOrg: ShellOrg;
-  workspaces: ShellWorkspace[]; // the current org's workspaces this user can open
+  accounts: ShellAccount[]; // yours first, then organizations
+  currentAccount: ShellAccount;
+  workspaces: ShellWorkspace[]; // the current account's workspaces this user can open
   currentWorkspace: ShellWorkspace;
+  // An owner of the current account: may add workspaces to it.
+  canCreateWorkspace?: boolean;
   initialMenu: MenuState;
   devTools?: ShellDevTools;
   // The workspace has no Dokploy yet and this person is the one to connect
@@ -96,9 +113,8 @@ export function AppShell({
   const router = useRouter();
   const [menu, setMenu] = useState<MenuState>(initialMenu);
   const [popOpen, setPopOpen] = useState(false);
-  const [switchOpen, setSwitchOpen] = useState(false);
-  const switchRef = useRef<HTMLDivElement>(null);
-  const multiWs = workspaces.length > 1;
+  const [newModal, setNewModal] = useState<null | "workspace" | "org">(null);
+  const atAccount = atAccountLevel(pathname);
   const [crumbLast, setCrumbLast] = useState<string | null>(null);
   // Narrow screens: the menu is a drawer over the page. Never remembered,
   // so a phone always opens on the page itself.
@@ -118,7 +134,6 @@ export function AppShell({
   function holdBack(e: React.MouseEvent, href: string) {
     if (!needsDokploy || openWithoutDokploy(href.split(/[?#]/)[0])) return;
     e.preventDefault();
-    setSwitchOpen(false);
     setGateOpen(true);
   }
 
@@ -200,20 +215,13 @@ export function AppShell({
     function onKey(e: KeyboardEvent) {
       if (e.key !== "Escape") return;
       setPopOpen(false);
-      setSwitchOpen(false);
       setGateOpen(false);
+      setNewModal(null);
       setDrawer(false);
     }
-    function onDown(e: MouseEvent) {
-      if (switchOpen && switchRef.current && !switchRef.current.contains(e.target as Node)) setSwitchOpen(false);
-    }
     document.addEventListener("keydown", onKey);
-    document.addEventListener("mousedown", onDown);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("mousedown", onDown);
-    };
-  }, [switchOpen]);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
   const menuClass = (menu === "open" ? " is-open" : menu === "closed" ? " is-closed" : "") + (drawer ? " is-drawer" : "");
@@ -223,7 +231,14 @@ export function AppShell({
     item.href === "/app" ? pathname === "/app" : [item.href, ...(item.also ?? [])].some((h) => pathname.startsWith(h)),
   );
   const otherHref = Object.keys(OTHER_PAGES).find((h) => pathname.startsWith(h));
-  const page = menuPage ? { href: menuPage.href, label: menuPage.label } : otherHref ? { href: otherHref, label: OTHER_PAGES[otherHref] } : null;
+  const accountPage = atAccount ? ACCOUNT_ITEMS.find((i) => (i.href === "/app/org" ? pathname === "/app/org" : pathname.startsWith(i.href))) : undefined;
+  const page = atAccount
+    ? accountPage ?? null
+    : menuPage
+      ? { href: menuPage.href, label: menuPage.label }
+      : otherHref
+        ? { href: otherHref, label: OTHER_PAGES[otherHref] }
+        : null;
 
   return (
     <CrumbContext.Provider value={setCrumbLast}>
@@ -249,11 +264,16 @@ export function AppShell({
             <span className="zq-name">zeqqat</span>
           </a>
           <nav className="zq-bc" aria-label="You are here" ref={bcRef}>
-            <a href={`/${currentOrg.slug}`}>@{currentOrg.slug}</a>
-            <span className="zq-bc-sep">/</span>
-            <a href="/app" className={page ? undefined : "is-cur"}>
-              {currentWorkspace.name}
-            </a>
+            <PathSwitch
+              accounts={accounts}
+              current={currentAccount}
+              myImage={user.image}
+              workspaces={workspaces}
+              currentWorkspace={atAccount ? null : currentWorkspace}
+              canCreateWorkspace={canCreateWorkspace}
+              onNewWorkspace={() => setNewModal("workspace")}
+              onNewOrg={() => setNewModal("org")}
+            />
             {page && (
               <>
                 <span className="zq-bc-sep">/</span>
@@ -342,79 +362,25 @@ export function AppShell({
             See components/AGENTS.md. */}
         <aside id="zq-side" className="zq-side" aria-label="Menu">
           <div className="zq-side-in">
-            <div className="zq-switch" ref={switchRef}>
-              <button
-                type="button"
-                className="zq-switch-btn"
-                aria-haspopup="listbox"
-                aria-expanded={switchOpen}
-                onClick={() => setSwitchOpen((v) => !v)}
-              >
-                <span className="zq-ws-avatar" aria-hidden="true">
-                  {firstLetter(multiWs ? currentWorkspace.name : currentOrg.name)}
-                </span>
-                <span className="zq-switch-txt">
-                  <b>{multiWs ? currentWorkspace.name : currentOrg.name}</b>
-                  <small>
-                    @{currentOrg.slug}
-                    {multiWs ? `/${currentWorkspace.slug}` : ""} · {currentWorkspace.role}
-                  </small>
-                </span>
-                <svg className="zq-switch-chev" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M8 10l4-4 4 4M8 14l4 4 4-4" />
-                </svg>
-              </button>
-              {switchOpen && (
-                <div className="zq-switch-pop">
-                  <div className="zq-switch-h">Organizations</div>
-                  {orgs.map((o) => (
-                    <form action={switchWorkspaceAction} key={o.id}>
-                      <input type="hidden" name="organization_id" value={o.id} />
-                      <button type="submit" className={`zq-switch-opt${o.id === currentOrg.id ? " is-current" : ""}`} disabled={o.id === currentOrg.id}>
-                        <span className="zq-ws-avatar is-other" aria-hidden="true">
-                          {firstLetter(o.name)}
-                        </span>
-                        <span className="zq-switch-txt">
-                          <b>{o.name}</b>
-                          <small>@{o.slug}</small>
-                        </span>
-                        {o.id === currentOrg.id && <Check />}
-                      </button>
-                    </form>
-                  ))}
-                  {multiWs && (
-                    <>
-                      <div className="zq-switch-h">Workspaces in @{currentOrg.slug}</div>
-                      {workspaces.map((w) => (
-                        <form action={switchWorkspaceAction} key={w.id}>
-                          <input type="hidden" name="workspace_id" value={w.id} />
-                          <button
-                            type="submit"
-                            className={`zq-switch-opt${w.id === currentWorkspace.id ? " is-current" : ""}`}
-                            disabled={w.id === currentWorkspace.id}
-                          >
-                            <span className="zq-ws-avatar" aria-hidden="true">
-                              {firstLetter(w.name)}
-                            </span>
-                            <span className="zq-switch-txt">
-                              <b>{w.name}</b>
-                              <small>
-                                @{currentOrg.slug}/{w.slug} · {w.role}
-                              </small>
-                            </span>
-                            {w.id === currentWorkspace.id && <Check />}
-                          </button>
-                        </form>
-                      ))}
-                    </>
-                  )}
-                  <a className="zq-switch-new" href="/app/settings#new" onClick={(e) => holdBack(e, "/app/settings")}>
-                    + New workspace or org
-                  </a>
-                </div>
-              )}
-            </div>
-
+            <div className="zq-side-top" aria-hidden="true" />
+            {atAccount ? (
+              <nav className="zq-menu" aria-label={`@${currentAccount.slug}`}>
+                {ACCOUNT_ITEMS.map((item) => {
+                  const isActive = accountPage?.href === item.href;
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      className={`zq-menu-i${isActive ? " is-active" : ""}`}
+                      aria-current={isActive ? "page" : undefined}
+                      onClick={() => setDrawer(false)}
+                    >
+                      {item.label}
+                    </a>
+                  );
+                })}
+              </nav>
+            ) : (
             <nav className="zq-menu" aria-label="Dashboard">
               {ITEMS.map((item) => {
                 const isActive =
@@ -440,6 +406,7 @@ export function AppShell({
                 );
               })}
             </nav>
+            )}
             <div className="zq-panel-foot">
               <VersionPill version={version} edition={edition} />
             </div>
@@ -454,6 +421,22 @@ export function AppShell({
           <div className="zq-body">{held ? null : children}</div>
         </main>
       </div>
+
+      {newModal && (
+        <div className="zq-modal-back" onClick={() => setNewModal(null)}>
+          <div className="zq-modal" role="dialog" aria-modal="true" aria-labelledby="zq-new-t" onClick={(e) => e.stopPropagation()}>
+            <div className="zq-modal-head">
+              <h2 id="zq-new-t">{newModal === "workspace" ? `New workspace in @${currentAccount.slug}` : "New organization"}</h2>
+              <button type="button" className="zq-modal-x" aria-label="Close" onClick={() => setNewModal(null)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="zq-new-body">{newModal === "workspace" ? <CreateWorkspaceForm /> : <CreateOrgForm />}</div>
+          </div>
+        </div>
+      )}
 
       {gateOpen && (
         <div className="zq-modal-back" onClick={() => setGateOpen(false)}>
@@ -581,14 +564,6 @@ function DevToolsSection({ devTools }: { devTools: NonNullable<ShellDevTools> })
       )}
       {failed && <p className="zq-pop-dev-err">That didn&apos;t work. Reload and try again.</p>}
     </div>
-  );
-}
-
-function Check() {
-  return (
-    <svg className="zq-switch-check" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 12l5 5L20 7" />
-    </svg>
   );
 }
 

@@ -6,7 +6,17 @@ import { CopyButton } from "./CopyButton";
 
 // Zeqqat doesn't send email, so the owner gets the invite link to pass on.
 // It's shown once, right here; only its hash is kept.
-export function InviteForm({ canMakeOrgOwner = false, workspace }: { canMakeOrgOwner?: boolean; workspace: string }) {
+// `workspaces` (the account's Members page): the inviter picks which
+// workspace they join. Without it, they join the current one.
+export function InviteForm({
+  canMakeOrgOwner = false,
+  workspace,
+  workspaces,
+}: {
+  canMakeOrgOwner?: boolean;
+  workspace: string;
+  workspaces?: { id: string; name: string }[];
+}) {
   const [state, action, pending] = useActionState<InviteState, FormData>(createInviteAction, {});
 
   return (
@@ -18,6 +28,20 @@ export function InviteForm({ canMakeOrgOwner = false, workspace }: { canMakeOrgO
           </label>
           <input className="zq-input" id="invite_email" name="email" type="email" required placeholder="teammate@example.com" />
         </div>
+        {workspaces && (
+          <div style={{ flex: "1 1 160px" }}>
+            <label className="zq-label" htmlFor="invite_ws">
+              Workspace
+            </label>
+            <select className="zq-select" id="invite_ws" name="workspace_id" defaultValue={workspaces[0]?.id}>
+              {workspaces.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div style={{ flex: "1 1 140px" }}>
           <label className="zq-label" htmlFor="invite_role">
             Role
@@ -39,7 +63,7 @@ export function InviteForm({ canMakeOrgOwner = false, workspace }: { canMakeOrgO
         )}
       </form>
       <p className="zq-help">
-        They join {workspace} with that role. The link only works for that Google account, and expires in 7 days.
+        They join {workspaces ? "that workspace" : workspace} with that role. The link only works for that Google account, and expires in 7 days.
       </p>
       {state.error && (
         <div className="zq-warn-box" role="alert" style={{ marginTop: 12 }}>
