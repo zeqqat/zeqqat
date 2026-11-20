@@ -37,6 +37,7 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: 
 const ACCOUNT_ITEMS: { label: string; href: string; icon?: React.ReactNode }[] = [
   { label: "Workspaces", href: "" },
   { label: "Dokploy integrations", href: "/dokploy-integrations", icon: <DokployMark size={15} /> },
+  { label: "Policies", href: "/policies" },
   { label: "Members", href: "/members" },
   { label: "Settings", href: "/settings" },
 ];

@@ -17,7 +17,7 @@ import { isReserved, ORG_SLUG } from "./username";
 // (homePathFor in lib/workspace.ts). There is no /app.
 
 // The account level's own pages. A workspace can't take these names.
-export const ACCOUNT_PAGES = new Set(["members", "settings", "dokploy-integrations", "workspaces"]);
+export const ACCOUNT_PAGES = new Set(["members", "settings", "dokploy-integrations", "policies", "workspaces"]);
 
 // Workspace slugs that would collide with an account page or another route
 // under /<username>/.

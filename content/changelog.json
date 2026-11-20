@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.6",
+    "date": "2026-11-20",
+    "at": "2026-11-20T18:01:53Z",
+    "changes": [
+      "Policies: account and workspace lists with Read/Create/Edit/Delete pills, a policy page with Map (calls on the arrow), MCP tools (Show filter) and Manage, a Default policy page"
+    ]
+  },
+  {
     "version": "0.5.5",
     "date": "2026-11-20",
     "at": "2026-11-20T14:04:51Z",

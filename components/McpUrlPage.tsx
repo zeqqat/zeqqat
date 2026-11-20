@@ -47,7 +47,7 @@ function PolicyPicker({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
-  const all = [{ id: "", name: "No policy" }, ...options];
+  const all = [{ id: "", name: "Default policy" }, ...options];
   const current = all.find((o) => o.id === value) ?? all[0];
   useEffect(() => {
     if (!open) return;

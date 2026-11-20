@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { openAccountAction, switchWorkspaceAction } from "../lib/actions/workspace";
 import type { ShellAccount } from "../lib/accounts";
 import { useBase } from "./DashboardBase";
+import { colorOf } from "../lib/avatar-color";
 
 // The top bar's path is also the switcher (Gaita, 2026-11-19, "B3"). One
 // click on @username or on the workspace opens its list. The first row is
@@ -11,14 +12,6 @@ import { useBase } from "./DashboardBase";
 // then + New. Your own account sits at the top with a "you" pill; people
 // are circles, organizations are rounded squares. Every row keeps room for
 // the tick so they line up however long a name is.
-
-const COLORS = ["#2e6fe0", "#1e9e82", "#b5531d", "#7a4fd6", "#c9423a", "#0f8aa8", "#8a6d12"];
-
-function colorOf(slug: string) {
-  let h = 0;
-  for (const c of slug) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return COLORS[h % COLORS.length];
-}
 
 export function AccountAvatar({
   account,

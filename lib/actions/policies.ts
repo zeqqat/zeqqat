@@ -1,11 +1,11 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "../../db";
-import { connectionGrant, policy, policyRevision } from "../../db/schema";
-import { here, requireOrgOwner, requireWorkspace } from "../guard";
+import { connectionGrant, policy } from "../../db/schema";
+import { hereAccount, requireOrgOwner, requireWorkspace } from "../guard";
 import { copyPolicy, getPolicy, policyIntegrations, policyWorkspaceIds, savePolicy, updateCopyFromSource } from "../policies";
 import { isValidSegment, toPolicyName } from "../tool-names";
 
@@ -19,7 +19,7 @@ function pgCode(err: unknown): string | undefined {
 }
 
 export async function savePolicyFormAction(formData: FormData) {
-  const base = await here();
+  const base = await hereAccount();
   const { user, ws } = await requireOrgOwner();
   const id = formData.get("policy_id")?.toString() || undefined;
   const integrationId = formData.get("integration_id")?.toString() ?? "";
@@ -28,7 +28,7 @@ export async function savePolicyFormAction(formData: FormData) {
   const visibility = formData.get("visibility")?.toString() === "public" ? "public" : "private";
   const allow = formData.getAll("allow").map((v) => v.toString());
   const workspaceIds = formData.getAll("workspace").map((v) => v.toString());
-  const back = id ? `${base}/policies/${id}` : `${base}/policies/new?integration=${encodeURIComponent(integrationId)}`;
+  const back = id ? `${base}/policies/${id}?tab=tools` : `${base}/policies/new`;
 
   if (!name || !isValidSegment(name)) redirect(`${back}${back.includes("?") ? "&" : "?"}error=name`);
   const allowedIntegrations = await policyIntegrations(ws.organizationId);
@@ -46,19 +46,19 @@ export async function savePolicyFormAction(formData: FormData) {
     throw err;
   }
   revalidatePath(`${base}/policies`);
-  redirect(`${base}/policies/${saved}?saved=1`);
+  redirect(`${base}/policies/${saved}?tab=${id ? "tools" : "map"}&saved=1`);
 }
 
 // A policy still attached to a connection can't be deleted (the foreign
 // key restricts it too); detach it in Connections first.
 export async function deletePolicyAction(formData: FormData) {
-  const base = await here();
+  const base = await hereAccount();
   const { ws } = await requireOrgOwner();
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);
   if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${base}/policies`);
   const [used] = await db.select({ id: connectionGrant.id }).from(connectionGrant).where(eq(connectionGrant.policyId, id)).limit(1);
-  if (used) redirect(`${base}/policies/${id}?error=in_use`);
+  if (used) redirect(`${base}/policies/${id}?tab=manage&error=in_use`);
   await db.delete(policy).where(eq(policy.id, id));
   revalidatePath(`${base}/policies`);
   redirect(`${base}/policies?deleted=1`);
@@ -66,7 +66,7 @@ export async function deletePolicyAction(formData: FormData) {
 
 // Copy on install, into the namespace you're working in.
 export async function copyPolicyAction(formData: FormData) {
-  const base = await here();
+  const base = await hereAccount();
   const { user, ws } = await requireWorkspace();
   const sourceId = formData.get("policy_id")?.toString() ?? "";
   if (ws.orgRole !== "owner") redirect(`${base}/policies?error=owner_only`);
@@ -78,7 +78,7 @@ export async function copyPolicyAction(formData: FormData) {
 }
 
 export async function updateCopyAction(formData: FormData) {
-  const base = await here();
+  const base = await hereAccount();
   const { user, ws } = await requireOrgOwner();
   const id = formData.get("policy_id")?.toString() ?? "";
   await updateCopyFromSource(id, ws.organizationId, user.id);
@@ -86,27 +86,63 @@ export async function updateCopyAction(formData: FormData) {
   redirect(`${base}/policies/${id}?saved=1`);
 }
 
-// Undo: saves an older revision's list and description as a new version.
-export async function restoreRevisionAction(formData: FormData) {
-  const base = await here();
+// The MCP tools tab saves the allow list alone; everything else stays.
+export async function savePolicyAllowAction(formData: FormData) {
+  const base = await hereAccount();
   const { user, ws } = await requireOrgOwner();
   const id = formData.get("policy_id")?.toString() ?? "";
-  const version = Number(formData.get("version"));
   const existing = await getPolicy(id);
   if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${base}/policies`);
-  const rev = await db.query.policyRevision.findFirst({ where: and(eq(policyRevision.policyId, id), eq(policyRevision.version, version)) });
-  if (!rev) redirect(`${base}/policies/${id}`);
   await savePolicy({
     id,
     organizationId: ws.organizationId,
     integrationId: existing.row.integrationId,
     name: existing.row.name,
-    description: rev.description,
-    allow: rev.allow ?? [],
+    description: existing.row.description,
+    allow: formData.getAll("allow").map((v) => v.toString()),
     visibility: existing.row.visibility as "public" | "private",
     userId: user.id,
     workspaceIds: await policyWorkspaceIds(id),
   });
   revalidatePath(`${base}/policies/${id}`);
-  redirect(`${base}/policies/${id}?saved=1`);
+  redirect(`${base}/policies/${id}?tab=tools&saved=1`);
+}
+
+// Manage: name, what agents read, public, workspaces. Each form sends only
+// its own field; the rest keeps its value.
+export async function updatePolicyMetaAction(formData: FormData) {
+  const base = await hereAccount();
+  const { user, ws } = await requireOrgOwner();
+  const id = formData.get("policy_id")?.toString() ?? "";
+  const existing = await getPolicy(id);
+  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${base}/policies`);
+  const back = `${base}/policies/${id}?tab=manage`;
+  const has = (k: string) => formData.has(k);
+  const name = has("name") ? toPolicyName(formData.get("name")?.toString() ?? "") : existing.row.name;
+  if (!name || !isValidSegment(name)) redirect(`${back}&error=name`);
+  const description = has("description") ? (formData.get("description")?.toString() ?? "").trim().slice(0, 280) : existing.row.description;
+  const visibility = has("visibility")
+    ? formData.get("visibility")?.toString() === "public"
+      ? "public"
+      : "private"
+    : (existing.row.visibility as "public" | "private");
+  const workspaceIds = has("workspaces") ? formData.getAll("workspace").map((v) => v.toString()) : await policyWorkspaceIds(id);
+  try {
+    await savePolicy({
+      id,
+      organizationId: ws.organizationId,
+      integrationId: existing.row.integrationId,
+      name,
+      description,
+      allow: existing.row.allow ?? [],
+      visibility,
+      userId: user.id,
+      workspaceIds,
+    });
+  } catch (err) {
+    if (pgCode(err) === "23505") redirect(`${back}&error=taken`);
+    throw err;
+  }
+  revalidatePath(`${base}/policies`);
+  redirect(`${back}&saved=1`);
 }
