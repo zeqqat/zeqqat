@@ -18,7 +18,7 @@ test("every held-back menu page opens the connect-first modal and stays on the o
     await menu.getByRole("link", { name: label, exact: true }).click();
     const dialog = page.getByRole("dialog", { name: /Connect your\s+Dokploy first/ });
     await expect(dialog).toBeVisible();
-    await expect(page).toHaveURL(/\/app$/);
+    await expect(page).toHaveURL(/^[^?]*\/[a-z0-9_]+\/[a-z0-9-]+$/);
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
   }
@@ -34,13 +34,13 @@ test("the modal's button shakes the heading and puts the cursor in the form", as
 
 test("a held-back page opened by its address goes to the overview and says why", async ({ page }) => {
   await page.goto("/app/mcp-urls");
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/^[^?]*\/[a-z0-9_]+\/[a-z0-9-]+$/);
   await expect(page.getByRole("dialog", { name: /Connect your\s+Dokploy first/ })).toBeVisible();
 });
 
 test("Releases stays open", async ({ page }) => {
   await page.goto("/app/releases");
-  await expect(page).toHaveURL(/\/app\/releases$/);
+  await expect(page).toHaveURL(/\/[a-z0-9-]+\/releases$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".zq-rel").first()).toBeVisible();
 });

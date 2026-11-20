@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { invitation, membership, oauthGrant, organization, user as userTable, workspace, workspaceMember } from "../../db/schema";
 import { publicUrl } from "../env";
-import { requireOrgOwner, requireOwner, requireUser } from "../guard";
+import { wsBase } from "../paths";
+import { here, hereAccount, requireOrgOwner, requireOwner, requireUser } from "../guard";
 import { newId } from "../id";
 import { INVITE_TTL_MS, findOpenInvite } from "../invites";
 import { randomToken, sha256Hex } from "../oauth-crypto";
@@ -38,11 +39,13 @@ async function inviteTarget(formData: FormData) {
   if (!wanted) return requireOwner();
   const user = await requireUser();
   const ws = (await listUserWorkspaces(user.id)).find((w) => w.workspaceId === wanted && w.wsRole === "admin");
-  if (!ws) redirect("/app/org/members?error=owner_only");
+  if (!ws) redirect(await hereAccount("/members?error=owner_only"));
   return { user, ws };
 }
 
 export async function createInviteAction(_prev: InviteState, formData: FormData): Promise<InviteState> {
+  const base = await here();
+  const acct = await hereAccount();
   const { user, ws } = await inviteTarget(formData);
   const personal = ws.organizationKind === "personal";
   if (personal && ws.orgRole !== "owner") return { error: "Only the owner of this personal namespace can invite people." };
@@ -86,23 +89,25 @@ export async function createInviteAction(_prev: InviteState, formData: FormData)
     expiresAt: new Date(Date.now() + INVITE_TTL_MS),
   });
 
-  revalidatePath("/app/team");
-  revalidatePath("/app/org/members");
+  revalidatePath(`${base}/members`);
+  revalidatePath(`${acct}/members`);
   return { link: `${publicUrl()}/invite/${token}`, email };
 }
 
 export async function revokeInviteAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("invite_id")?.toString() ?? "";
   await db
     .update(invitation)
     .set({ revokedAt: new Date() })
     .where(and(eq(invitation.id, id), eq(invitation.organizationId, ws.organizationId)));
-  revalidatePath("/app/team");
+  revalidatePath(`${base}/members`);
 }
 
 // Adds someone already in the org to this workspace.
 export async function addToWorkspaceAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const userId = formData.get("user_id")?.toString() ?? "";
   const role = wsRole(formData.get("ws_role"));
@@ -114,10 +119,11 @@ export async function addToWorkspaceAction(formData: FormData) {
     .insert(workspaceMember)
     .values({ id: newId(), workspaceId: ws.workspaceId, userId, role })
     .onConflictDoUpdate({ target: [workspaceMember.workspaceId, workspaceMember.userId], set: { role } });
-  revalidatePath("/app/team");
+  revalidatePath(`${base}/members`);
 }
 
 export async function changeWorkspaceRoleAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("member_id")?.toString() ?? "";
   const role = wsRole(formData.get("ws_role"));
@@ -125,20 +131,21 @@ export async function changeWorkspaceRoleAction(formData: FormData) {
     .update(workspaceMember)
     .set({ role })
     .where(and(eq(workspaceMember.id, id), eq(workspaceMember.workspaceId, ws.workspaceId)));
-  revalidatePath("/app/team");
+  revalidatePath(`${base}/members`);
 }
 
 // Removing someone from a workspace also disconnects every agent they
 // connected here, so access ends now rather than at the next token expiry.
 // Their org membership (and other workspaces) stay.
 export async function removeFromWorkspaceAction(formData: FormData) {
+  const base = await here();
   const { user, ws } = await requireOwner();
   const id = formData.get("member_id")?.toString() ?? "";
   const row = await db.query.workspaceMember.findFirst({
     where: and(eq(workspaceMember.id, id), eq(workspaceMember.workspaceId, ws.workspaceId)),
   });
   if (!row) return;
-  if (row.userId === user.id) redirect("/app/team?error=self");
+  if (row.userId === user.id) redirect(`${base}/members?error=self`);
   await db.transaction(async (tx) => {
     await tx
       .update(oauthGrant)
@@ -146,7 +153,7 @@ export async function removeFromWorkspaceAction(formData: FormData) {
       .where(and(eq(oauthGrant.workspaceId, ws.workspaceId), eq(oauthGrant.userId, row.userId), isNull(oauthGrant.revokedAt)));
     await tx.delete(workspaceMember).where(eq(workspaceMember.id, row.id));
   });
-  revalidatePath("/app/team");
+  revalidatePath(`${base}/members`);
 }
 
 async function ownerCount(organizationId: string) {
@@ -159,6 +166,7 @@ async function ownerCount(organizationId: string) {
 
 // Org owners are admins of every workspace in the org.
 export async function changeOrgRoleAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOrgOwner();
   const membershipId = formData.get("membership_id")?.toString() ?? "";
   const role = formData.get("role")?.toString() === "owner" ? "owner" : "member";
@@ -167,25 +175,26 @@ export async function changeOrgRoleAction(formData: FormData) {
   });
   if (!row) return;
   // A personal namespace has exactly one owner, forever.
-  if (ws.organizationKind === "personal" && role === "owner") redirect("/app/team?error=personal");
+  if (ws.organizationKind === "personal" && role === "owner") redirect(`${base}/members?error=personal`);
   if (row.role === "owner" && role === "member" && (await ownerCount(ws.organizationId)) <= 1) {
-    redirect("/app/team?error=last_owner");
+    redirect(`${base}/members?error=last_owner`);
   }
   await db.update(membership).set({ role }).where(eq(membership.id, row.id));
-  revalidatePath("/app", "layout");
+  revalidatePath(`${base}`, "layout");
 }
 
 // Removes someone from the whole org: every workspace, every agent.
 export async function removeFromOrgAction(formData: FormData) {
+  const base = await here();
   const { user, ws } = await requireOrgOwner();
   const membershipId = formData.get("membership_id")?.toString() ?? "";
   const row = await db.query.membership.findFirst({
     where: and(eq(membership.id, membershipId), eq(membership.organizationId, ws.organizationId)),
   });
   if (!row) return;
-  if (row.userId === user.id) redirect("/app/team?error=self");
+  if (row.userId === user.id) redirect(`${base}/members?error=self`);
   const org = await db.query.organization.findFirst({ where: eq(organization.id, ws.organizationId) });
-  if (org?.ownerUserId === row.userId) redirect("/app/team?error=creator");
+  if (org?.ownerUserId === row.userId) redirect(`${base}/members?error=creator`);
 
   const wsIds = (await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, ws.organizationId))).map(
     (w) => w.id,
@@ -200,7 +209,7 @@ export async function removeFromOrgAction(formData: FormData) {
     }
     await tx.delete(membership).where(eq(membership.id, row.id));
   });
-  revalidatePath("/app/team");
+  revalidatePath(`${base}/members`);
 }
 
 // The signed-in Google account must match the address the invite was sent
@@ -238,5 +247,8 @@ export async function acceptInviteAction(formData: FormData) {
   const opts = { path: "/", httpOnly: true, sameSite: "lax" as const, secure: publicUrl().startsWith("https://"), maxAge: 60 * 60 * 24 * 365 };
   jar.set(CURRENT_ORG_COOKIE, invite.organizationId, opts);
   if (workspaceId) jar.set(CURRENT_WS_COOKIE, workspaceId, opts);
-  redirect("/app?joined=1");
+  // Straight into the workspace just joined.
+  const joined = (await listUserWorkspaces(user.id)).find((w) => w.workspaceId === workspaceId) ??
+    (await listUserWorkspaces(user.id)).find((w) => w.organizationId === invite.organizationId);
+  redirect(joined ? `${wsBase(joined.organizationSlug, joined.workspaceSlug)}?joined=1` : "/app?joined=1");
 }

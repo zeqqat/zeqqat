@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { instance, instanceGrant, oauthClient } from "../../db/schema";
-import { requireOwner } from "../guard";
+import { here, requireOwner } from "../guard";
 import { newId } from "../id";
 
 const FIELDS = ["allowRead", "allowCreate", "allowEdit", "allowDelete"] as const;
@@ -27,13 +27,14 @@ function scopeWhere(workspaceId: string, instanceId: string, oauthClientId: stri
 // follows the default; its first change copies the default and then
 // applies the change, so the other three switches don't jump.
 export async function setPermission(instanceId: string, oauthClientId: string | null, field: GrantField, value: boolean) {
+  const base = await here();
   const { ws } = await requireOwner();
   if (!FIELDS.includes(field)) return;
 
   const inst = await db.query.instance.findFirst({
     where: and(eq(instance.id, instanceId), eq(instance.workspaceId, ws.workspaceId)),
   });
-  if (!inst) redirect("/app/permissions");
+  if (!inst) redirect(`${base}/permissions`);
   if (oauthClientId) {
     const client = await db.query.oauthClient.findFirst({ where: eq(oauthClient.id, oauthClientId) });
     if (!client) return;
@@ -62,12 +63,13 @@ export async function setPermission(instanceId: string, oauthClientId: string | 
     });
   }
 
-  revalidatePath("/app", "layout");
+  revalidatePath(`${base}`, "layout");
 }
 
 // Drops an agent's own row so it follows the workspace default again.
 export async function resetPermission(instanceId: string, oauthClientId: string) {
+  const base = await here();
   const { ws } = await requireOwner();
   await db.delete(instanceGrant).where(scopeWhere(ws.workspaceId, instanceId, oauthClientId));
-  revalidatePath("/app", "layout");
+  revalidatePath(`${base}`, "layout");
 }

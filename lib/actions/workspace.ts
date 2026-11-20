@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { instance, membership, oauthGrant, oauthToken, organization, workspace } from "../../db/schema";
 import { publicUrl } from "../env";
-import { requireOrgOwner, requireOwner, requireUser } from "../guard";
+import { hrefIn, requireOrgOwner, requireOwner, requireUser } from "../guard";
+import { accountBase, isReservedWorkspaceSlug, wsBase } from "../paths";
 import { newId } from "../id";
 import { deleteInstances } from "../instance-ops";
 import { transferWorkspace } from "../transfer";
@@ -39,11 +40,10 @@ export async function switchWorkspaceAction(formData: FormData) {
   const target = all.find((w) => w.workspaceId === wsId) ?? all.find((w) => w.organizationId === orgId);
   if (!target) redirect("/app");
   await setCurrent(target.organizationId, target.workspaceId);
-  revalidatePath("/app", "layout");
-  redirect("/app");
+  redirect(wsBase(target.organizationSlug, target.workspaceSlug));
 }
 
-// The account level (/app/org): an account's workspaces, members and
+// The account level (/<username>): an account's workspaces, members and
 // settings. Keeps the current workspace if it's in that account, else the
 // first one there you can open.
 export async function openAccountAction(formData: FormData) {
@@ -55,12 +55,13 @@ export async function openAccountAction(formData: FormData) {
   const target = all.find((w) => w.organizationId === orgId && w.workspaceId === curWs) ?? all.find((w) => w.organizationId === orgId);
   if (!target) redirect("/app/org");
   await setCurrent(target.organizationId, target.workspaceId);
-  revalidatePath("/app", "layout");
-  redirect("/app/org");
+  redirect(accountBase(target.organizationSlug));
 }
 
-// Workspace slugs are internal only (never in a URL or tool name), so they
-// keep their old shape. Org handles follow the org slug rules.
+// A workspace's slug is the second part of its pages' URLs
+// (/<username>/<workspace>), never part of an MCP URL or tool name.
+// Lowercase with hyphens; never a dot, so it can't look like a tool page.
+// Org handles follow the org slug rules.
 function toSlug(raw: string) {
   return raw
     .trim()
@@ -85,6 +86,7 @@ export async function createWorkspaceAction(_prev: FormState, formData: FormData
   const name = (formData.get("name")?.toString() ?? "").trim();
   const slug = toSlug(name);
   if (!name || !slug) return { error: "Give the workspace a name, for example Marketing." };
+  if (isReservedWorkspaceSlug(slug)) return { error: `"${slug}" is the name of an account page. Pick another name.` };
   const id = newId();
   try {
     await db.insert(workspace).values({
@@ -100,8 +102,7 @@ export async function createWorkspaceAction(_prev: FormState, formData: FormData
     throw err;
   }
   await setCurrent(ws.organizationId, id);
-  revalidatePath("/app", "layout");
-  redirect("/app");
+  redirect(wsBase(ws.organizationSlug, slug));
 }
 
 // A new organization, owned by whoever creates it, with one workspace.
@@ -127,33 +128,32 @@ export async function createOrgAction(_prev: FormState, formData: FormData): Pro
     throw err;
   }
   await setCurrent(orgId, wsId);
-  revalidatePath("/app", "layout");
-  redirect("/app/org");
+  redirect(accountBase(slug));
 }
 
 export async function renameWorkspaceAction(formData: FormData) {
   const { ws } = await requireOwner();
   const name = (formData.get("name")?.toString() ?? "").trim().slice(0, 60);
-  if (!name) redirect("/app/settings?error=name");
+  if (!name) redirect(hrefIn(ws, "/settings?error=name"));
   await db.update(workspace).set({ name }).where(eq(workspace.id, ws.workspaceId));
-  revalidatePath("/app", "layout");
-  redirect("/app/settings?saved=1");
+  revalidatePath(hrefIn(ws), "layout");
+  redirect(hrefIn(ws, "/settings?saved=1"));
 }
 
 // Deletes a workspace and everything in it (instances, keys, connections).
 // Never the org's last workspace.
 export async function deleteWorkspaceAction(formData: FormData) {
   const { ws } = await requireOrgOwner();
-  if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect("/app/settings?error=confirm");
-  const siblings = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, ws.organizationId));
-  if (siblings.length <= 1) redirect("/app/settings?error=last");
+  if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect(hrefIn(ws, "/settings?error=confirm"));
+  const siblings = await db.select({ id: workspace.id, slug: workspace.slug }).from(workspace).where(eq(workspace.organizationId, ws.organizationId));
+  if (siblings.length <= 1) redirect(hrefIn(ws, "/settings?error=last"));
   const ids = (await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, ws.workspaceId))).map((r) => r.id);
   await deleteInstances(ws.workspaceId, ids);
   await db.delete(workspace).where(eq(workspace.id, ws.workspaceId));
   const next = siblings.find((s) => s.id !== ws.workspaceId)!;
   await setCurrent(ws.organizationId, next.id);
-  revalidatePath("/app", "layout");
-  redirect("/app/settings?deleted=1");
+  // The workspace's own pages are gone: on to the next one.
+  redirect(wsBase(ws.organizationSlug, next.slug) + "/settings?deleted=1");
 }
 
 // The "keep using this site or self-host" screen after first setup. Both
@@ -162,8 +162,7 @@ export async function completeSetupAction(formData: FormData) {
   const { ws } = await requireOwner();
   const choice = formData.get("choice")?.toString();
   await db.update(workspace).set({ setupCompletedAt: new Date() }).where(eq(workspace.id, ws.workspaceId));
-  revalidatePath("/app", "layout");
-  redirect(choice === "self-host" ? "/app/self-host" : "/app");
+  redirect(hrefIn(ws, choice === "self-host" ? "/self-host" : ""));
 }
 
 // After someone moves to their own Zeqqat: deletes every Dokploy key this
@@ -172,7 +171,7 @@ export async function completeSetupAction(formData: FormData) {
 // confirmation.
 export async function removeHostedDataAction(formData: FormData) {
   const { ws } = await requireOwner();
-  if (formData.get("confirm")?.toString() !== "yes") redirect("/app/self-host/clean-up?error=confirm");
+  if (formData.get("confirm")?.toString() !== "yes") redirect(hrefIn(ws, "/self-host/clean-up?error=confirm"));
 
   const ids = (await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, ws.workspaceId))).map(
     (r) => r.id,
@@ -190,8 +189,7 @@ export async function removeHostedDataAction(formData: FormData) {
     await db.update(oauthToken).set({ revokedAt: now }).where(inArray(oauthToken.grantId, grantIds));
   }
 
-  revalidatePath("/app", "layout");
-  redirect(`/app/self-host/clean-up?done=${ids.length}-${grantIds.length}`);
+  redirect(hrefIn(ws, `/self-host/clean-up?done=${ids.length}-${grantIds.length}`));
 }
 
 // Moves this workspace (instances, connections, policies it uses) from
@@ -199,15 +197,18 @@ export async function removeHostedDataAction(formData: FormData) {
 // keep working and tell agents the new one.
 export async function transferWorkspaceAction(formData: FormData) {
   const { user, ws } = await requireOrgOwner();
-  if (ws.organizationKind !== "personal") redirect("/app/settings?error=transfer_personal");
-  if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect("/app/settings?error=confirm_transfer");
+  if (ws.organizationKind !== "personal") redirect(hrefIn(ws, "/settings?error=transfer_personal"));
+  if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect(hrefIn(ws, "/settings?error=confirm_transfer"));
   const target = formData.get("to_org")?.toString() ?? "";
+  let movedTo: string | null = null;
   try {
     const { organizationId } = await transferWorkspace({ workspaceId: ws.workspaceId, toOrganizationId: target, userId: user.id });
     await setCurrent(organizationId, ws.workspaceId);
+    const [org] = await db.select({ slug: organization.slug }).from(organization).where(eq(organization.id, organizationId));
+    movedTo = org?.slug ?? null;
   } catch {
-    redirect("/app/settings?error=transfer");
+    redirect(hrefIn(ws, "/settings?error=transfer"));
   }
-  revalidatePath("/app", "layout");
-  redirect("/app/settings?transferred=1");
+  // The workspace now lives under the organization's username.
+  redirect(movedTo ? wsBase(movedTo, ws.workspaceSlug) + "/settings?transferred=1" : "/app/settings?transferred=1");
 }

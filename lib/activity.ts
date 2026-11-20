@@ -266,7 +266,8 @@ export function buildCard(id: string, reason: string, calls: ActivityCall[], leg
   const perInstance = countBy(work, (c) => c.instanceId);
   return {
     id,
-    href: legacy ? `/app/activity/call/${calls[0].id}` : `/app/activity/${id}`,
+    // Inside the workspace (/<username>/<workspace> goes in front).
+    href: legacy ? `/activity/call/${calls[0].id}` : `/activity/${id}`,
     reason,
     legacy,
     person: first.person,

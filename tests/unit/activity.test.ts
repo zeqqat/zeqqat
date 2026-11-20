@@ -164,7 +164,7 @@ describe("a request card", () => {
     expect(card.blocked).toEqual({ op: "application.stop", instanceAlias: "dokploy-production", connectionId: "k1" });
     expect(card.instances).toEqual([{ id: "i1", alias: "dokploy-production", calls: 2 }]);
     expect(card.connections).toEqual([{ id: "k1", name: "deployment", shortId: "a39f", calls: 2 }]);
-    expect(card.href).toBe("/app/activity/r1");
+    expect(card.href).toBe("/activity/r1");
   });
 
   it("names the instance that failed", () => {

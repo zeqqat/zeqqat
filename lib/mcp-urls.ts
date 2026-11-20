@@ -4,7 +4,7 @@ import { apiEndpoint, callLog, connectionGrant, instance, oauthClient, oauthGran
 import { appCallsOnly } from "./overview";
 import { agentHost } from "./permissions";
 
-// Usage and people for the MCP URLs pages (app/app/mcp-urls). In the code
+// Usage and people for the MCP URLs pages (app/[org]/[ws]/mcp-urls). In the code
 // an MCP URL is still a `connection`; the dashboard and agents say MCP URL.
 
 export type Period = "today" | "week" | "month";

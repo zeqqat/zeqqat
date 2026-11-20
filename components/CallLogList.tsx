@@ -1,4 +1,5 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import { useMemo, useState } from "react";
 import type { CallView } from "../lib/calls";
@@ -49,6 +50,7 @@ export function CallLogList({
   showInstance?: boolean;
   filters?: boolean;
 }) {
+  const { ws: base } = useBase();
   const [openId, setOpenId] = useState<string | null>(null);
   const [status, setStatus] = useState<Filter>("all");
   const [agent, setAgent] = useState("");
@@ -167,7 +169,7 @@ export function CallLogList({
                     )}
                     {c.outcome === "blocked" && (
                       <p className="zq-note" style={{ marginTop: 10 }}>
-                        This call was stopped by the MCP URL&rsquo;s policy or the person&rsquo;s role. <a className="zq-textlink" href="/app/mcp-urls">Change it in MCP URLs</a>
+                        This call was stopped by the MCP URL&rsquo;s policy or the person&rsquo;s role. <a className="zq-textlink" href={`${base}/mcp-urls`}>Change it in MCP URLs</a>
                       </p>
                     )}
                   </div>

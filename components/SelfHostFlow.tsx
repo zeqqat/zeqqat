@@ -1,4 +1,5 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import { useRef, useState } from "react";
 import {
@@ -47,6 +48,7 @@ const MARK: Record<StepState, string> = {
 // already holds, and shows each step as it finishes. Plain code, no agent:
 // the steps never change, so there's nothing for a model to decide.
 export function SelfHostFlow({ instances, agents, siteHost }: Props) {
+  const { ws: base } = useBase();
   const [instanceId, setInstanceId] = useState(instances[0]?.id ?? "");
   const [states, setStates] = useState<Record<StepKey, StepState>>({
     create: "idle",
@@ -392,7 +394,7 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
             >
               Open your Zeqqat
             </a>
-            <a className="zq-action" href="/app/self-host/clean-up">
+            <a className="zq-action" href={`${base}/self-host/clean-up`}>
               Clean up {siteHost} (optional)
             </a>
           </div>

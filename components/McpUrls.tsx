@@ -1,10 +1,11 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { InfoBubble } from "./activity/InfoBubble";
 
-// The MCP URLs list (app/app/mcp-urls/page.tsx) and the parts its URL
+// The MCP URLs list (app/[org]/[ws]/mcp-urls/page.tsx) and the parts its URL
 // page reuses, the card included. Each card: the URL with a clock beside it when it turns
 // off; under it, people (or a globe when public) and instances on the
 // left, the calls line and number on the right. Clicking the period
@@ -242,10 +243,11 @@ export function McpUrlItemCard({
   // The list's cards open the URL's page; the page's own card doesn't.
   linked?: boolean;
 }) {
+  const { ws: base } = useBase();
   const router = useRouter();
   const values = series(item.usage, period);
   const off = item.state === "cutoff";
-  const href = `/app/mcp-urls/${item.id}`;
+  const href = `${base}/mcp-urls/${item.id}`;
   // A div, not a link: the card holds buttons (copy, period, status).
   const link = linked
     ? {

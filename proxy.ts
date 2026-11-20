@@ -1,5 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { connectionRoute, internalMcpPath, MCP_INTERNAL_PREFIX, parseConnectionPath } from "./lib/connection-paths";
+import { placeOf } from "./lib/paths";
+
+// Kept in step with lib/workspace.ts (not imported: that file pulls in the
+// database).
+const PLACE_ORG_HEADER = "x-zq-org";
+const PLACE_WS_HEADER = "x-zq-ws";
+const PATH_HEADER = "x-zq-path";
+const LAST_PLACE_COOKIE = "zq_at";
 
 // A nonce-based policy rather than 'unsafe-inline': the consent screen
 // renders a client name that the client itself chose at registration, so
@@ -61,8 +69,33 @@ function withCsp(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("content-security-policy", csp);
 
+  // Which account and workspace the URL is about (lib/paths.ts). Always
+  // overwritten, so a client can't send its own.
+  const path = request.nextUrl.pathname;
+  const place = placeOf(path);
+  requestHeaders.delete(PLACE_ORG_HEADER);
+  requestHeaders.delete(PLACE_WS_HEADER);
+  requestHeaders.set(PATH_HEADER, path + request.nextUrl.search);
+  if (place) requestHeaders.set(PLACE_ORG_HEADER, place.org);
+  if (place?.kind === "workspace") requestHeaders.set(PLACE_WS_HEADER, place.ws);
+
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("content-security-policy", csp);
+  // Remember the workspace, so /app (the way back in) returns to it. Only
+  // on page loads: a prefetch isn't a visit.
+  const prefetch = request.headers.get("next-router-prefetch") || request.headers.get("purpose") === "prefetch";
+  if (place?.kind === "workspace" && request.method === "GET" && !prefetch) {
+    const value = `${place.org}/${place.ws}`;
+    if (request.cookies.get(LAST_PLACE_COOKIE)?.value !== value) {
+      response.cookies.set(LAST_PLACE_COOKIE, value, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: request.nextUrl.protocol === "https:",
+        maxAge: 60 * 60 * 24 * 365,
+      });
+    }
+  }
   return response;
 }
 
@@ -112,12 +145,8 @@ export const config = {
     "/mcp-internal/:path*",
     // Static assets are served straight from disk and carry no markup, so
     // there's nothing for a policy to protect there.
-    {
-      source: "/((?!_next/static|_next/image|favicon.ico).*)",
-      missing: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
+    // Prefetches too: the page they fetch depends on which account and
+    // workspace the URL names, which the proxy passes on.
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

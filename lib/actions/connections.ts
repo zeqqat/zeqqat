@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { connection, connectionGrant, instance, integration, oauthGrant, oauthToken } from "../../db/schema";
 import { CONNECTION_NAME, createConnection, getConnection, replaceConnection, toConnectionName } from "../connections";
-import { requireOwner } from "../guard";
+import { here, requireOwner } from "../guard";
 import { newId } from "../id";
 import { pickablePolicies } from "../policies";
 
@@ -22,6 +22,7 @@ async function ownedConnection(workspaceId: string, id: string) {
 // (they're part of the URL agents are configured with). They don't have to
 // be unique: the short id tells same-named connections apart.
 export async function createConnectionAction(_prev: ConnFormState, formData: FormData): Promise<ConnFormState> {
+  const base = await here();
   const { user, ws } = await requireOwner();
   const name = toConnectionName(formData.get("name")?.toString() ?? "");
   const authMode = formData.get("auth_mode")?.toString() === "public" ? "public" : "members";
@@ -36,8 +37,8 @@ export async function createConnectionAction(_prev: ConnFormState, formData: For
     description,
     createdByUserId: user.id,
   });
-  revalidatePath("/app/mcp-urls");
-  redirect(`/app/mcp-urls/${id}?created=1`);
+  revalidatePath(`${base}/mcp-urls`);
+  redirect(`${base}/mcp-urls/${id}?created=1`);
 }
 
 // Saves the whole policy table in one go: one row per instance, each with
@@ -45,10 +46,11 @@ export async function createConnectionAction(_prev: ConnFormState, formData: For
 // permission boxes used when no policy is attached. A policy must be one
 // this workspace may pick, for the instance's integration.
 export async function savePolicyAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/mcp-urls");
+  if (!conn) redirect(`${base}/mcp-urls`);
   const instances = await db
     .select({ id: instance.id, integrationSlug: integration.slug })
     .from(instance)
@@ -81,19 +83,20 @@ export async function savePolicyAction(formData: FormData) {
         .onConflictDoUpdate({ target: [connectionGrant.connectionId, connectionGrant.instanceId], set: values });
     }
   });
-  revalidatePath(`/app/mcp-urls/${conn.id}`);
-  redirect(`/app/mcp-urls/${conn.id}?saved=1`);
+  revalidatePath(`${base}/mcp-urls/${conn.id}`);
+  redirect(`${base}/mcp-urls/${conn.id}?saved=1`);
 }
 
 // Switching to public drops every write permission and signs out every
 // agent on it (they no longer need tokens); switching to members-only means
 // agents must sign in.
 export async function setAuthModeAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const mode = formData.get("auth_mode")?.toString() === "public" ? "public" : "members";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn || conn.authMode === mode) redirect(`/app/mcp-urls/${id}?tab=manage`);
+  if (!conn || conn.authMode === mode) redirect(`${base}/mcp-urls/${id}?tab=manage`);
   await db.transaction(async (tx) => {
     await tx.update(connection).set({ authMode: mode }).where(eq(connection.id, conn.id));
     if (mode === "public") {
@@ -104,8 +107,8 @@ export async function setAuthModeAction(formData: FormData) {
       await revokeGrants(tx, conn.id);
     }
   });
-  revalidatePath(`/app/mcp-urls/${conn.id}`);
-  redirect(`/app/mcp-urls/${conn.id}?saved=1&tab=manage`);
+  revalidatePath(`${base}/mcp-urls/${conn.id}`);
+  redirect(`${base}/mcp-urls/${conn.id}?saved=1&tab=manage`);
 }
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -136,72 +139,77 @@ function readCutoff(formData: FormData): Date | null {
 // the model can explain, but no tools are listed. Tokens are left alone:
 // after the cutoff there is nothing they can reach.
 export async function sunsetConnectionAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const message = (formData.get("message")?.toString() ?? "").trim().slice(0, 400) || null;
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/mcp-urls");
+  if (!conn) redirect(`${base}/mcp-urls`);
   const cutoff = readCutoff(formData);
-  if (!cutoff) redirect(`/app/mcp-urls/${conn.id}?error=cutoff&tab=manage`);
+  if (!cutoff) redirect(`${base}/mcp-urls/${conn.id}?error=cutoff&tab=manage`);
   await db.update(connection).set({ sunsetAt: cutoff, sunsetMessage: message }).where(eq(connection.id, conn.id));
-  revalidatePath("/app/mcp-urls");
-  redirect(`/app/mcp-urls/${conn.id}?sunset=1&tab=manage`);
+  revalidatePath(`${base}/mcp-urls`);
+  redirect(`${base}/mcp-urls/${conn.id}?sunset=1&tab=manage`);
 }
 
 // Replacing a connection: a new one (same name unless changed) with a new
 // short id and a copy of the policy. The old one points clients at the new
 // URL and, if a cutoff is given, stops serving tools then.
 export async function replaceConnectionAction(formData: FormData) {
+  const base = await here();
   const { user, ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const old = await getConnection(ws.workspaceId, id);
-  if (!old) redirect("/app/mcp-urls");
+  if (!old) redirect(`${base}/mcp-urls`);
   const rawName = formData.get("name")?.toString() ?? "";
   const name = rawName.trim() ? toConnectionName(rawName) : old.name;
-  if (!CONNECTION_NAME.test(name)) redirect(`/app/mcp-urls/${old.id}?error=name&tab=manage`);
+  if (!CONNECTION_NAME.test(name)) redirect(`${base}/mcp-urls/${old.id}?error=name&tab=manage`);
   const message = (formData.get("message")?.toString() ?? "").trim().slice(0, 400) || null;
   const newConnId = await replaceConnection({ old, name, cutoff: readCutoff(formData), message, createdByUserId: user.id });
-  revalidatePath("/app/mcp-urls");
-  redirect(`/app/mcp-urls/${newConnId}?replaced=${old.id}`);
+  revalidatePath(`${base}/mcp-urls`);
+  redirect(`${base}/mcp-urls/${newConnId}?replaced=${old.id}`);
 }
 
 // The description under the URL: what kind of tools it connects to.
 export async function updateDescriptionAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/mcp-urls");
+  if (!conn) redirect(`${base}/mcp-urls`);
   const description = (formData.get("description")?.toString() ?? "").replace(/\s+/g, " ").trim().slice(0, 140) || null;
   await db.update(connection).set({ description }).where(eq(connection.id, conn.id));
-  revalidatePath("/app/mcp-urls");
-  redirect(`/app/mcp-urls/${conn.id}?saved=1&tab=manage`);
+  revalidatePath(`${base}/mcp-urls`);
+  redirect(`${base}/mcp-urls/${conn.id}?saved=1&tab=manage`);
 }
 
 // Cancels a sunset: the connection is fully live again.
 export async function reviveConnectionAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/mcp-urls");
+  if (!conn) redirect(`${base}/mcp-urls`);
   await db.update(connection).set({ sunsetAt: null, sunsetMessage: null }).where(eq(connection.id, conn.id));
-  revalidatePath("/app/mcp-urls");
-  redirect(`/app/mcp-urls/${conn.id}?tab=manage`);
+  revalidatePath(`${base}/mcp-urls`);
+  redirect(`${base}/mcp-urls/${conn.id}?tab=manage`);
 }
 
 // Deleting is soft: the URL stops answering at all (it looks exactly like
 // one that never existed) and every agent on it is signed out, but the row
 // stays, so its short id is never reused for the same name in this org.
 export async function deleteConnectionAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const id = formData.get("connection_id")?.toString() ?? "";
-  if (formData.get("confirm")?.toString() !== "delete") redirect(`/app/mcp-urls/${id}?error=confirm&tab=manage`);
+  if (formData.get("confirm")?.toString() !== "delete") redirect(`${base}/mcp-urls/${id}?error=confirm&tab=manage`);
   const conn = await ownedConnection(ws.workspaceId, id);
-  if (!conn) redirect("/app/mcp-urls");
+  if (!conn) redirect(`${base}/mcp-urls`);
   await db.transaction(async (tx) => {
     await tx.update(connection).set({ deletedAt: new Date() }).where(eq(connection.id, conn.id));
     await tx.delete(connectionGrant).where(eq(connectionGrant.connectionId, conn.id));
     await revokeGrants(tx, conn.id);
   });
-  revalidatePath("/app/mcp-urls");
-  redirect("/app/mcp-urls?deleted=1");
+  revalidatePath(`${base}/mcp-urls`);
+  redirect(`${base}/mcp-urls?deleted=1`);
 }

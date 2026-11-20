@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { openAccountAction, switchWorkspaceAction } from "../lib/actions/workspace";
 import type { ShellAccount } from "../lib/accounts";
+import { useBase } from "./DashboardBase";
 
 // The top bar's path is also the switcher (Gaita, 2026-11-19, "B3"). One
 // click on @username or on the workspace opens its list. The first row is
@@ -88,6 +89,7 @@ export function PathSwitch({
   onNewWorkspace: () => void;
   onNewOrg: () => void;
 }) {
+  const base = useBase();
   const [open, setOpen] = useState<null | "account" | "workspace">(null);
   const accRef = useRef<HTMLButtonElement>(null);
   const wsRef = useRef<HTMLButtonElement>(null);
@@ -191,7 +193,7 @@ export function PathSwitch({
         >
           {open === "account" ? (
             <>
-              <a className="zq-acc-open" href="/app/org" role="menuitem" onClick={() => setOpen(null)}>
+              <a className="zq-acc-open" href={base.account} role="menuitem" onClick={() => setOpen(null)}>
                 <AccountAvatar account={current} image={imageOf(current)} />
                 <span className="zq-acc-n">@{current.slug}</span>
                 <span className="zq-acc-go">Open ›</span>
@@ -221,7 +223,7 @@ export function PathSwitch({
           ) : (
             currentWorkspace && (
               <>
-                <a className="zq-acc-open" href="/app" role="menuitem" onClick={() => setOpen(null)}>
+                <a className="zq-acc-open" href={base.ws} role="menuitem" onClick={() => setOpen(null)}>
                   <WorkspaceAvatar name={currentWorkspace.name} />
                   <span className="zq-acc-n">{currentWorkspace.name}</span>
                   <span className="zq-acc-go">Open ›</span>

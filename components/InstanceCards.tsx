@@ -1,4 +1,5 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -7,7 +8,7 @@ import { WhatIsThis, WhatLink } from "./WhatIsThis";
 import { changedPart } from "../lib/version-diff";
 import { Icon, PeriodPick, Spark, type Period, type UrlUsage } from "./McpUrls";
 
-// The Dokploy Instances list (app/app/dokploy-instances). Each card, three
+// The Dokploy Instances list (app/[org]/[ws]/dokploy-instances). Each card, three
 // rows per side that line up (UI principles 39):
 //   name                       | graph
 //   domain                     | calls, with the period switch
@@ -111,10 +112,11 @@ function Card({ c }: { c: InstanceCard }) {
 // page's own card (linked=false) doesn't, and its period switch drives the
 // whole page.
 export function InstanceCardView({ c, period, onPeriod, linked = true }: { c: InstanceCard; period: Period; onPeriod: (p: Period) => void; linked?: boolean }) {
+  const { ws: base } = useBase();
   const router = useRouter();
   const setPeriod = onPeriod;
   const values = series(c.usage, period);
-  const href = `/app/dokploy-instances/${c.id}`;
+  const href = `${base}/dokploy-instances/${c.id}`;
   const bad = c.status !== null && c.status !== "ok";
   const tone = c.status === "ok" ? " is-ok" : bad ? " is-bad" : "";
   const word = c.status ? (STATUS_WORDS[c.status] ?? c.status) : "Not checked yet";
@@ -185,6 +187,7 @@ export function InstanceCards({
   emptyText: string;
   what?: boolean;
 }) {
+  const { ws: base } = useBase();
   // Same head as the MCP URLs page: the count on the left, the add button on the right.
   return (
     <div>
@@ -207,7 +210,7 @@ export function InstanceCards({
       {cards.length > 0 && (
         <WhatIsThis open={what}>
           An instance is one Dokploy install (on Dokploy Cloud, your account). Zeqqat makes API calls to an instance via an{" "}
-          <WhatLink href="/app/dokploy-integrations?what=1">integration</WhatLink>.
+          <WhatLink href={`${base}/dokploy-integrations?what=1`}>integration</WhatLink>.
         </WhatIsThis>
       )}
       {cards.length > 0 && (

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// The account menu's name line opens /app/account, where you change your
+// The account menu's name line opens /account, where you change your
 // picture, name and username. A renamed account keeps its old username:
 // old public links redirect, and nobody else can take it.
 
@@ -12,16 +12,16 @@ test("the name line in the account menu opens the profile page, even before Dokp
   await page.goto("/app");
   await page.getByRole("button", { name: "Account menu" }).click();
   const id = page.locator(".zq-pop-user");
-  await expect(id).toHaveAttribute("href", "/app/account");
+  await expect(id).toHaveAttribute("href", "/account");
   await page.screenshot({ path: "test-results/account-menu.png" });
   await id.click();
-  await expect(page).toHaveURL(/\/app\/account$/);
+  await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByLabel("Username")).toBeVisible();
 });
 
 test("changing the username warns first, saves, and the old username redirects", async ({ page }) => {
-  await page.goto("/app/account");
+  await page.goto("/account");
   const field = page.getByLabel("Username");
   const old = await field.inputValue();
   const next = `${old}_renamed`.slice(0, 39);
@@ -36,7 +36,7 @@ test("changing the username warns first, saves, and the old username redirects",
   await expect(page).toHaveURL(new RegExp(`/${next}$`));
 
   // Back to the original, which takes the old name back.
-  await page.goto("/app/account");
+  await page.goto("/account");
   await page.getByLabel("Username").fill(old);
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("status")).toContainText(`You're @${old} now`);
@@ -45,7 +45,7 @@ test("changing the username warns first, saves, and the old username redirects",
 });
 
 test("a reserved username is refused", async ({ page }) => {
-  await page.goto("/app/account");
+  await page.goto("/account");
   await page.getByLabel("Username").fill("admin");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.locator(".zq-account [role=alert]")).toContainText("reserved");

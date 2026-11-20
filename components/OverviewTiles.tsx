@@ -20,7 +20,9 @@ export function OverviewTiles({
   agentHosts,
   instances,
   people,
+  base,
 }: {
+  base: string; // the workspace's pages, /<username>/<workspace>
   callsToday: number;
   hourly: number[];
   blockedToday: number;
@@ -35,7 +37,7 @@ export function OverviewTiles({
 
   return (
     <div className="zq-stats zq-kpis">
-      <a href="/app/activity?when=today" className="zq-stat zq-kpi">
+      <a href={`${base}/activity?when=today`} className="zq-stat zq-kpi">
         <span className="zq-kpi-l">Calls today</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{callsToday}</span>
@@ -52,7 +54,7 @@ export function OverviewTiles({
         </span>
       </a>
 
-      <a href="/app/activity?when=today&show=blocked" className={`zq-stat zq-kpi${blockedToday ? " is-blocked" : ""}`}>
+      <a href={`${base}/activity?when=today&show=blocked`} className={`zq-stat zq-kpi${blockedToday ? " is-blocked" : ""}`}>
         <span className="zq-kpi-l">Blocked</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{blockedToday}</span>
@@ -64,7 +66,7 @@ export function OverviewTiles({
         </span>
       </a>
 
-      <a href="/app/activity?when=today&show=redacted" className={`zq-stat zq-kpi${redactedToday ? " is-redacted" : ""}`}>
+      <a href={`${base}/activity?when=today&show=redacted`} className={`zq-stat zq-kpi${redactedToday ? " is-redacted" : ""}`}>
         <span className="zq-kpi-l">Secrets hidden</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{redactedToday}</span>
@@ -78,7 +80,7 @@ export function OverviewTiles({
         </span>
       </a>
 
-      <a href="/app/agents" className="zq-stat zq-kpi">
+      <a href={`${base}/agents`} className="zq-stat zq-kpi">
         <span className="zq-kpi-l">Agents</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{agentHosts.length}</span>
@@ -93,7 +95,7 @@ export function OverviewTiles({
         </span>
       </a>
 
-      <a href="/app/dokploy-instances" className="zq-stat zq-kpi">
+      <a href={`${base}/dokploy-instances`} className="zq-stat zq-kpi">
         <span className="zq-kpi-l">Instances</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{instances.length}</span>
@@ -106,7 +108,7 @@ export function OverviewTiles({
         </span>
       </a>
 
-      <a href="/app/team" className="zq-stat zq-kpi">
+      <a href={`${base}/members`} className="zq-stat zq-kpi">
         <span className="zq-kpi-l">Members</span>
         <span className="zq-kpi-row">
           <span className="zq-stat-n">{people.length}</span>

@@ -7,7 +7,7 @@ import { agentBrand, connectedPeople, cutoffLabel, urlCounts, usageByUrl, type A
 import { appCallsOnly } from "./overview";
 import { toPolicyCanonical } from "./tool-names";
 
-// Data for one Dokploy instance's page (app/app/dokploy-instances/[id]):
+// Data for one Dokploy instance's page (app/[org]/[ws]/dokploy-instances/[id]):
 // the MCP URLs that reach it (with the policy each one applies here), its
 // calls (who, which tool, which agent, through which URL) and the people
 // connected through those URLs. Access belongs to an MCP URL, never to the

@@ -9,7 +9,7 @@ import { DokployMark } from "./Marks";
 import { Icon, Spark } from "./McpUrls";
 import { AccountAvatar, WorkspaceAvatar } from "./PathSwitch";
 
-// The account level (/app/org): Workspaces and Members. Each list page has
+// The account level (/<username>): Workspaces and Members. Each list page has
 // a big count on the left and its add button on the right, their bottoms
 // on one line (Gaita, 2026-11-19).
 

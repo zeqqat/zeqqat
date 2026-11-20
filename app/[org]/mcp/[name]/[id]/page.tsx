@@ -5,7 +5,7 @@ import { CopyButton } from "../../../../../components/CopyButton";
 import { PublicHeader } from "../../../../../components/PublicHeader";
 import { db } from "../../../../../db";
 import { oauthClient, oauthGrant, user, workspace } from "../../../../../db/schema";
-import { switchWorkspaceAction } from "../../../../../lib/actions/workspace";
+import { wsBase } from "../../../../../lib/paths";
 import {
   findConnectionByPath,
   formatCutoff,
@@ -18,7 +18,7 @@ import {
 } from "../../../../../lib/connections";
 import { agentHost } from "../../../../../lib/permissions";
 import { getServerSession } from "../../../../../lib/session";
-import { getUserWorkspace, workspaceRoleFor } from "../../../../../lib/workspace";
+import { workspaceRoleFor } from "../../../../../lib/workspace";
 
 type Props = { params: Promise<{ org: string; name: string; id: string }> };
 
@@ -53,11 +53,10 @@ export default async function ConnectionUrlPage({ params }: Props) {
   if (!role) notFound();
   const isAdmin = role === "admin";
 
-  const [ws, policy, notice, current] = await Promise.all([
+  const [ws, policy, notice] = await Promise.all([
     db.query.workspace.findFirst({ where: eq(workspace.id, conn.workspaceId) }),
     getConnectionPolicy(conn.id, conn.workspaceId),
     sunsetNotice(conn),
-    getUserWorkspace(session.user.id),
   ]);
   const reachable = policy.filter((p) => p.enabled);
   const isPublic = conn.authMode === "public";
@@ -72,7 +71,6 @@ export default async function ConnectionUrlPage({ params }: Props) {
         .where(and(eq(oauthGrant.connectionId, conn.id), isNull(oauthGrant.revokedAt)))
         .orderBy(desc(oauthGrant.createdAt))
     : [];
-  const inCurrentWorkspace = current?.workspaceId === conn.workspaceId;
 
   return (
     <div className="zq">
@@ -182,18 +180,9 @@ export default async function ConnectionUrlPage({ params }: Props) {
 
         {isAdmin && (
           <section className="zq-block">
-            {inCurrentWorkspace ? (
-              <a className="zq-action zq-action-primary" href={`/app/mcp-urls/${conn.id}`}>
-                Manage in the dashboard
-              </a>
-            ) : (
-              <form action={switchWorkspaceAction}>
-                <input type="hidden" name="workspace_id" value={conn.workspaceId} />
-                <button type="submit" className="zq-action zq-action-primary">
-                  Switch to {ws?.name ?? "its workspace"} to manage it
-                </button>
-              </form>
-            )}
+            <a className="zq-action zq-action-primary" href={ws ? `${wsBase(conn.orgSlug, ws.slug)}/mcp-urls/${conn.id}` : "/app/mcp-urls"}>
+              Manage in the dashboard
+            </a>
           </section>
         )}
       </main>

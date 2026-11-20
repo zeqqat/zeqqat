@@ -131,15 +131,15 @@ need an org on zeqqat.com, not a local one (planned, not built).
 
 **MCP URL, not connection.** What the code calls a `connection` (table,
 files, `lib/connections.ts`) is an **MCP URL** everywhere a person or an
-agent reads it: the dashboard (`/app/mcp-urls`), tool descriptions, errors, the context (`mcpUrl`), the docs
+agent reads it: the dashboard (`<ws>/mcp-urls`), tool descriptions, errors, the context (`mcpUrl`), the docs
 and the plugin. "Connection" was misleading: a URL is not connected to
 anything until someone pastes it into an agent. People whose agent signed
 in through one are "connected".
 
 **Dokploy Instances, not integrations, in the UI.** The menu item is the
-Dokploy logo plus "Dokploy Instances" (`/app/dokploy-instances`, instances
+Dokploy logo plus "Dokploy Instances" (`<ws>/dokploy-instances`, instances
 grouped under their app; one instance's page is
-`/app/dokploy-instances/<id>`, and the old `/app/instances/<id>` redirects there). "Integration" is the code's
+`<ws>/dokploy-instances/<id>`, and the old `<ws>/instances/<id>` still lands there). "Integration" is the code's
 word for a published tool set (`@zeqqat/dokploy`), not a menu label: people
 think "my Dokploy", not "my integration". Once Zeqqat leaves the Dokploy
 ecosystem the page becomes "Apps", each app listing its instances or
@@ -176,8 +176,8 @@ agents.
 **Dokploy integrations.** An integration is the list of tools that reach an
 instance (`@zeqqat/dokploy`), so its pages never show an instance name on
 the card: several instances can use one. The workspace menu's "Dokploy
-integrations" (`/app/dokploy-integrations`) lists the integrations its own
-instances use; the account level (`/app/org/dokploy-integrations`) lists
+integrations" (`<ws>/dokploy-integrations`) lists the integrations its own
+instances use; the account level (`/<username>/dokploy-integrations`) lists
 those of every workspace the viewer can open, plus any the account
 published, with "+ Add integration". Both use `components/IntegrationViews.tsx`
 (data in `lib/integrations.ts`, scope in `lib/integration-scope.ts`). A card
@@ -190,7 +190,7 @@ Dokploy version, and how its own API compares) and About (published by, and
 (an owner of the integration's org) edits a tool's description and kind in
 place (`kind_source` / `summary_source` = `accepted`, which imports never
 overwrite); anyone else's edit becomes a suggestion in the publisher's
-review queue (`/app/feedback`). `/app/tools` redirects to the workspace page.
+review queue (`<ws>/feedback`). `<ws>/tools` redirects to the workspace page.
 
 **An instance's own API.** Dokploy builds its OpenAPI document at runtime
 (`settings.getOpenApiDocument`), and it can list operations the spec file
@@ -207,9 +207,9 @@ tool callable: activating one still means adding it to the catalog.
 
 **Connect Dokploy first.** Until a workspace has its first instance,
 everyone in it can open only the overview and Releases
-(`lib/setup-gate.ts`). `app/app/layout.tsx` decides, `components/AppShell.tsx`
+(`lib/setup-gate.ts`). `components/AppFrame.tsx` decides, `components/AppShell.tsx`
 applies it: a menu click opens a modal instead of navigating, and a
-held-back page opened by its address goes to `/app` with the same modal.
+held-back page opened by its address goes to the workspace overview with the same modal.
 An admin is told to connect Dokploy; anyone else can't, so the modal names
 the admin to ask (`firstAdminOf`, "Name @username"). It is a nudge, not
 access control: the server actions keep their own checks.
@@ -222,13 +222,41 @@ is the switcher (`components/PathSwitch.tsx`): one click on `@username` or
 the workspace opens a list whose first row opens it ("Open ›"), then the
 others to switch to, then + New. Your own account is first, with a "you"
 pill, then "Organizations". People are circles, organizations rounded
-squares. Each account has its own level at `/app/org` (Workspaces,
+squares. Each account has its own level at `/<username>` (Workspaces,
 Members, Settings, `lib/accounts.ts`), with its own side menu; everything
-else under `/app` is one workspace. The current account and workspace are
-the `zq_org` / `zq_ws` cookies, set by `openAccountAction` and
-`switchWorkspaceAction`. A personal account has members too (people in its
-workspaces), but nobody else can ever be its owner.
+under `/<username>/<workspace>` is one workspace (see **Dashboard URLs**).
+Switching (`openAccountAction`, `switchWorkspaceAction`) just goes to the
+other URL; the `zq_org` / `zq_ws` cookies are only a fallback. A personal
+account has members too (people in its workspaces), but nobody else can
+ever be its owner.
 `pnpm exec tsx tests/e2e/accounts-seed.ts` runs it locally with three accounts.
+
+**Dashboard URLs** (`lib/paths.ts`), like Twitter and GitHub. Below, `<ws>`
+means `/<username>/<workspace>`.
+
+- `/<username>`: one URL for everyone. Someone in the account sees its
+  workspaces (the account level, `app/[org]/page.tsx` +
+  `app/[org]/account-home.tsx`); anyone else, signed in or not, sees the
+  public page (what it publishes).
+- `/<username>/members`, `/settings`, `/dokploy-integrations`: the
+  account's own pages (`app/[org]/(account)/`).
+- `<ws>` and `<ws>/...`: one workspace's pages (`app/[org]/[ws]/`). A dotted
+  second segment is a tool or policy page instead (`app/[org]/[ws]/page.tsx`
+  dispatches to `tool-page.tsx`); workspace slugs never have dots.
+- `/account`: your own profile. `/app` and every old `/app/...` address
+  redirect to the same page in the workspace you were last in
+  (`app/app/[[...rest]]/route.ts`, the `zq_at` cookie).
+- MCP URLs stay `/<username>/mcp/<name>/<id>`, never with a workspace in
+  them, because an MCP URL can move between workspaces.
+
+`proxy.ts` reads the account and workspace off the path (`placeOf`) and
+passes them on as `x-zq-org` / `x-zq-ws` (always overwritten, never taken
+from the client). `requireWorkspace` uses them: a workspace the person can't
+open is a 404, an old username redirects to the new one. Pages and actions
+build links with `here("/policies")` / `hrefIn(ws, ...)` (`lib/guard.ts`);
+client components with `useBase().ws` (`components/DashboardBase.tsx`).
+Never hard-code `/app/...` in a link. Workspace slugs can't be an account
+page's name or another reserved word (`RESERVED_WORKSPACE_SLUGS`).
 
 **Org → workspace → connection** is the access model:
 
@@ -240,8 +268,9 @@ workspaces), but nobody else can ever be its owner.
 - **`workspace`** splits an org by team (Engineering gets deploy tools,
   Marketing gets social). It holds its own instances (keys), connections
   and members (`workspace_member`, `admin` | `member` | `viewer`).
-  Workspaces are internal: they never appear in a URL or tool name; the
-  token decides which workspace a caller is in.
+  Workspaces never appear in an MCP URL or tool name (the token decides
+  which workspace a caller is in); they are the second part of the
+  dashboard's page URLs.
 - **`connection`** is one MCP URL, `/<org>/mcp/<name>/<shortId>`, owned by
   the org and belonging to exactly one workspace, plus a per-instance
   ceiling (`connection_grant`). Names are snake_case, immutable, and **not
@@ -333,9 +362,9 @@ caller's role, the policy name and version, the spec release and the
 outbound request (`describeOutbound`: method, url, query or body, headers
 with the credential's value never stored). The dashboard reads it through
 `lib/activity.ts`, per viewer (only workspaces they can open in the current
-org): `/app/activity` (request cards), `/app/activity/<requestId>` (the
-request's calls, lookups as quiet lines), `/app/activity/call/<callId>`
-(one call: request, response, details), `/app/activity/<id>/export` (JSON).
+org): `<ws>/activity` (request cards), `<ws>/activity/<requestId>` (the
+request's calls, lookups as quiet lines), `<ws>/activity/call/<callId>`
+(one call: request, response, details), `<ws>/activity/<id>/export` (JSON).
 Rows from before reasons existed show as single-call cards.
 `tests/e2e/activity-seed.ts` runs the whole flow locally against a
 throwaway Postgres and a stand-in Dokploy.
@@ -355,11 +384,11 @@ every call but the spec needs it as a Bearer token. No dashboard UI lives
 in the app.
 `pnpm exec tsx tests/e2e/telemetry-flow.ts` runs the ping loop end to end.
 
-**Public site** (cloud edition only; self-hosted redirects into `/app`):
+**Public site** (cloud edition only; self-hosted redirects into `/app`, which goes on to the dashboard):
 `/` and `/releases` share `components/SiteChrome.tsx`. There is no public
 integrations page: Zeqqat is the MCP for Dokploy, and the list of apps lives
-only in the dashboard (`/app/dokploy-instances`). A link can still fill the
-import form in (`/app/dokploy-instances?add=app&spec=...`), through
+only in the dashboard (`<ws>/dokploy-instances`). A link can still fill the
+import form in (`<ws>/dokploy-instances?add=app&spec=...`), through
 `/signup?next=...` when signed out (`lib/next-path.ts` keeps `next` on-site).
 
 **SEO:** every public page gets its title, description, canonical URL and
@@ -493,7 +522,7 @@ password into an app's `DATABASE_URL`). `lib/secret-handles.ts` does it:
 
 ## One-button self-host install
 
-`/app/self-host` installs Zeqqat into a workspace's Dokploy with the key
+`<ws>/self-host` installs Zeqqat into a workspace's Dokploy with the key
 the instance already holds: no agent, because the steps never change.
 `lib/selfhost-install.ts` is the steps (project, compose service from
 `lib/selfhost-compose.ts`, Dokploy's free sslip.io address, fresh secrets
@@ -527,12 +556,12 @@ version. The same entry becomes the GitHub release notes (`release.yml`).
 The side menu footer shows only `v<version>` and one pill: `Latest`, or
 `Update available` (never the newer number; that's inside the modal).
 `components/VersionPill.tsx` opens the What's new modal (every version,
-newest first, scrolls) with a link to `/app/releases`. Tags: Latest (the
+newest first, scrolls) with a link to `<ws>/releases`. Tags: Latest (the
 newest), New (newer than yours), Your version. The public `/releases` shows
 the same list with no Your version. zeqqat.com serves
 its changelog at `/api/releases`; a self-hosted install fetches it at most
 every ten minutes, and right away from the Check for updates pill in the
-modal and on `/app/releases` (`components/CheckUpdates.tsx`, `checkNow`)
+modal and on `<ws>/releases` (`components/CheckUpdates.tsx`, `checkNow`)
 (`lib/changelog.ts`, `ZEQQAT_RELEASES_URL` to point elsewhere,
 `ZEQQAT_UPDATE_CHECK=0` to stop) to learn about newer versions. Cloud is
 always Latest.
@@ -543,7 +572,7 @@ through the admin's Dokploy instances for the compose whose
 `compose.deploy`s it; the image is `latest` with `pull_policy: always`, so
 that is the update. A compose pinned with `ZEQQAT_VERSION` is reported, not
 deployed. The same Update now block (`SelfUpdate`) is in the modal and on
-`/app/releases`. It then polls `/api/health` (which returns `version`)
+`<ws>/releases`. It then polls `/api/health` (which returns `version`)
 until the new version answers and reloads. While it waits it shows three
 real steps with a spinner and a timer (asked Dokploy, Dokploy deploying
 from `composeStatus` via `getUpdateDeploy`, Zeqqat restarting), never a

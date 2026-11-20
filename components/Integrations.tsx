@@ -1,4 +1,5 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -297,11 +298,12 @@ function ToolEditor({ row, publisher, publisherSlug, onDone }: { row: ToolRow; p
 
 
 export function IntegrationsWhat({ open }: { open: boolean }) {
+  const { ws: base } = useBase();
   return (
     <WhatIsThis open={open}>
       An MCP tool is a Dokploy API endpoint with a description, so your agent knows what it does and when to use it. An
       integration is all of Dokploy&rsquo;s API endpoints, made into MCP tools. Zeqqat makes API calls to an{" "}
-      <WhatLink href="/app/dokploy-instances?what=1">instance</WhatLink> via an integration.
+      <WhatLink href={`${base}/dokploy-instances?what=1`}>instance</WhatLink> via an integration.
     </WhatIsThis>
   );
 }

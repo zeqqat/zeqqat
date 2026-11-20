@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.5.0",
+    "date": "2026-11-20",
+    "at": "2026-11-20T11:28:09Z",
+    "changes": [
+      "Dashboard addresses now read like Twitter and GitHub: your account at /<username>, a workspace at /<username>/<workspace>",
+      "Your account's page shows its workspaces to you and its public page to everyone else",
+      "Old /app links still work: /app takes you to the workspace you were last in"
+    ]
+  },
+  {
     "version": "0.4.14",
     "date": "2026-11-20",
     "at": "2026-11-20T10:24:31Z",

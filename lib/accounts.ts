@@ -4,7 +4,7 @@ import { callLog, connection, instance, membership, organization, user, workspac
 import { appCallsOnly } from "./overview";
 import { orgsOf, type UserWorkspace } from "./workspace";
 
-// The account level of the dashboard (/app/org...): one account's
+// The account level of the dashboard (/<username>): one account's
 // workspaces, members and settings. An account is a personal account
 // (@gaita, one owner forever) or an organization. Both live in the
 // `organization` table, told apart by `kind`.

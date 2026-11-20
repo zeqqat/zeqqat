@@ -1,5 +1,6 @@
 import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { cache } from "react";
 import { db } from "../db";
 import { instance, membership, oauthGrant, organization, workspace, workspaceMember } from "../db/schema";
 
@@ -7,6 +8,15 @@ import { instance, membership, oauthGrant, organization, workspace, workspaceMem
 // among workspaces the user can already open; they never grant access.
 export const CURRENT_ORG_COOKIE = "zq_org";
 export const CURRENT_WS_COOKIE = "zq_ws";
+// The last workspace opened by its URL, as "<org slug>/<workspace slug>".
+// proxy.ts sets it; /app sends you back there.
+export const LAST_PLACE_COOKIE = "zq_at";
+// Set by proxy.ts from the URL (lib/paths.ts placeOf): which account and
+// workspace this request is about. Always overwritten there, never trusted
+// from the client.
+export const PLACE_ORG_HEADER = "x-zq-org";
+export const PLACE_WS_HEADER = "x-zq-ws";
+export const PATH_HEADER = "x-zq-path";
 
 export type OrgRole = "owner" | "member";
 export type WsRole = "admin" | "member" | "viewer";
@@ -31,7 +41,7 @@ export type UserWorkspace = {
 // Every workspace the user can open, their own org first. Org owners see
 // every workspace in their org as admin; everyone else sees the workspaces
 // they were added to, with that workspace's role.
-export async function listUserWorkspaces(userId: string): Promise<UserWorkspace[]> {
+export const listUserWorkspaces = cache(async function listUserWorkspaces(userId: string): Promise<UserWorkspace[]> {
   const rows = await db
     .select({
       workspaceId: workspace.id,
@@ -69,24 +79,53 @@ export async function listUserWorkspaces(userId: string): Promise<UserWorkspace[
       setupCompletedAt: r.setupCompletedAt,
     };
   });
+});
+
+// What the URL says this request is about (proxy.ts), if anything.
+export async function placeFromRequest(): Promise<{ org: string | null; ws: string | null }> {
+  try {
+    const h = await headers();
+    return { org: h.get(PLACE_ORG_HEADER), ws: h.get(PLACE_WS_HEADER) };
+  } catch {
+    return { org: null, ws: null };
+  }
 }
 
-// The workspace this request acts on: the one named by the workspace
-// cookie, else the first one in the org cookie's org, else the first.
+// The workspace this request acts on. A URL naming an account or a
+// workspace decides it: null when the person can't open it (the page is a
+// 404 then). Without one (/app, /account, server actions posted from
+// elsewhere): the last workspace opened, else the first one.
 export async function getUserWorkspace(userId: string): Promise<UserWorkspace | null> {
   const all = await listUserWorkspaces(userId);
   if (all.length === 0) return null;
+  let last: string | undefined;
   let wantedWs: string | undefined;
   let wantedOrg: string | undefined;
   try {
     const jar = await cookies();
+    last = jar.get(LAST_PLACE_COOKIE)?.value;
     wantedWs = jar.get(CURRENT_WS_COOKIE)?.value;
     wantedOrg = jar.get(CURRENT_ORG_COOKIE)?.value;
   } catch {
     wantedWs = undefined;
   }
+  const [lastOrg, lastWs] = (last ?? "").split("/");
+  const place = await placeFromRequest();
+  if (place.org) {
+    const inOrg = all.filter((w) => w.organizationSlug === place.org);
+    if (place.ws) return inOrg.find((w) => w.workspaceSlug === place.ws) ?? null;
+    return (
+      inOrg.find((w) => w.organizationSlug === lastOrg && w.workspaceSlug === lastWs) ??
+      inOrg.find((w) => w.workspaceId === wantedWs) ??
+      inOrg[0] ??
+      null
+    );
+  }
   return (
-    all.find((w) => w.workspaceId === wantedWs) ?? all.find((w) => w.organizationId === wantedOrg) ?? all[0]
+    all.find((w) => w.organizationSlug === lastOrg && w.workspaceSlug === lastWs) ??
+    all.find((w) => w.workspaceId === wantedWs) ??
+    all.find((w) => w.organizationId === wantedOrg) ??
+    all[0]
   );
 }
 

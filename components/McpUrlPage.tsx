@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// The interactive parts of an MCP URL's page (app/app/mcp-urls/[id]).
+// The interactive parts of an MCP URL's page (app/[org]/[ws]/mcp-urls/[id]).
 
 type Kind = "read" | "create" | "edit" | "delete";
 const KINDS: { k: Kind; label: string }[] = [

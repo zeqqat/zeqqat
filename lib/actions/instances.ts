@@ -8,7 +8,7 @@ import { instance, instanceGrant, integration } from "../../db/schema";
 import { decryptCredential, encryptCredential } from "../crypto";
 import { CONNECTION_MESSAGES, normalizeBaseUrl, testDokployConnection } from "../dokploy-check";
 import { addInstanceToPrimaryConnection, primaryConnection } from "../connections";
-import { requireOwner } from "../guard";
+import { here, requireOwner } from "../guard";
 import { newId } from "../id";
 import { deleteInstances } from "../instance-ops";
 import { syncOfficialCatalog } from "../official-catalog";
@@ -30,12 +30,13 @@ function pgCode(err: unknown) {
 // Every new instance gets a workspace-default grant (read, create and edit
 // on, delete off): without one, the executor allows nothing.
 export async function connectDokployAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
+  const base = await here();
   const { user, ws } = await requireOwner();
 
   const alias = (formData.get("alias")?.toString() ?? "").trim().toLowerCase();
   const baseUrlRaw = (formData.get("base_url")?.toString() ?? "").trim();
   const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
-  const next = formData.get("next")?.toString() === "dokploy-instances" ? "/app/dokploy-instances" : "/app";
+  const next = formData.get("next")?.toString() === "dokploy-instances" ? `${base}/dokploy-instances` : `${base}`;
   const values = { alias, baseUrl: baseUrlRaw };
 
   if (!alias || !baseUrlRaw || !apiKey) return { error: "Fill in the name, the URL and the API key.", values };
@@ -87,7 +88,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
     throw err;
   }
 
-  revalidatePath("/app", "layout");
+  revalidatePath(`${base}`, "layout");
   redirect(`${next}?connected=${encodeURIComponent(alias)}`);
 }
 
@@ -95,6 +96,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
 // visible to this workspace's org. Saved once its address answers; the key
 // is checked by the first real call.
 export async function connectAppAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
+  const base = await here();
   const { user, ws } = await requireOwner();
 
   const integrationId = formData.get("integration_id")?.toString() ?? "";
@@ -138,8 +140,8 @@ export async function connectAppAction(_prev: ConnectState, formData: FormData):
     throw err;
   }
 
-  revalidatePath("/app", "layout");
-  redirect(`/app/dokploy-instances?connected=${encodeURIComponent(alias)}`);
+  revalidatePath(`${base}`, "layout");
+  redirect(`${base}/dokploy-instances?connected=${encodeURIComponent(alias)}`);
 }
 
 async function isDokploy(integrationId: string) {
@@ -154,11 +156,12 @@ async function ownedInstance(workspaceId: string, instanceId: string) {
 }
 
 export async function replaceKeyAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
+  const base = await here();
   const { ws } = await requireOwner();
   const instanceId = formData.get("instance_id")?.toString() ?? "";
   const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
   const inst = await ownedInstance(ws.workspaceId, instanceId);
-  if (!inst) redirect("/app/dokploy-instances");
+  if (!inst) redirect(`${base}/dokploy-instances`);
   if (!apiKey) return { error: "Paste the new API key." };
 
   const result = (await isDokploy(inst.integrationId))
@@ -178,16 +181,17 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
     })
     .where(eq(instance.id, inst.id));
 
-  revalidatePath(`/app/dokploy-instances/${inst.id}`);
-  redirect(`/app/dokploy-instances/${inst.id}?tab=manage&key=replaced`);
+  revalidatePath(`${base}/dokploy-instances/${inst.id}`);
+  redirect(`${base}/dokploy-instances/${inst.id}?tab=manage&key=replaced`);
 }
 
 // Re-runs the connection test with the stored key, so the status badge
 // reflects today rather than the day the instance was added.
 export async function retestInstanceAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
-  if (!inst) redirect("/app/dokploy-instances");
+  if (!inst) redirect(`${base}/dokploy-instances`);
 
   let status: string;
   let version = inst.lastVersion;
@@ -209,9 +213,9 @@ export async function retestInstanceAction(formData: FormData) {
     .set({ lastValidatedAt: new Date(), lastStatus: status, lastVersion: version })
     .where(eq(instance.id, inst.id));
 
-  revalidatePath(`/app/dokploy-instances/${inst.id}`);
-  revalidatePath("/app/dokploy-instances");
-  redirect(`/app/dokploy-instances/${inst.id}?tab=manage&checked=1`);
+  revalidatePath(`${base}/dokploy-instances/${inst.id}`);
+  revalidatePath(`${base}/dokploy-instances`);
+  redirect(`${base}/dokploy-instances/${inst.id}?tab=manage&checked=1`);
 }
 
 // Asks Dokploy to update itself to its latest release (its own
@@ -219,10 +223,11 @@ export async function retestInstanceAction(formData: FormData) {
 // new image and restarts, so agents get errors for a minute or two. Owners
 // only, behind a confirm on the instance's Manage tab.
 export async function updateDokployAction(formData: FormData) {
+  const here_ = await here();
   const { ws } = await requireOwner();
   const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
-  if (!inst) redirect("/app/dokploy-instances");
-  const page = `/app/dokploy-instances/${inst.id}?tab=manage`;
+  if (!inst) redirect(`${here_}/dokploy-instances`);
+  const page = `${here_}/dokploy-instances/${inst.id}?tab=manage`;
   const base = (await isDokploy(inst.integrationId)) ? normalizeBaseUrl(inst.baseUrl) : null;
   if (!base) redirect(`${page}&error=update`);
   let ok = false;
@@ -239,7 +244,7 @@ export async function updateDokployAction(formData: FormData) {
     // Dokploy can drop the connection as it restarts: that still means it started.
     ok = true;
   }
-  revalidatePath(`/app/dokploy-instances/${inst.id}`);
+  revalidatePath(`${here_}/dokploy-instances/${inst.id}`);
   redirect(ok ? `${page}&updating=1` : `${page}&error=update`);
 }
 
@@ -247,16 +252,17 @@ export async function updateDokployAction(formData: FormData) {
 // for it. call_log rows keep their history: their instance_id is a plain
 // reference, so it's cleared first rather than blocking the delete.
 export async function removeInstanceAction(formData: FormData) {
+  const base = await here();
   const { ws } = await requireOwner();
   const inst = await ownedInstance(ws.workspaceId, formData.get("instance_id")?.toString() ?? "");
-  if (!inst) redirect("/app/dokploy-instances");
+  if (!inst) redirect(`${base}/dokploy-instances`);
   // The Manage tab asks for the instance's name before removing it.
   if ((formData.get("confirm")?.toString() ?? "").trim() !== inst.alias) {
-    redirect(`/app/dokploy-instances/${inst.id}?tab=manage&error=confirm`);
+    redirect(`${base}/dokploy-instances/${inst.id}?tab=manage&error=confirm`);
   }
 
   await deleteInstances(ws.workspaceId, [inst.id]);
 
-  revalidatePath("/app", "layout");
-  redirect("/app/dokploy-instances?removed=1");
+  revalidatePath(`${base}`, "layout");
+  redirect(`${base}/dokploy-instances?removed=1`);
 }

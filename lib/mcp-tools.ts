@@ -1,4 +1,5 @@
 import { and, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { wsBase } from "./paths";
 import { db } from "../db";
 import { apiEndpoint, callLog, integration, organization } from "../db/schema";
 import { docSection, docsIndex, searchDocs } from "./agent-docs";
@@ -587,7 +588,8 @@ export async function toolActivity(ctx: Ctx, args: { limit?: number; request?: s
   const ws = (await listUserWorkspaces(ctx.userId)).find((w) => w.workspaceId === ctx.workspaceId);
   if (!ws) return fail("This MCP URL's workspace isn't visible to you.");
   const viewer = { userId: ctx.userId, ws };
-  const base = publicUrl().replace(/\/$/, "");
+  // The workspace's own pages on this site (lib/paths.ts).
+  const base = publicUrl().replace(/\/$/, "") + wsBase(ws.organizationSlug, ws.workspaceSlug);
 
   if (args.request) {
     const found = await getRequest(viewer, args.request);
@@ -607,7 +609,7 @@ export async function toolActivity(ctx: Ctx, args: { limit?: number; request?: s
   const text = requests.length
     ? requests
         .map((r) => `${r.lastAt} "${r.reason}" by ${r.by} via ${r.agent}: ${r.calls} call(s)${r.blocked ? `, ${r.blocked} blocked` : ""}${r.failed ? `, ${r.failed} failed` : ""}. id ${r.id}`)
-        .join("\n") + `\nAll activity: ${base}/app/activity`
-    : `No activity in this workspace yet. All activity: ${base}/app/activity`;
-  return logged(ctx, TOOL_NAMES.activity, requestArgs, toolOk({ requests, link: `${base}/app/activity` }, text));
+        .join("\n") + `\nAll activity: ${base}/activity`
+    : `No activity in this workspace yet. All activity: ${base}/activity`;
+  return logged(ctx, TOOL_NAMES.activity, requestArgs, toolOk({ requests, link: `${base}/activity` }, text));
 }

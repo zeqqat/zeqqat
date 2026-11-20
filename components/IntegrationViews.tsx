@@ -1,4 +1,5 @@
 import { CountHead } from "./AccountPages";
+import { here } from "../lib/guard";
 import { CrumbLast } from "./AppShell";
 import { IntegrationVersion, KindPills, ToolFinder, IntegrationsWhat } from "./Integrations";
 import { DokployMark } from "./Marks";
@@ -16,8 +17,8 @@ import {
   type Kind,
 } from "../lib/integrations";
 
-// Shared by the workspace pages (/app/dokploy-integrations) and the account
-// pages (/app/org/dokploy-integrations): the same cards and the same
+// Shared by the workspace pages (/<username>/<workspace>/dokploy-integrations)
+// and the account pages (/<username>/dokploy-integrations): the same cards and the same
 // integration page, with the instances of the workspaces in scope.
 
 function newest(versions: (string | null)[]): string | null {
@@ -79,13 +80,15 @@ export async function IntegrationList({
   empty: string;
   account?: { slug: string };
 }) {
+  // The current workspace's pages, for links to its Dokploy Instances.
+  const wsHome = await here();
   const [cards, mine] = await Promise.all([integrationCards(ids), reviewableOrgIds(userId)]);
   const instances = new Map(await Promise.all(cards.map(async (c) => [c.id, await integrationInstances(c.id, workspaceIds)] as const)));
   return (
     <div>
       {account && (
         <CountHead n={cards.length} one="integration" many="integrations">
-          <a className="zq-action" href="/app/dokploy-instances?add=app">
+          <a className="zq-action" href={`${wsHome}/dokploy-instances?add=app`}>
             + Add integration
           </a>
         </CountHead>
@@ -150,6 +153,8 @@ export async function IntegrationDetail({
   base: string;
   params: Record<string, string | string[] | undefined>;
 }) {
+  // The current workspace's pages, for links to its Dokploy Instances.
+  const wsHome = await here();
   const one = (k: string) => (typeof params[k] === "string" ? (params[k] as string) : "");
   const q = one("q").trim().slice(0, 80);
   const kinds = one("kinds")
@@ -232,7 +237,7 @@ export async function IntegrationDetail({
                 {compareLine(i, card.release, card.orgSlug)}
                 {(i.missing?.length ?? 0) > 0 && (compareVersions(i.version, card.release) ?? 0) < 0 && (
                   <span className="zq-in-act">
-                    <a className="zq-action zq-action-sm" href={`/app/dokploy-instances/${i.id}?tab=manage`}>
+                    <a className="zq-action zq-action-sm" href={`${wsHome}/dokploy-instances/${i.id}?tab=manage`}>
                       Update Dokploy
                     </a>
                   </span>

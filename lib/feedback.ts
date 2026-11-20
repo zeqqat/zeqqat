@@ -8,7 +8,7 @@ import type { McpContext } from "./mcp-auth";
 // Summary suggestions (schema: summary_suggestion). An agent that found
 // the right tool the hard way proposes a better one-line summary through
 // zeqqat_feedback; owners of the org that publishes the integration accept
-// or reject it at /app/feedback. Accepted summaries reach everyone using
+// or reject it at <workspace>/feedback. Accepted summaries reach everyone using
 // that integration, and catalog imports keep them (lib/catalog-import.ts).
 //
 // Models read summaries, so a suggestion never goes live without a person,

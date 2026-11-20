@@ -1,7 +1,9 @@
 import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { AppFrame } from "../../components/AppFrame";
 import { PublicHeader } from "../../components/PublicHeader";
+import AccountWorkspacesPage from "./account-home";
 import { db } from "../../db";
 import { apiEndpoint, integration, organization } from "../../db/schema";
 import { listPublicPolicies } from "../../lib/policies";
@@ -21,9 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `@${org}` };
 }
 
-// zeqqat.com/<org> (naming doc v2, section 7). The org is the owner and
-// publisher of everything it creates, so its page lists the tools it
-// publishes. Workspaces are internal and never shown here.
+// zeqqat.com/<username> (naming doc v2, section 7), one URL for everyone,
+// like a Twitter profile. Someone in the account sees its workspaces (the
+// account level of the dashboard). Everyone else, signed in or not, sees
+// the public page: what the account publishes. Workspaces never show there.
 export default async function OrgPage({ params, searchParams }: Props) {
   const { org: slug } = await params;
   if (!isValidOrgSlug(slug)) notFound();
@@ -33,6 +36,15 @@ export default async function OrgPage({ params, searchParams }: Props) {
     const renamed = await renamedTo(slug);
     if (renamed) redirect(`/${renamed.slug}`);
     notFound();
+  }
+
+  const session0 = await getServerSession();
+  if (session0?.user && (await listUserWorkspaces(session0.user.id)).some((w) => w.organizationId === org.id)) {
+    return (
+      <AppFrame level="account">
+        <AccountWorkspacesPage />
+      </AppFrame>
+    );
   }
 
   const q = typeof (await searchParams).q === "string" ? ((await searchParams).q as string).trim().slice(0, 80) : "";
@@ -74,15 +86,12 @@ export default async function OrgPage({ params, searchParams }: Props) {
   ]);
   const publicPolicies = await listPublicPolicies(org.id);
 
-  const memberHere = session?.user
-    ? (await listUserWorkspaces(session.user.id)).some((w) => w.organizationId === org.id)
-    : false;
 
   return (
     <div className="zq">
-      <PublicHeader right={memberHere ? <a className="zq-link" href="/app">Dashboard</a> : undefined} />
+      <PublicHeader right={session?.user ? <a className="zq-link" href="/app">Dashboard</a> : undefined} />
       <main className="zq-body" style={{ maxWidth: 920 }}>
-        <p className="zq-kicker">Org</p>
+        <p className="zq-kicker">{org.kind === "personal" ? "Person" : "Organization"}</p>
         <h1 className="zq-h">
           {org.displayName}
           <span className="dot">.</span>

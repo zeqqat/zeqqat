@@ -87,7 +87,7 @@ test("the menu stays the way you left it across pages", async ({ page }) => {
   // only pages that open (tests/e2e/connect-first.spec.ts).
   const menu = page.getByRole("complementary", { name: "Menu" });
   await page.goto("/app/releases");
-  await expect(page).toHaveURL(/\/app\/releases/);
+  await expect(page).toHaveURL(/\/releases/);
   await expect(menu).toBeVisible();
 
   await page.locator(BURGER).click();

@@ -4,7 +4,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "../../db";
 import { oauthGrant, oauthToken } from "../../db/schema";
-import { requireWorkspace } from "../guard";
+import { here, requireWorkspace } from "../guard";
 
 // Disconnects an agent from this workspace. An owner disconnects it for
 // everyone who connected it; a member can only disconnect their own
@@ -12,6 +12,7 @@ import { requireWorkspace } from "../guard";
 // any request whose grant has a revokedAt, so it takes effect on the
 // agent's very next call. Tokens are revoked too, for a tidy log.
 export async function revokeAgentAction(formData: FormData) {
+  const base = await here();
   const { user, ws } = await requireWorkspace();
   const oauthClientId = formData.get("oauth_client_id")?.toString();
   if (!oauthClientId) return;
@@ -30,5 +31,5 @@ export async function revokeAgentAction(formData: FormData) {
   await db.update(oauthGrant).set({ revokedAt: now }).where(inArray(oauthGrant.id, ids));
   await db.update(oauthToken).set({ revokedAt: now }).where(inArray(oauthToken.grantId, ids));
 
-  revalidatePath("/app", "layout");
+  revalidatePath(`${base}`, "layout");
 }

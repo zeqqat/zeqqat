@@ -3,21 +3,21 @@ import { openWithoutDokploy } from "../../lib/setup-gate";
 
 describe("openWithoutDokploy", () => {
   it("keeps the overview and Releases open", () => {
-    for (const p of ["/app", "/app/", "/app/releases", "/app/releases/"]) expect(openWithoutDokploy(p)).toBe(true);
+    for (const p of ["", "/", "/releases", "/releases/"]) expect(openWithoutDokploy(p)).toBe(true);
   });
   it("holds every other dashboard page back", () => {
     for (const p of [
-      "/app/mcp-urls",
-      "/app/dokploy-instances",
-      "/app/dokploy-instances/abc",
-      "/app/tools",
-      "/app/dokploy-integrations",
-      "/app/policies/new",
-      "/app/activity",
-      "/app/team",
-      "/app/settings",
-      "/app/self-host",
-      "/app/releases-old",
+      "/mcp-urls",
+      "/dokploy-instances",
+      "/dokploy-instances/abc",
+      "/tools",
+      "/dokploy-integrations",
+      "/policies/new",
+      "/activity",
+      "/members",
+      "/settings",
+      "/self-host",
+      "/releases-old",
     ]) {
       expect(openWithoutDokploy(p)).toBe(false);
     }

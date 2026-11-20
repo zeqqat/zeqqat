@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "../../db";
 import { apiEndpoint, integration, organization } from "../../db/schema";
 import { reviewableOrgIds, submitSuggestion, summaryProblem } from "../feedback";
-import { requireWorkspace } from "../guard";
+import { here, hereAccount, requireWorkspace } from "../guard";
 import { KINDS, type Kind } from "../integrations";
 
 type Result = { ok: true; note?: string } | { ok: false; error: string };
@@ -33,6 +33,8 @@ const isKind = (k: string): k is Kind => (KINDS as readonly string[]).includes(k
 // tool's summary and kind. Both are marked accepted so a later import of the
 // spec never puts the old ones back.
 export async function updateToolAction(id: string, summary: string, kind: string): Promise<Result> {
+  const base = await here();
+  const acct = await hereAccount();
   const { user } = await requireWorkspace();
   const e = await endpointWithOrg(id);
   if (!e) return { ok: false, error: "That tool is gone." };
@@ -51,13 +53,13 @@ export async function updateToolAction(id: string, summary: string, kind: string
       ...(kind !== e.kind ? { kind, kindSource: "accepted" } : {}),
     })
     .where(eq(apiEndpoint.id, id));
-  revalidatePath("/app/dokploy-integrations", "layout");
-  revalidatePath("/app/org/dokploy-integrations", "layout");
+  revalidatePath(`${base}/dokploy-integrations`, "layout");
+  revalidatePath(`${acct}/dokploy-integrations`, "layout");
   return { ok: true };
 }
 
 // Anyone else suggests a fix; it lands in the publisher's review queue
-// (/app/feedback). A different kind goes along as the note.
+// (<workspace>/feedback). A different kind goes along as the note.
 export async function suggestToolAction(id: string, summary: string, kind: string): Promise<Result> {
   const { user, ws } = await requireWorkspace();
   const e = await endpointWithOrg(id);

@@ -155,7 +155,7 @@ async function main() {
   await dokployIn(fans, fansWs, "fans-dokploy", 9);
   await member(fans, me.id, [fansWs]);
 
-  console.log(JSON.stringify({ ok: true, urls: ["/app", "/app/org", "/app/org/members", "/app/org/settings"] }));
+  console.log(JSON.stringify({ ok: true, urls: ["/app", "/gaita", "/gaita/default", "/gaita/members", "/acme_corp/engineering"] }));
 
   const app = spawn("pnpm", ["exec", "next", "dev", "-p", String(APP_PORT)], {
     stdio: "inherit",

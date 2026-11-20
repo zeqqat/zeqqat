@@ -5,8 +5,10 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
 import type { ShellAccount } from "../lib/accounts";
+import { PROFILE_PATH } from "../lib/paths";
 import { openWithoutDokploy } from "../lib/setup-gate";
 import { CreateOrgForm, CreateWorkspaceForm } from "./ConnectionForms";
+import { BaseContext } from "./DashboardBase";
 import { DokployMark } from "./Marks";
 import { PathSwitch } from "./PathSwitch";
 import { ThemeToggle } from "./ThemeToggle";
@@ -14,40 +16,44 @@ import { VersionPill } from "./VersionPill";
 
 type Pane = "overview" | "mcp-urls" | "dokploy-instances" | "dokploy-integrations" | "policies" | "activity" | "members" | "settings";
 
-// `also` lists other paths that belong to the same pane. `icon` sits before
-// the label. An instance page (/app/dokploy-instances/<id>) highlights Dokploy Instances.
+// Paths are relative to the workspace (/<username>/<workspace>, see
+// lib/paths.ts). `also` lists other paths that belong to the same pane.
+// `icon` sits before the label. An instance page (.../dokploy-instances/<id>)
+// highlights Dokploy Instances.
 const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: React.ReactNode }[] = [
-  { pane: "overview", label: "Overview", href: "/app" },
-  { pane: "mcp-urls", label: "MCP URLs", href: "/app/mcp-urls" },
-  { pane: "dokploy-instances", label: "Dokploy Instances", href: "/app/dokploy-instances", icon: <DokployMark size={15} /> },
-  { pane: "dokploy-integrations", label: "Dokploy integrations", href: "/app/dokploy-integrations", icon: <DokployMark size={15} /> },
-  { pane: "policies", label: "Policies", href: "/app/policies" },
-  { pane: "activity", label: "Activity", href: "/app/activity" },
-  { pane: "members", label: "Members", href: "/app/team" },
-  { pane: "settings", label: "Settings", href: "/app/settings" },
+  { pane: "overview", label: "Overview", href: "" },
+  { pane: "mcp-urls", label: "MCP URLs", href: "/mcp-urls" },
+  { pane: "dokploy-instances", label: "Dokploy Instances", href: "/dokploy-instances", icon: <DokployMark size={15} /> },
+  { pane: "dokploy-integrations", label: "Dokploy integrations", href: "/dokploy-integrations", icon: <DokployMark size={15} /> },
+  { pane: "policies", label: "Policies", href: "/policies" },
+  { pane: "activity", label: "Activity", href: "/activity" },
+  { pane: "members", label: "Members", href: "/members" },
+  { pane: "settings", label: "Settings", href: "/settings" },
 ];
 
-// The account level (/app/org): the account's own pages, with its own menu.
-// The same for your personal account and an organization.
+// The account level (/<username>): the account's own pages, with its own
+// menu. The same for your personal account and an organization. Relative
+// to the account.
 const ACCOUNT_ITEMS: { label: string; href: string; icon?: React.ReactNode }[] = [
-  { label: "Workspaces", href: "/app/org" },
-  { label: "Dokploy integrations", href: "/app/org/dokploy-integrations", icon: <DokployMark size={15} /> },
-  { label: "Members", href: "/app/org/members" },
-  { label: "Settings", href: "/app/org/settings" },
+  { label: "Workspaces", href: "" },
+  { label: "Dokploy integrations", href: "/dokploy-integrations", icon: <DokployMark size={15} /> },
+  { label: "Members", href: "/members" },
+  { label: "Settings", href: "/settings" },
 ];
 
-function atAccountLevel(pathname: string) {
-  return pathname === "/app/org" || pathname.startsWith("/app/org/");
-}
-
-// Pages outside the menu that still get a name in the top bar.
+// Pages outside the menu that still get a name in the top bar, relative to
+// the workspace.
 const OTHER_PAGES: Record<string, string> = {
-  "/app/account": "Account",
-  "/app/releases": "Releases",
-  "/app/agents": "Agents",
-  "/app/self-host": "Self-host",
-  "/app/feedback": "Feedback",
+  "/releases": "Releases",
+  "/agents": "Agents",
+  "/self-host": "Self-host",
+  "/feedback": "Feedback",
 };
+
+// `rel` is under `base` (or is it).
+function under(rel: string, base: string) {
+  return rel === base || rel.startsWith(`${base}/`);
+}
 
 // A page deeper than the menu (one MCP URL, say) names itself at the end
 // of the top bar's path with <CrumbLast text="..." />.
@@ -90,6 +96,9 @@ export function AppShell({
   devTools = null,
   needsDokploy = false,
   askAdmin = null,
+  level = "workspace",
+  wsBase,
+  accountBase,
   children,
 }: {
   user: { name: string; email: string; image: string | null; username: string };
@@ -108,6 +117,10 @@ export function AppShell({
   needsDokploy?: boolean;
   // Set when this person can't connect Dokploy themselves: the admin to ask.
   askAdmin?: { name: string; username: string | null } | null;
+  // Which menu shows (components/AppFrame.tsx).
+  level?: "workspace" | "account" | "profile";
+  wsBase: string; // /<username>/<workspace>
+  accountBase: string; // /<username>
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -115,7 +128,11 @@ export function AppShell({
   const [menu, setMenu] = useState<MenuState>(initialMenu);
   const [popOpen, setPopOpen] = useState(false);
   const [newModal, setNewModal] = useState<null | "workspace" | "org">(null);
-  const atAccount = atAccountLevel(pathname);
+  const atAccount = level === "account";
+  // The path inside the workspace ("" for its overview), or null when the
+  // page isn't one of the workspace's.
+  const rel = level === "workspace" && (pathname === wsBase || pathname.startsWith(`${wsBase}/`)) ? pathname.slice(wsBase.length) : null;
+  const accRel = atAccount ? (pathname === accountBase ? "" : pathname.slice(accountBase.length)) : null;
   const [crumbLast, setCrumbLast] = useState<string | null>(null);
   // Narrow screens: the menu is a drawer over the page. Never remembered,
   // so a phone always opens on the page itself.
@@ -124,14 +141,15 @@ export function AppShell({
   const [gateOpen, setGateOpen] = useState(false);
   // A held-back page opened by its address (a bookmark, a typed URL): show
   // nothing of it, go to the connect screen and say why.
-  const held = needsDokploy && !openWithoutDokploy(pathname);
+  const held = needsDokploy && rel !== null && !openWithoutDokploy(rel);
   useEffect(() => {
     if (!held) return;
     setGateOpen(true);
-    router.replace("/app");
-  }, [held, router]);
+    router.replace(wsBase);
+  }, [held, router, wsBase]);
 
   // Menu links to held-back pages don't navigate; they open the modal.
+  // `href` is relative to the workspace.
   function holdBack(e: React.MouseEvent, href: string) {
     if (!needsDokploy || openWithoutDokploy(href.split(/[?#]/)[0])) return;
     e.preventDefault();
@@ -142,8 +160,8 @@ export function AppShell({
   // first empty field takes focus.
   function goConnect() {
     setGateOpen(false);
-    if (pathname !== "/app") {
-      router.push("/app");
+    if (pathname !== wsBase) {
+      router.push(wsBase);
       return;
     }
     const h = document.getElementById("zq-connect-dokploy");
@@ -228,20 +246,27 @@ export function AppShell({
   const menuClass = (menu === "open" ? " is-open" : menu === "closed" ? " is-closed" : "") + (drawer ? " is-drawer" : "");
 
   // Where you are, for the top bar: the menu page this path belongs to.
-  const menuPage = ITEMS.find((item) =>
-    item.href === "/app" ? pathname === "/app" : [item.href, ...(item.also ?? [])].some((h) => pathname.startsWith(h)),
-  );
-  const otherHref = Object.keys(OTHER_PAGES).find((h) => pathname.startsWith(h));
-  const accountPage = atAccount ? ACCOUNT_ITEMS.find((i) => (i.href === "/app/org" ? pathname === "/app/org" : pathname.startsWith(i.href))) : undefined;
+  const menuPage =
+    rel === null
+      ? undefined
+      : ITEMS.find((item) => (item.href === "" ? rel === "" : [item.href, ...(item.also ?? [])].some((h) => under(rel, h))));
+  const otherHref = rel === null ? undefined : Object.keys(OTHER_PAGES).find((h) => under(rel, h));
+  const accountPage =
+    accRel === null ? undefined : ACCOUNT_ITEMS.find((i) => (i.href === "" ? accRel === "" : under(accRel, i.href)));
   const page = atAccount
-    ? accountPage ?? null
-    : menuPage
-      ? { href: menuPage.href, label: menuPage.label }
-      : otherHref
-        ? { href: otherHref, label: OTHER_PAGES[otherHref] }
-        : null;
+    ? accountPage
+      ? { href: accountBase + accountPage.href, label: accountPage.label }
+      : null
+    : level === "profile"
+      ? { href: PROFILE_PATH, label: "Account" }
+      : menuPage
+        ? { href: wsBase + menuPage.href, label: menuPage.label }
+        : otherHref
+          ? { href: wsBase + otherHref, label: OTHER_PAGES[otherHref] }
+          : null;
 
   return (
+    <BaseContext.Provider value={{ ws: wsBase, account: accountBase }}>
     <CrumbContext.Provider value={setCrumbLast}>
     <div className={`zq-shell${menuClass}`}>
       <header className="zq-appbar">
@@ -258,7 +283,7 @@ export function AppShell({
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           </button>
-          <a href="/app" className="zq-brand" aria-label="Zeqqat dashboard">
+          <a href={wsBase} className="zq-brand" aria-label="Zeqqat dashboard">
             <span className="zq-logo" aria-hidden="true">
               Z
             </span>
@@ -308,7 +333,7 @@ export function AppShell({
                 <button className="zq-pop-scrim" type="button" aria-label="Close account menu" tabIndex={-1} onClick={() => setPopOpen(false)} />
                 <div className="zq-pop" role="menu">
                   <div className="zq-pop-sec">
-                    <a className="zq-pop-user" href="/app/account" role="menuitem" title="Edit your profile" onClick={() => setPopOpen(false)}>
+                    <a className="zq-pop-user" href={PROFILE_PATH} role="menuitem" title="Edit your profile" onClick={() => setPopOpen(false)}>
                       <span className="zq-pop-avatar" aria-hidden="true">
                         {user.image ? <img src={user.image} alt="" referrerPolicy="no-referrer" /> : initial}
                       </span>
@@ -371,7 +396,7 @@ export function AppShell({
                   return (
                     <a
                       key={item.href}
-                      href={item.href}
+                      href={accountBase + item.href}
                       className={`zq-menu-i${isActive ? " is-active" : ""}`}
                       aria-current={isActive ? "page" : undefined}
                       onClick={() => setDrawer(false)}
@@ -385,15 +410,12 @@ export function AppShell({
             ) : (
             <nav className="zq-menu" aria-label="Dashboard">
               {ITEMS.map((item) => {
-                const isActive =
-                  item.pane === "overview"
-                    ? pathname === "/app"
-                    : [item.href, ...(item.also ?? [])].some((h) => pathname.startsWith(h));
+                const isActive = menuPage?.pane === item.pane;
                 const locked = needsDokploy && !openWithoutDokploy(item.href);
                 return (
                   <a
                     key={item.pane}
-                    href={item.href}
+                    href={wsBase + item.href}
                     className={`zq-menu-i${isActive ? " is-active" : ""}${locked ? " is-locked" : ""}`}
                     aria-current={isActive ? "page" : undefined}
                     aria-haspopup={locked ? "dialog" : undefined}
@@ -500,6 +522,7 @@ export function AppShell({
       )}
     </div>
     </CrumbContext.Provider>
+    </BaseContext.Provider>
   );
 }
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireOwner } from "../guard";
+import { here, requireOwner } from "../guard";
 import { ImportError, importFromUrl } from "../spec-import";
 
 export type ImportState = { error?: string; values?: { specUrl: string; docsUrl: string; name: string } };
@@ -11,6 +11,7 @@ export type ImportState = { error?: string; values?: { specUrl: string; docsUrl:
 // tool and POST /api/integrations/import, under the current workspace's
 // account.
 export async function importAppAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  const base = await here();
   const { ws } = await requireOwner();
   const values = {
     specUrl: (formData.get("spec_url")?.toString() ?? "").trim(),
@@ -39,6 +40,6 @@ export async function importAppAction(_prev: ImportState, formData: FormData): P
     return { error: "The import failed. Check the link and try again.", values };
   }
 
-  revalidatePath("/app", "layout");
-  redirect(`/app/dokploy-instances?imported=${encodeURIComponent(slug)}&tools=${tools}${updated ? "&updated=1" : ""}`);
+  revalidatePath(`${base}`, "layout");
+  redirect(`${base}/dokploy-instances?imported=${encodeURIComponent(slug)}&tools=${tools}${updated ? "&updated=1" : ""}`);
 }

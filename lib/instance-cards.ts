@@ -7,7 +7,7 @@ import { fetchDokploySpec } from "./instance-spec";
 import type { Usage } from "./mcp-urls";
 import { appCallsOnly } from "./overview";
 
-// Data for the Dokploy Instances cards (app/app/dokploy-instances): calls
+// Data for the Dokploy Instances cards (app/[org]/[ws]/dokploy-instances): calls
 // per instance over time, how many MCP URLs reach each one and how many
 // people are connected through them, and a fresh look at each Dokploy's
 // health and version.

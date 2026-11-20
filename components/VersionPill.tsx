@@ -1,4 +1,5 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -70,6 +71,7 @@ function WhatsNew({
   onStatus: (s: ReleaseStatus) => void;
   onClose: () => void;
 }) {
+  const { ws: base } = useBase();
   const closeRef = useRef<HTMLButtonElement>(null);
   const [restarting, setRestarting] = useState(false);
 
@@ -114,7 +116,7 @@ function WhatsNew({
         </div>
 
         <div className="zq-modal-foot">
-          <Link href="/app/releases" onClick={onClose}>
+          <Link href={`${base}/releases`} onClick={onClose}>
             See all changes →
           </Link>
         </div>

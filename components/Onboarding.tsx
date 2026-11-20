@@ -27,7 +27,7 @@ export function OnboardConnectDokploy() {
   );
 }
 
-export function OnboardConnectAgent({ mcpUrl, alias }: { mcpUrl: string; alias: string | null }) {
+export function OnboardConnectAgent({ mcpUrl, alias, base }: { mcpUrl: string; alias: string | null; base: string }) {
   return (
     <div className="zq-ob">
       <Stepper
@@ -47,7 +47,7 @@ export function OnboardConnectAgent({ mcpUrl, alias }: { mcpUrl: string; alias: 
         <AgentPicker mcpUrl={mcpUrl} />
         <p className="zq-note zq-ob-refresh">
           Already approved it?{" "}
-          <a className="zq-textlink" href="/app">
+          <a className="zq-textlink" href={base}>
             Refresh this page
           </a>
         </p>

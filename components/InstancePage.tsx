@@ -1,4 +1,5 @@
 "use client";
+import { useBase } from "./DashboardBase";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { InstanceCall, InstancePerson, InstanceUrl } from "../lib/instance-page";
@@ -173,6 +174,7 @@ function dur(ms: number | null) {
 const STATUS_LABEL: Record<InstanceCall["outcome"], string> = { ok: "Done", blocked: "Blocked", error: "Error", running: "Running" };
 
 function CallCard({ c, now }: { c: InstanceCall; now: number }) {
+  const { ws: base } = useBase();
   const ref = useRef<HTMLAnchorElement>(null);
   useFit(
     ref,
@@ -191,7 +193,7 @@ function CallCard({ c, now }: { c: InstanceCall; now: number }) {
   const d = dur(c.durationMs);
   const why = c.why ? `: ${c.why}` : "";
   return (
-    <a ref={ref} className="zq-ip-c" href={`/app/activity/call/${c.id}`}>
+    <a ref={ref} className="zq-ip-c" href={`${base}/activity/call/${c.id}`}>
       {c.person ? (
         <Avatar p={c.person} className="zq-mu-av zq-ip-cav" />
       ) : (
