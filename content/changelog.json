@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.4.10",
+    "date": "2026-11-20",
+    "at": "2026-11-20T08:05:39Z",
+    "changes": [
+      "Calls to an app now go only to its instance's own address. A tool whose path points to another host is refused before anything is sent."
+    ]
+  },
+  {
     "version": "0.4.9",
     "date": "2026-11-20",
     "at": "2026-11-20T07:26:42Z",

@@ -193,6 +193,19 @@ function formEncode(value: unknown, prefix: string, out: URLSearchParams) {
   }
 }
 
+// A request must go to the instance it was made for. The URL is built
+// from the instance's saved address plus the tool's path, and a path from
+// someone else's spec (`//other.host/x`, `https://other.host/x`) would
+// otherwise send the instance's API key to another host. So the final
+// address is checked against the saved one, not just the saved one alone.
+export function staysOnInstance(url: URL, baseUrl: string): boolean {
+  try {
+    return url.origin === new URL(baseUrl).origin;
+  } catch {
+    return false;
+  }
+}
+
 // Path params fill the {placeholders}; on GET/DELETE everything else goes
 // in the query string; otherwise the spec's query params go in the query
 // string and the rest is the body, as JSON or form data.
@@ -352,6 +365,10 @@ export async function runEndpoint(
   const scheme = endpoint.credentialScheme as { type: string; in?: string; name?: string };
   const { url, body, contentType } = buildRequest(inst.baseUrl, endpoint, resolved.inputs);
   const shown = buildRequest(inst.baseUrl, endpoint, params.inputs);
+  if (!staysOnInstance(url, inst.baseUrl)) {
+    await logCall(ctx, { ...base, outcome: "blocked", durationMs: Date.now() - start, errorMessage: "tool path leaves the instance's host" });
+    return toolError("Not sent: this tool's path points away from the instance's address.");
+  }
   // Some APIs (GitHub) refuse requests without a User-Agent.
   const headers = new Headers({ "user-agent": "Zeqqat" });
   if (contentType) headers.set("content-type", contentType);
