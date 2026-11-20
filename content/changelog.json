@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.8",
+    "date": "2026-11-20",
+    "at": "2026-11-20T18:20:04Z",
+    "changes": [
+      "Policies open inside the workspace when you click them there, Default policy included"
+    ]
+  },
+  {
     "version": "0.5.7",
     "date": "2026-11-20",
     "at": "2026-11-20T18:03:10Z",

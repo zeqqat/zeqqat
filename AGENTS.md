@@ -328,7 +328,9 @@ blocks. **Policies pages** (`components/PolicyViews.tsx`, `components/PolicyClie
 data in `lib/policy-pages.ts`): policies belong to the account, so they are
 made and edited at `/<username>/policies` (every policy the account owns,
 used or not, plus "+ New policy" for owners); `<ws>/policies` lists only the
-ones used in that workspace and links to the account's pages. A card is the
+ones used in that workspace, and each opens in the workspace
+(`<ws>/policies/<id>`, Map limited to that workspace's MCP URLs; the same
+page as the account's, `components/PolicyPage.tsx`, and edits return there). A card is the
 full name (`@acme/dokploy.policy.` dim, the name bold, opening scrolled to
 its end when it doesn't fit) with the version, the Read / Create / Edit /
 Delete pills as allowed/total (they scroll sideways on a phone, never shrink),

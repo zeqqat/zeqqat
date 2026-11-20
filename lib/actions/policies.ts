@@ -13,6 +13,15 @@ import { isValidSegment, toPolicyName } from "../tool-names";
 // published under the namespace's handle. In a personal namespace that is
 // the one person who owns it.
 
+// Where this policy's pages live: the account's (/<username>/policies) or,
+// when the page was opened from a workspace, that workspace's
+// (/<username>/<workspace>/policies). The form says which; anything that
+// isn't one of this account's own paths falls back to the account's.
+function policiesBase(formData: FormData, orgSlug: string, accountBase: string): string {
+  const v = formData.get("policies_base")?.toString() ?? "";
+  return /^\/[a-z0-9_]+\/[a-z0-9_-]+\/policies$/.test(v) && v.startsWith(`/${orgSlug}/`) ? v : `${accountBase}/policies`;
+}
+
 function pgCode(err: unknown): string | undefined {
   const e = err as { code?: string; cause?: { code?: string } };
   return e?.code ?? e?.cause?.code;
@@ -54,14 +63,15 @@ export async function savePolicyFormAction(formData: FormData) {
 export async function deletePolicyAction(formData: FormData) {
   const base = await hereAccount();
   const { ws } = await requireOrgOwner();
+  const list = policiesBase(formData, ws.organizationSlug, base);
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);
-  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${base}/policies`);
+  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${list}`);
   const [used] = await db.select({ id: connectionGrant.id }).from(connectionGrant).where(eq(connectionGrant.policyId, id)).limit(1);
-  if (used) redirect(`${base}/policies/${id}?tab=manage&error=in_use`);
+  if (used) redirect(`${list}/${id}?tab=manage&error=in_use`);
   await db.delete(policy).where(eq(policy.id, id));
-  revalidatePath(`${base}/policies`);
-  redirect(`${base}/policies?deleted=1`);
+  revalidatePath(`${list}`);
+  redirect(`${list}?deleted=1`);
 }
 
 // Copy on install, into the namespace you're working in.
@@ -90,9 +100,10 @@ export async function updateCopyAction(formData: FormData) {
 export async function savePolicyAllowAction(formData: FormData) {
   const base = await hereAccount();
   const { user, ws } = await requireOrgOwner();
+  const list = policiesBase(formData, ws.organizationSlug, base);
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);
-  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${base}/policies`);
+  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${list}`);
   await savePolicy({
     id,
     organizationId: ws.organizationId,
@@ -104,8 +115,8 @@ export async function savePolicyAllowAction(formData: FormData) {
     userId: user.id,
     workspaceIds: await policyWorkspaceIds(id),
   });
-  revalidatePath(`${base}/policies/${id}`);
-  redirect(`${base}/policies/${id}?tab=tools&saved=1`);
+  revalidatePath(`${list}/${id}`);
+  redirect(`${list}/${id}?tab=tools&saved=1`);
 }
 
 // Manage: name, what agents read, public, workspaces. Each form sends only
@@ -113,10 +124,11 @@ export async function savePolicyAllowAction(formData: FormData) {
 export async function updatePolicyMetaAction(formData: FormData) {
   const base = await hereAccount();
   const { user, ws } = await requireOrgOwner();
+  const list = policiesBase(formData, ws.organizationSlug, base);
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);
-  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${base}/policies`);
-  const back = `${base}/policies/${id}?tab=manage`;
+  if (!existing || existing.row.organizationId !== ws.organizationId) redirect(`${list}`);
+  const back = `${list}/${id}?tab=manage`;
   const has = (k: string) => formData.has(k);
   const name = has("name") ? toPolicyName(formData.get("name")?.toString() ?? "") : existing.row.name;
   if (!name || !isValidSegment(name)) redirect(`${back}&error=name`);
@@ -143,6 +155,6 @@ export async function updatePolicyMetaAction(formData: FormData) {
     if (pgCode(err) === "23505") redirect(`${back}&error=taken`);
     throw err;
   }
-  revalidatePath(`${base}/policies`);
+  revalidatePath(`${list}`);
   redirect(`${back}&saved=1`);
 }
