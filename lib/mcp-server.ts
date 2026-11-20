@@ -90,6 +90,10 @@ const CONTEXT_SCHEMA = {
       properties: {
         username: { type: "string", description: "The account's username, without the @." },
         type: { type: "string", enum: ["personal", "organization"] },
+        dashboard: {
+          type: "string",
+          description: "Link to this account's page in the Zeqqat dashboard, which lists its workspaces. Only from zeqqat_whoami.",
+        },
         workspace: {
           type: "object",
           description: "The workspace inside that account that this MCP URL belongs to.",

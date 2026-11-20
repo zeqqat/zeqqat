@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.5",
+    "date": "2026-11-20",
+    "at": "2026-11-20T14:04:51Z",
+    "changes": [
+      "zeqqat_whoami also links to the account's page in the dashboard"
+    ]
+  },
+  {
     "version": "0.5.4",
     "date": "2026-11-20",
     "at": "2026-11-20T13:55:29Z",

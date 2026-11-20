@@ -52,6 +52,9 @@ export type ContextWorkspace = { name: string; dashboard?: string; mcpUrl: Conte
 export type ContextAccount = {
   username: string;
   type: "personal" | "organization";
+  // The account's page in the dashboard (/<username>). Only in the full
+  // context (zeqqat_whoami).
+  dashboard?: string;
   workspace: ContextWorkspace;
 };
 
@@ -222,7 +225,9 @@ export async function buildContext(ctx: McpContext, opts: { full?: boolean } = {
     zeqqat: { version: r.current, latest: r.latest, updateAvailable: r.updateAvailable },
     currentUser,
     currentAccount: {
-      ...currentAccount,
+      username: currentAccount.username,
+      type: currentAccount.type,
+      dashboard: publicUrl().replace(/\/$/, "") + `/${currentAccount.username}`,
       workspace: { name: currentAccount.workspace.name, dashboard, mcpUrl: currentAccount.workspace.mcpUrl },
     },
     ...rest,

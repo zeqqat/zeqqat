@@ -478,8 +478,9 @@ each integration's `categories` (distinct first spec tag of its live
 endpoints). It also leads with `zeqqat` (`version`, `latest`,
 `updateAvailable`, from `releaseStatus` in `lib/changelog.ts`), then
 `currentUser` (the caller's `name` and `username`, never their email; null
-on a public MCP URL) and `currentAccount.workspace.dashboard` (the full
-address of the workspace's page, so the agent can hand the person a link).
+on a public MCP URL), `currentAccount.dashboard` (the account's page) and
+`currentAccount.workspace.dashboard` (the workspace's page), full
+addresses so the agent can hand the person a link.
 Other results and `instructions` leave categories, `currentUser` and
 `dashboard` out to stay small. Field descriptions live in the context's
 JSON Schema (`CONTEXT_SCHEMA` in `lib/mcp-server.ts`), but clients don't
