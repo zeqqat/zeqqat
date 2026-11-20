@@ -82,7 +82,7 @@ export const AGENT_DOCS: DocSection[] = [
     page: "overview",
     title: "The context object",
     text:
-      "Every tool result starts with a context object: account (the account that owns this MCP URL), workspace, mcpUrl (its name), the integrations this MCP URL reaches with their instances, and a notice. " +
+      "Every tool result starts with a context object: currentAccount (the account, a person or an organization, that owns this MCP URL, with its workspace and the MCP URL's name, id and address), the integrations this MCP URL reaches with their instances, and a notice. zeqqat_whoami adds currentUser (the person you act for, who may be working in someone else's account), the workspace's dashboard link and the Zeqqat version. " +
       "account has a username and a type: personal (one person, the only owner) or organization (owned by a group with owners). It is the owner of the MCP URL, not necessarily the person calling. " +
       "Each integration is named @author/slug, which tells you whose tool set it is, and carries toolCount, how many tools it has. zeqqat_whoami also lists its categories, the kinds of tools it has (for example application, docker, project); search a category to see its tools. zeqqat_whoami also carries zeqqat: the version of Zeqqat answering, the latest release, and updateAvailable, so you can tell the user when their install is behind. " +
       "Instance names are chosen by the user, for example prod or staging. " +

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.4",
+    "date": "2026-11-20",
+    "at": "2026-11-20T13:55:29Z",
+    "changes": [
+      "Agents now get currentUser (who they act for) and currentAccount (the account that owns the MCP URL, with its workspace and the MCP URL's name, id and address), with a description of every field"
+    ]
+  },
+  {
     "version": "0.5.3",
     "date": "2026-11-20",
     "at": "2026-11-20T12:26:00Z",

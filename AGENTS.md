@@ -466,8 +466,10 @@ tool definitions run against a server.
 Clients differ: some drop server `instructions`; some show a result's
 `content`, others its `structuredContent` (Claude Code: structuredContent on
 success, content on errors). So the context object (`lib/mcp-context.ts`:
-`account` (`username` + `type`: `personal` | `organization`, the account
-that owns the connection), workspace, connection, integrations as
+`currentAccount` (`username` + `type`: `personal` | `organization`, the
+account that owns the MCP URL, not necessarily the caller; inside it
+`workspace` with its `name` and the `mcpUrl` as `name`, `id` (short id)
+and `url`), integrations as
 `@author/slug` with `toolCount`, their instances and a `policySummary`, a
 "not connected" hint, the sunset notice) goes in `instructions`, in the first `content` block of every
 result, and in `structuredContent.context`. Every tool description points
@@ -475,11 +477,14 @@ to `zeqqat_whoami`, whose result is the full context: every instance, plus
 each integration's `categories` (distinct first spec tag of its live
 endpoints). It also leads with `zeqqat` (`version`, `latest`,
 `updateAvailable`, from `releaseStatus` in `lib/changelog.ts`), then
-`you` (the caller's `name` and `username`, never their email; null on a
-public MCP URL) and `dashboard` (the full address of the workspace's page,
-`https://<site>/<username>/<workspace>`, so the agent can hand the person
-a link). Other results and `instructions` leave categories, `you` and
-`dashboard` out to stay small. Every built-in declares an `outputSchema`
+`currentUser` (the caller's `name` and `username`, never their email; null
+on a public MCP URL) and `currentAccount.workspace.dashboard` (the full
+address of the workspace's page, so the agent can hand the person a link).
+Other results and `instructions` leave categories, `currentUser` and
+`dashboard` out to stay small. Field descriptions live in the context's
+JSON Schema (`CONTEXT_SCHEMA` in `lib/mcp-server.ts`), but clients don't
+reliably show `outputSchema` to the model, so whoami's tool description
+also says what `currentUser` and `currentAccount` are. Every built-in declares an `outputSchema`
 (`{ context, result }`; `zeqqat_run`'s result is any JSON). JSON keys the
 agent sees are camelCase; Postgres columns stay snake_case.
 

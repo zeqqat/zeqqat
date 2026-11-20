@@ -69,43 +69,69 @@ const REASON_OPTIONAL = {
 const CONTEXT_SCHEMA = {
   type: "object",
   properties: {
-    account: {
-      type: "object",
-      properties: {
-        username: { type: "string" },
-        type: { type: "string", enum: ["personal", "organization"] },
-      },
-      required: ["username", "type"],
-    },
     zeqqat: {
       type: "object",
+      description: "The Zeqqat build answering, and whether a newer one is out. Only from zeqqat_whoami.",
       properties: { version: { type: "string" }, latest: { type: "string" }, updateAvailable: { type: "boolean" } },
       required: ["version"],
     },
-    you: {
+    currentUser: {
       type: ["object", "null"],
-      properties: { name: { type: "string" }, username: { type: ["string", "null"] } },
+      description: "The person you are acting for. Null on a public MCP URL, where nobody signs in. Only from zeqqat_whoami.",
+      properties: {
+        name: { type: "string", description: "Their display name." },
+        username: { type: ["string", "null"], description: "Their Zeqqat username, without the @." },
+      },
     },
-    dashboard: { type: "string" },
-    workspace: { type: "string" },
-    connection: { type: ["string", "null"] },
+    currentAccount: {
+      type: "object",
+      description:
+        "The account that owns this workspace and MCP URL: a person (personal) or an organization. Not necessarily the current user, who may be working in someone else's account.",
+      properties: {
+        username: { type: "string", description: "The account's username, without the @." },
+        type: { type: "string", enum: ["personal", "organization"] },
+        workspace: {
+          type: "object",
+          description: "The workspace inside that account that this MCP URL belongs to.",
+          properties: {
+            name: { type: "string" },
+            dashboard: {
+              type: "string",
+              description: "Link to this workspace in the Zeqqat dashboard. Give it to the user when they ask where to see something. Only from zeqqat_whoami.",
+            },
+            mcpUrl: {
+              type: ["object", "null"],
+              description: "The MCP URL you are connected through. Several can share a name; the id tells them apart.",
+              properties: {
+                name: { type: "string" },
+                id: { type: "string", description: "Its short id, the last part of the URL." },
+                url: { type: "string" },
+              },
+            },
+          },
+          required: ["name"],
+        },
+      },
+      required: ["username", "type", "workspace"],
+    },
     integrations: {
       type: "array",
+      description: "The tool sets this MCP URL reaches, each with the instances (servers) it can call.",
       items: {
         type: "object",
         properties: {
-          name: { type: "string" },
+          name: { type: "string", description: "@publisher/slug" },
           title: { type: "string" },
           toolCount: { type: "integer" },
-          categories: { type: "array", items: { type: "string" } },
+          categories: { type: "array", items: { type: "string" }, description: "What kinds of tools it has. Only from zeqqat_whoami." },
           instances: {
             type: "array",
             items: {
               type: "object",
               properties: {
-                name: { type: "string" },
-                policy: { type: ["string", "null"] },
-                policySummary: { type: "string" },
+                name: { type: "string", description: "Pass this as the instance to zeqqat_run." },
+                policy: { type: ["string", "null"], description: "The policy attached here, if any." },
+                policySummary: { type: "string", description: "What you may do on this instance." },
               },
               required: ["name"],
             },
@@ -114,10 +140,10 @@ const CONTEXT_SCHEMA = {
         required: ["name", "instances"],
       },
     },
-    missing: { type: "string" },
-    notice: { type: ["string", "null"] },
+    missing: { type: "string", description: "What to tell the user when they need an integration that isn't here." },
+    notice: { type: ["string", "null"], description: "A warning to pass on, e.g. this MCP URL turns off on a date." },
   },
-  required: ["account", "workspace", "integrations"],
+  required: ["currentAccount", "integrations"],
 } as const;
 
 // structuredContent is always { context, result }. Only true must-haves
@@ -203,7 +229,8 @@ export const TOOLS = [
     title: "Show context",
     annotations: { title: "Show context", readOnlyHint: true, openWorldHint: false },
     description:
-      "Call first: returns the Zeqqat context. Which integrations and instances this MCP URL reaches, and what you may do on each.",
+      "Call first: returns the Zeqqat context. Which integrations and instances this MCP URL reaches, and what you may do on each. " +
+      "currentUser is the person you are acting for. currentAccount is the account (a person or an organization) that owns this workspace and MCP URL; it is not necessarily the current user, who may be working in someone else's account.",
     inputSchema: { type: "object", properties: { reason: REASON_OPTIONAL } },
     outputSchema: outputSchema({}),
   },
@@ -425,7 +452,7 @@ function instructionsText(context: ZeqqatContext, callerRole: McpContext["caller
     : "nothing yet";
   const who = callerRole === "public" ? " Public MCP URL: read only." : "";
   const text =
-    `${context.notice ? `${context.notice} ` : ""}Zeqqat MCP gateway. MCP URL "${context.mcpUrl ?? ""}" in workspace "${context.workspace}", owned by the ${context.account.type} account @${context.account.username}. Reaches: ${reach}.${who} ` +
+    `${context.notice ? `${context.notice} ` : ""}Zeqqat MCP gateway. MCP URL "${context.currentAccount.workspace.mcpUrl?.name ?? ""}" in workspace "${context.currentAccount.workspace.name}", owned by the ${context.currentAccount.type} account @${context.currentAccount.username}. Reaches: ${reach}.${who} ` +
     `Flow: zeqqat_search, then zeqqat_describe, then zeqqat_run with an operationId and an instance name. Search, describe and run need a one-line reason saying what the user asked for, worded the same on every call for one request. Every result starts with this context. Secrets never reach you: results show handles like {{zq_secret_...}}, which you pass back in zeqqat_run inputs, and zeqqat_secret creates new ones. ` +
     `Context: ${JSON.stringify({ context })}`;
   return text;

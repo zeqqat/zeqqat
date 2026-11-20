@@ -29,6 +29,7 @@ const who = {
   organizationKind: "organization" as const,
   workspaceName: "Engineering",
   connectionName: "deployment",
+  connectionShortId: "a39f",
   notice: null,
 };
 const personal = { ...who, organizationSlug: "perminus_gaita", organizationKind: "personal" as const };
@@ -45,9 +46,10 @@ describe("contextFrom", () => {
       inst("staging"),
       inst("home", { integrationId: "int-coolify", integrationSlug: "coolify", integrationTitle: "Coolify", integrationOrgSlug: "gaita" }),
     ]);
-    expect(c.account).toEqual({ username: "acme_corp", type: "organization" });
+    expect(c.currentAccount).toMatchObject({ username: "acme_corp", type: "organization" });
     expect("namespace" in c).toBe(false);
-    expect(c.mcpUrl).toBe("deployment");
+    expect(c.currentAccount.workspace.mcpUrl).toMatchObject({ name: "deployment", id: "a39f" });
+    expect(c.currentAccount.workspace.mcpUrl?.url).toMatch(/\/acme_corp\/mcp\/deployment\/a39f$/);
     expect(c.integrations.map((g) => g.name)).toEqual(["@zeqqat/dokploy", "@gaita/coolify"]);
     expect(c.integrations[0].instances).toEqual([
       { name: "prod", policy: null, policySummary: "Allowed: read. Not allowed: create, edit, delete." },
@@ -59,7 +61,7 @@ describe("contextFrom", () => {
   it("names a personal account by its username", () => {
     // A collaborator calling through someone else's personal account still
     // sees the owner: the context is built from the connection's account.
-    expect(contextFrom(personal, [inst("prod")]).account).toEqual({ username: "perminus_gaita", type: "personal" });
+    expect(contextFrom(personal, [inst("prod")]).currentAccount).toMatchObject({ username: "perminus_gaita", type: "personal" });
   });
 
   it("carries the tool count everywhere and the categories only in the full context", () => {
@@ -174,7 +176,7 @@ describe("instructionsFrom", () => {
     expect(text.startsWith("Sunset soon.")).toBe(true);
     expect(text).toContain("@zeqqat/dokploy, 0 tools (prod)");
     expect(text).toContain("owned by the organization account @acme_corp");
-    expect(text).toContain('"account":{"username":"acme_corp","type":"organization"}');
+    expect(text).toContain('"currentAccount":{"username":"acme_corp","type":"organization"');
     expect(text).not.toContain('"categories":');
     expect(text.length).toBeLessThanOrEqual(2000);
   });
@@ -206,7 +208,7 @@ describe("TOOLS", () => {
     for (const t of TOOLS) {
       expect(t.outputSchema.required).toEqual(["context"]);
       expect(t.outputSchema.properties.context.required).toContain("integrations");
-      expect(t.outputSchema.properties.context.required).toContain("account");
+      expect(t.outputSchema.properties.context.required).toContain("currentAccount");
     }
   });
 

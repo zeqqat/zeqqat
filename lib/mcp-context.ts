@@ -3,6 +3,7 @@ import { db } from "../db";
 import { apiEndpoint, connectionGrant, instance, integration, organization, user, workspace } from "../db/schema";
 import { integrationRef } from "./catalog";
 import { releaseStatus } from "./changelog";
+import { connectionUrl } from "./connections";
 import { publicUrl } from "./env";
 import type { McpContext } from "./mcp-auth";
 import { wsBase } from "./paths";
@@ -36,12 +37,22 @@ export type ContextIntegration = {
   instances: ContextInstance[];
 };
 
-// The account that owns the connection (not the caller). "username" is
-// the same field for people and organizations: it is the word people use
-// (project doc context-account-and-catalog-v1).
+// The MCP URL the call came in on. Names aren't unique inside an account;
+// the id tells same-named ones apart.
+export type ContextMcpUrl = { name: string; id: string; url: string };
+
+// The workspace the MCP URL belongs to. `dashboard` (its page) is only in
+// the full context (zeqqat_whoami).
+export type ContextWorkspace = { name: string; dashboard?: string; mcpUrl: ContextMcpUrl | null };
+
+// The account that owns the MCP URL and its workspace: a person (personal)
+// or an organization. Not necessarily the caller (currentUser), who may be
+// working in someone else's account. "username" is the same field for
+// people and organizations (project doc context-account-and-catalog-v1).
 export type ContextAccount = {
   username: string;
   type: "personal" | "organization";
+  workspace: ContextWorkspace;
 };
 
 // The Zeqqat build answering, so an agent can tell which version an
@@ -59,13 +70,8 @@ export type ContextCaller = { name: string; username: string | null };
 
 export type ZeqqatContext = {
   zeqqat?: ContextZeqqat;
-  you?: ContextCaller | null;
-  // The workspace's page in the dashboard (/<username>/<workspace>), so the
-  // agent can hand the person a link. Only in the full context.
-  dashboard?: string;
-  account: ContextAccount;
-  workspace: string;
-  mcpUrl: string | null;
+  currentUser?: ContextCaller | null;
+  currentAccount: ContextAccount;
   integrations: ContextIntegration[];
   missing: string;
   notice: string | null;
@@ -147,6 +153,7 @@ export function sortedCategories(tags: (string | null | undefined)[]): string[] 
 
 type ContextOwner = Pick<McpContext, "organizationSlug" | "organizationKind" | "workspaceName" | "notice"> & {
   connectionName?: string | null;
+  connectionShortId?: string | null;
 };
 
 // Pure: builds the context object from what reachableInstances returned.
@@ -183,9 +190,21 @@ export function contextFrom(
     }));
   }
   return {
-    account: { username: ctx.organizationSlug, type: ctx.organizationKind },
-    workspace: ctx.workspaceName,
-    mcpUrl: ctx.connectionName ?? null,
+    currentAccount: {
+      username: ctx.organizationSlug,
+      type: ctx.organizationKind,
+      workspace: {
+        name: ctx.workspaceName,
+        mcpUrl:
+          ctx.connectionName && ctx.connectionShortId
+            ? {
+                name: ctx.connectionName,
+                id: ctx.connectionShortId,
+                url: connectionUrl(ctx.organizationSlug, ctx.connectionName, ctx.connectionShortId),
+              }
+            : null,
+      },
+    },
     integrations,
     missing: opts.full || integrations.length === 0 ? MISSING : MISSING + CATEGORIES_HINT,
     notice: ctx.notice ?? null,
@@ -197,8 +216,17 @@ export async function buildContext(ctx: McpContext, opts: { full?: boolean } = {
   const stats = await catalogStats([...new Set(instances.map((i) => i.integrationId))]);
   const context = contextFrom(ctx, instances, { ...opts, stats });
   if (!opts.full) return context;
-  const [r, you, dashboard] = await Promise.all([releaseStatus(), callerOf(ctx.userId), dashboardUrl(ctx)]);
-  return { zeqqat: { version: r.current, latest: r.latest, updateAvailable: r.updateAvailable }, you, dashboard, ...context };
+  const [r, currentUser, dashboard] = await Promise.all([releaseStatus(), callerOf(ctx.userId), dashboardUrl(ctx)]);
+  const { currentAccount, ...rest } = context;
+  return {
+    zeqqat: { version: r.current, latest: r.latest, updateAvailable: r.updateAvailable },
+    currentUser,
+    currentAccount: {
+      ...currentAccount,
+      workspace: { name: currentAccount.workspace.name, dashboard, mcpUrl: currentAccount.workspace.mcpUrl },
+    },
+    ...rest,
+  };
 }
 
 // The caller's display name and username (their personal account's slug;

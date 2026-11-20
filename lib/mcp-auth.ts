@@ -18,7 +18,7 @@ export type McpContext = {
   organizationId: string;
   workspaceId: string;
   organizationSlug: string;
-  // The owning account's type, shown to the model as context.account.type.
+  // The owning account's type, shown to the model as context.currentAccount.type.
   organizationKind: AccountType;
   workspaceName: string;
   oauthClientId: string | null;
@@ -29,6 +29,8 @@ export type McpContext = {
   // The connection's name, shown to the model in the context. Set by the
   // route from the URL's connection row.
   connectionName?: string | null;
+  // Its short id, so the model can tell same-named MCP URLs apart.
+  connectionShortId?: string | null;
   callerRole: CallerRole;
   // Set during a sunset's warning period: the replacement URL and cutoff,
   // carried in the server's instructions and on every result.

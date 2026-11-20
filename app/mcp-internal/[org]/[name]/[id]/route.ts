@@ -69,6 +69,7 @@ export async function POST(request: Request, { params }: Params) {
       userId: null,
       connectionId: conn.id,
       connectionName: conn.name,
+      connectionShortId: conn.shortId,
       callerRole: "public",
       notice: notice.text || null,
     };
@@ -81,5 +82,6 @@ export async function POST(request: Request, { params }: Params) {
   if (!ctx) return withVary(unauthorized(resourceMetadataUrl(path)));
   ctx.notice = notice.text || null;
   ctx.connectionName = conn.name;
+  ctx.connectionShortId = conn.shortId;
   return withVary(await serveMcp(request, ctx, `mcp:${ctx.userId}:${ctx.oauthClientId}:${conn.id}`));
 }
