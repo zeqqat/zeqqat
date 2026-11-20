@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.1",
+    "date": "2026-11-20",
+    "at": "2026-11-20T11:48:34Z",
+    "changes": [
+      "Fix: opening /app sent you to the server's internal address instead of zeqqat.com"
+    ]
+  },
+  {
     "version": "0.5.0",
     "date": "2026-11-20",
     "at": "2026-11-20T11:28:09Z",
