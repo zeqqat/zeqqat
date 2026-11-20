@@ -1,6 +1,6 @@
 import { CountHead } from "./AccountPages";
 import { CrumbLast } from "./AppShell";
-import { IntegrationVersion, KindPills, ToolFinder } from "./Integrations";
+import { IntegrationVersion, KindPills, ToolFinder, WhatIsThis } from "./Integrations";
 import { DokployMark } from "./Marks";
 import { normalizeBaseUrl } from "../lib/dokploy-check";
 import { reviewableOrgIds } from "../lib/feedback";
@@ -88,6 +88,7 @@ export async function IntegrationList({
           </a>
         </CountHead>
       )}
+      {cards.length > 0 && <WhatIsThis />}
       {cards.length === 0 && !account ? (
         <p className="zq-empty">{empty}</p>
       ) : (

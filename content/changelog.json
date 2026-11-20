@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.4.12",
+    "date": "2026-11-20",
+    "at": "2026-11-20T09:52:57Z",
+    "changes": [
+      "Dokploy integrations: a What is this? line above the cards explains MCP tools, integrations and instances"
+    ]
+  },
+  {
     "version": "0.4.11",
     "date": "2026-11-20",
     "at": "2026-11-20T08:31:01Z",

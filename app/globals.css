@@ -7021,3 +7021,9 @@ button.zq-demo-open {
 .zq a.zq-in-mrow{display:block;color:inherit;text-decoration:none}
 .zq a.zq-in-mrow:hover{background:color-mix(in srgb,var(--fg) 2.5%,var(--panel))}
 .zq .zq-in-go{color:var(--faint);font-size:16px;margin-left:auto;align-self:center}
+.zq .zq-in-what{margin:0 0 10px}
+.zq .zq-in-whatb{display:inline-flex;align-items:center;gap:2px;border:0;background:none;padding:0;font:inherit;font-size:12.5px;color:var(--dim);cursor:pointer}
+.zq .zq-in-whatb:hover,.zq .zq-in-whatb[aria-expanded="true"]{color:var(--fg)}
+.zq .zq-in-whatb .zq-info{position:static;width:22px;height:22px}
+.zq .zq-in-whatb .zq-info svg{width:14px;height:14px}
+.zq .zq-in-what .zq-bubble.zq-in-wb{top:28px;left:0;right:auto;width:min(380px,calc(100vw - 32px));max-width:none;font-size:12.5px;line-height:1.6;color:var(--fg)}
