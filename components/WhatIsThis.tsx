@@ -47,11 +47,12 @@ export function WhatIsThis({ children, open: startOpen = false }: { children: Re
   );
 }
 
-// A word in an explanation that opens the explanation of that word on its own page.
+// A word in an explanation that opens the explanation of that word on its own
+// page. Hovering or focusing it lights the word up, so the ⓘ plainly belongs to it.
 export function WhatLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a className="zq-in-wlink" href={href}>
-      {children}
+      <span className="w">{children}</span>
       <span className="zq-info" aria-hidden="true">
         {INFO}
       </span>

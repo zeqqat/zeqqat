@@ -206,7 +206,7 @@ export function InstanceCards({
       {cards.length === 0 && <p className="zq-empty">{emptyText}</p>}
       {cards.length > 0 && (
         <WhatIsThis open={what}>
-          An instance is one Dokploy install (on Dokploy Cloud, your account). Zeqqat makes API calls to it with an{" "}
+          An instance is one Dokploy install (on Dokploy Cloud, your account). Zeqqat makes API calls to an instance via an{" "}
           <WhatLink href="/app/dokploy-integrations?what=1">integration</WhatLink>.
         </WhatIsThis>
       )}

@@ -300,8 +300,8 @@ export function IntegrationsWhat({ open }: { open: boolean }) {
   return (
     <WhatIsThis open={open}>
       An MCP tool is a Dokploy API endpoint with a description, so your agent knows what it does and when to use it. An
-      integration is all of Dokploy&rsquo;s API endpoints, made into MCP tools. Zeqqat uses an integration to make API calls to an{" "}
-      <WhatLink href="/app/dokploy-instances?what=1">instance</WhatLink>.
+      integration is all of Dokploy&rsquo;s API endpoints, made into MCP tools. Zeqqat makes API calls to an{" "}
+      <WhatLink href="/app/dokploy-instances?what=1">instance</WhatLink> via an integration.
     </WhatIsThis>
   );
 }
