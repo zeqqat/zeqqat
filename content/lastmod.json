@@ -1,15 +1,15 @@
 {
   "/": {
-    "hash": "b3d8bec6f1c4027b",
-    "date": "2026-11-15"
+    "hash": "d5ee6d8951466e3d",
+    "date": "2026-11-20"
   },
   "/docs": {
     "hash": "ede28eb53b4e3c56",
     "date": "2026-11-16"
   },
   "/docs/self-host": {
-    "hash": "eb7d74cf825103a9",
-    "date": "2026-11-14"
+    "hash": "8848bccf7f2b762a",
+    "date": "2026-11-20"
   },
   "/docs/agents": {
     "hash": "31221e63c66754be",
@@ -28,16 +28,16 @@
     "date": "2026-11-16"
   },
   "/demo/database": {
-    "hash": "c1570a232f2014fa",
-    "date": "2026-11-18"
+    "hash": "1d8266e0272f958f",
+    "date": "2026-11-20"
   },
   "/demo/deploy-logs": {
-    "hash": "3cdd7c55ca2bc07c",
-    "date": "2026-11-18"
+    "hash": "86eaf8fc9b0de80a",
+    "date": "2026-11-20"
   },
   "/demo/disk": {
-    "hash": "4d6efcbd9984a270",
-    "date": "2026-11-18"
+    "hash": "e96e41c165a1df57",
+    "date": "2026-11-20"
   },
   "/docs/agents/overview": {
     "hash": "dc6cc2e9254ef755",

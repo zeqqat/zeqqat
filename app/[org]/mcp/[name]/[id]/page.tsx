@@ -18,7 +18,7 @@ import {
 } from "../../../../../lib/connections";
 import { agentHost } from "../../../../../lib/permissions";
 import { getServerSession } from "../../../../../lib/session";
-import { workspaceRoleFor } from "../../../../../lib/workspace";
+import { homePathFor, workspaceRoleFor } from "../../../../../lib/workspace";
 
 type Props = { params: Promise<{ org: string; name: string; id: string }> };
 
@@ -60,6 +60,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
   ]);
   const reachable = policy.filter((p) => p.enabled);
   const isPublic = conn.authMode === "public";
+  const home = await homePathFor(session.user.id);
   const yourCap = isPublic ? ROLE_CAP.public : ROLE_CAP[role];
 
   const people = isAdmin
@@ -74,7 +75,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
 
   return (
     <div className="zq">
-      <PublicHeader right={<a className="zq-link" href="/app">Dashboard</a>} />
+      <PublicHeader right={<a className="zq-link" href={home}>Dashboard</a>} />
       <main className="zq-body" style={{ maxWidth: 860 }}>
         <p className="zq-kicker">
           <a href={`/${conn.orgSlug}`}>@{conn.orgSlug}</a> / MCP URL
@@ -180,7 +181,7 @@ export default async function ConnectionUrlPage({ params }: Props) {
 
         {isAdmin && (
           <section className="zq-block">
-            <a className="zq-action zq-action-primary" href={ws ? `${wsBase(conn.orgSlug, ws.slug)}/mcp-urls/${conn.id}` : "/app/mcp-urls"}>
+            <a className="zq-action zq-action-primary" href={ws ? `${wsBase(conn.orgSlug, ws.slug)}/mcp-urls/${conn.id}` : home}>
               Manage in the dashboard
             </a>
           </section>

@@ -30,8 +30,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/docs/agents/connections", destination: "/docs/agents/mcp-urls", permanent: true },
-      // One instance's page moved under the list it belongs to.
-      { source: "/app/instances/:id", destination: "/app/dokploy-instances/:id", permanent: true },
     ];
   },
   async headers() {

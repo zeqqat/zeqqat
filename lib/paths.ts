@@ -13,8 +13,8 @@ import { isReserved, ORG_SLUG } from "./username";
 //                                    because an MCP URL can move between
 //                                    workspaces)
 //
-// /app is kept as "take me to my dashboard": it redirects to the workspace
-// you were last in (app/[org]/[ws]/[[...rest]]/route.ts).
+// Signed in, you start on your own account page, /<username>
+// (homePathFor in lib/workspace.ts). There is no /app.
 
 // The account level's own pages. A workspace can't take these names.
 export const ACCOUNT_PAGES = new Set(["members", "settings", "dokploy-integrations", "workspaces"]);

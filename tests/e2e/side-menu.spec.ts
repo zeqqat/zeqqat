@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { openFirstWorkspace } from "./workspace";
 
 // On wide screens the side menu sits beside the page and pushes it, with
 // no overlay, and can stay open while you work. Below 900px it is a drawer
@@ -32,7 +33,7 @@ async function settle(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto("/app");
+  await openFirstWorkspace(page);
   await expect(page.locator(BURGER)).toBeVisible();
 });
 
@@ -86,19 +87,19 @@ test("the menu stays the way you left it across pages", async ({ page }) => {
   // The test user has no Dokploy yet, so Releases and the overview are the
   // only pages that open (tests/e2e/connect-first.spec.ts).
   const menu = page.getByRole("complementary", { name: "Menu" });
-  await page.goto("/app/releases");
+  await page.goto(`${await openFirstWorkspace(page)}/releases`);
   await expect(page).toHaveURL(/\/releases/);
   await expect(menu).toBeVisible();
 
   await page.locator(BURGER).click();
   await expect(menu).toBeHidden();
-  await page.goto("/app");
+  await openFirstWorkspace(page);
   await expect(page.getByRole("complementary", { name: "Menu" })).toBeHidden();
 });
 
 test("on a narrow screen the menu slides over the page and closes from the backdrop", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto("/app");
+  await openFirstWorkspace(page);
   const menu = page.getByRole("complementary", { name: "Menu" });
   await expect(menu).toBeHidden();
   const before = await page.locator("main.zq-main").boundingBox();

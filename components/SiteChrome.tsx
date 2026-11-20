@@ -7,7 +7,8 @@ import { ThemeToggle } from "./ThemeToggle";
 export const SITE_LINKS = {
   signin: "/signin",
   signup: "/signup",
-  app: "/app",
+  // Signed in, /signin goes on to your account page (/<username>).
+  app: "/signin",
   github: SOCIAL_LINKS.github,
   docs: "/docs/agents",
   selfHost: "/docs/self-host",

@@ -243,9 +243,11 @@ means `/<username>/<workspace>`.
 - `<ws>` and `<ws>/...`: one workspace's pages (`app/[org]/[ws]/`). A dotted
   second segment is a tool or policy page instead (`app/[org]/[ws]/page.tsx`
   dispatches to `tool-page.tsx`); workspace slugs never have dots.
-- `/account`: your own profile. `/app` and every old `/app/...` address
-  redirect to the same page in the workspace you were last in
-  (`app/app/[[...rest]]/route.ts`, the `zq_at` cookie).
+- `/account`: your own profile.
+- There is no `/app`. Signed in, you start on your own account page,
+  `/<username>` (`homePathFor` in `lib/workspace.ts`): after sign-in (with
+  no `?next=`, `/signin` sends a signed-in person there), from a self-hosted
+  install's home page, and from every "Dashboard" link.
 - MCP URLs stay `/<username>/mcp/<name>/<id>`, never with a workspace in
   them, because an MCP URL can move between workspaces.
 
@@ -255,7 +257,7 @@ from the client). `requireWorkspace` uses them: a workspace the person can't
 open is a 404, an old username redirects to the new one. Pages and actions
 build links with `here("/policies")` / `hrefIn(ws, ...)` (`lib/guard.ts`);
 client components with `useBase().ws` (`components/DashboardBase.tsx`).
-Never hard-code `/app/...` in a link. Workspace slugs can't be an account
+Never hard-code a dashboard path in a link. Workspace slugs can't be an account
 page's name or another reserved word (`RESERVED_WORKSPACE_SLUGS`).
 
 **Org → workspace → connection** is the access model:
@@ -384,7 +386,7 @@ every call but the spec needs it as a Bearer token. No dashboard UI lives
 in the app.
 `pnpm exec tsx tests/e2e/telemetry-flow.ts` runs the ping loop end to end.
 
-**Public site** (cloud edition only; self-hosted redirects into `/app`, which goes on to the dashboard):
+**Public site** (cloud edition only; a self-hosted install's `/` goes to `/signin`, which takes a signed-in person to `/<username>`):
 `/` and `/releases` share `components/SiteChrome.tsx`. There is no public
 integrations page: Zeqqat is the MCP for Dokploy, and the list of apps lives
 only in the dashboard (`<ws>/dokploy-instances`). A link can still fill the

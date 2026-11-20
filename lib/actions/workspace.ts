@@ -14,7 +14,7 @@ import { deleteInstances } from "../instance-ops";
 import { transferWorkspace } from "../transfer";
 import { isReserved, isValidOrgSlug, normalizeSlug } from "../username";
 import { heldByOldUsername } from "../username-alias";
-import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, listUserWorkspaces } from "../workspace";
+import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserWorkspaces } from "../workspace";
 
 async function setCurrent(organizationId: string, workspaceId: string) {
   const jar = await cookies();
@@ -38,7 +38,7 @@ export async function switchWorkspaceAction(formData: FormData) {
   const orgId = formData.get("organization_id")?.toString() ?? "";
   const all = await listUserWorkspaces(user.id);
   const target = all.find((w) => w.workspaceId === wsId) ?? all.find((w) => w.organizationId === orgId);
-  if (!target) redirect("/app");
+  if (!target) redirect(await homePathFor(user.id));
   await setCurrent(target.organizationId, target.workspaceId);
   redirect(wsBase(target.organizationSlug, target.workspaceSlug));
 }
@@ -53,7 +53,7 @@ export async function openAccountAction(formData: FormData) {
   const jar = await cookies();
   const curWs = jar.get(CURRENT_WS_COOKIE)?.value;
   const target = all.find((w) => w.organizationId === orgId && w.workspaceId === curWs) ?? all.find((w) => w.organizationId === orgId);
-  if (!target) redirect("/app/org");
+  if (!target) redirect(await homePathFor(user.id));
   await setCurrent(target.organizationId, target.workspaceId);
   redirect(accountBase(target.organizationSlug));
 }
@@ -210,5 +210,5 @@ export async function transferWorkspaceAction(formData: FormData) {
     redirect(hrefIn(ws, "/settings?error=transfer"));
   }
   // The workspace now lives under the organization's username.
-  redirect(movedTo ? wsBase(movedTo, ws.workspaceSlug) + "/settings?transferred=1" : "/app/settings?transferred=1");
+  redirect(movedTo ? wsBase(movedTo, ws.workspaceSlug) + "/settings?transferred=1" : hrefIn(ws, "/settings?transferred=1"));
 }

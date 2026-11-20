@@ -230,7 +230,7 @@ async function main() {
       ok: true,
       calls: rows.length,
       requests: requests.length,
-      urls: [`/app`, `/app/activity`, `/app/activity/${r1.id}`, `/app/activity/call/${first.id}`] /* /app redirects to the workspace */,
+      urls: [`/signin`],
     }),
   );
 

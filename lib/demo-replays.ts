@@ -8,7 +8,7 @@
 // really block it).
 //
 // The Zeqqat side is drawn with the app's own Activity components
-// (components/DemoReplay.tsx), so it looks exactly like /app/activity.
+// (components/DemoReplay.tsx), so it looks exactly like a workspace's Activity page.
 
 // One step the agent takes: a catalog lookup (zeqqat_search), or a call to
 // Dokploy through zeqqat_run.

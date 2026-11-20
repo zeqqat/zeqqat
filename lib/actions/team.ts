@@ -12,7 +12,7 @@ import { here, hereAccount, requireOrgOwner, requireOwner, requireUser } from ".
 import { newId } from "../id";
 import { INVITE_TTL_MS, findOpenInvite } from "../invites";
 import { randomToken, sha256Hex } from "../oauth-crypto";
-import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, listUserWorkspaces, type WsRole } from "../workspace";
+import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserWorkspaces, type WsRole } from "../workspace";
 
 export type InviteState = { error?: string; link?: string; email?: string };
 
@@ -250,5 +250,5 @@ export async function acceptInviteAction(formData: FormData) {
   // Straight into the workspace just joined.
   const joined = (await listUserWorkspaces(user.id)).find((w) => w.workspaceId === workspaceId) ??
     (await listUserWorkspaces(user.id)).find((w) => w.organizationId === invite.organizationId);
-  redirect(joined ? `${wsBase(joined.organizationSlug, joined.workspaceSlug)}?joined=1` : "/app?joined=1");
+  redirect(joined ? `${wsBase(joined.organizationSlug, joined.workspaceSlug)}?joined=1` : `${await homePathFor(user.id)}?joined=1`);
 }

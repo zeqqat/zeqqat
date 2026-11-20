@@ -11,7 +11,7 @@ import { getServerSession } from "../../lib/session";
 import { policyPagePath, toCanonical, toolPagePath } from "../../lib/tool-names";
 import { isValidOrgSlug } from "../../lib/username";
 import { renamedTo } from "../../lib/username-alias";
-import { listUserWorkspaces } from "../../lib/workspace";
+import { homePathFor, listUserWorkspaces } from "../../lib/workspace";
 
 type Props = {
   params: Promise<{ org: string }>;
@@ -89,7 +89,7 @@ export default async function OrgPage({ params, searchParams }: Props) {
 
   return (
     <div className="zq">
-      <PublicHeader right={session?.user ? <a className="zq-link" href="/app">Dashboard</a> : undefined} />
+      <PublicHeader right={session?.user ? <a className="zq-link" href={await homePathFor(session.user.id)}>Dashboard</a> : undefined} />
       <main className="zq-body" style={{ maxWidth: 920 }}>
         <p className="zq-kicker">{org.kind === "personal" ? "Person" : "Organization"}</p>
         <h1 className="zq-h">

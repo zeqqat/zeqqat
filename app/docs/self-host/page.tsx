@@ -27,7 +27,7 @@ export default function SelfHostPage() {
         </h1>
         <section className="zq-block">
           <div className="zq-grid2">
-            <a className="zq-way" href="/signup?next=/app/self-host">
+            <a className="zq-way" href="/signup">
               <h2 className="zq-way-t">Set up via Zeqqat Cloud</h2>
               <p className="zq-way-p">
                 Create an account, add your Dokploy, and Zeqqat installs your self-hosted instance on it for you.

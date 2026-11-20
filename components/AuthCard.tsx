@@ -4,6 +4,7 @@ import { edition } from "../lib/edition";
 import { hasNoUsers } from "../lib/password-auth";
 import { safeNext } from "../lib/next-path";
 import { getServerSession } from "../lib/session";
+import { homePathFor } from "../lib/workspace";
 import { signInErrorText } from "../lib/sign-in-errors";
 import { SignInButtons } from "./ConsentControls";
 import { DokployMark } from "./Marks";
@@ -11,18 +12,20 @@ import { PublicHeader } from "./PublicHeader";
 
 // Sign in and sign up are the same page: signing in with a new account
 // creates it. The landing page explains the product, so this card carries
-// no pitch, only the ways in. ?next= is where to land afterwards.
+// no pitch, only the ways in. ?next= is where to land afterwards; without
+// one, your own account page (/<username>). Sign-in providers come back
+// here, which is how a new account finds its username.
 export async function AuthCard({ error, next }: { error?: string; next?: string | string[] }) {
   const target = safeNext(next);
   const session = await getServerSession();
-  if (session?.user) redirect(target);
+  if (session?.user) redirect(target || (await homePathFor(session.user.id)));
 
   // A fresh self-hosted install: the first account owns it. After that,
   // password accounts are only made from invites, so the card only signs in.
   const passwordOnly = signInProviders.length === 1 && signInProviders[0] === "password";
   const setup = signInProviders.includes("password") && (await hasNoUsers());
 
-  const errorURL = `/signin${target === "/app" ? "" : `?next=${encodeURIComponent(target)}`}`;
+  const errorURL = `/signin${target ? `?next=${encodeURIComponent(target)}` : ""}`;
   return (
     <div className="zq">
       <PublicHeader social />
@@ -53,7 +56,7 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
           </p>
           <SignInButtons
             providers={signInProviders}
-            callbackURL={target}
+            callbackURL={target || "/signin"}
             errorCallbackURL={errorURL}
             error={signInErrorText(error)}
             passwordMode={setup ? "setup" : "signin"}

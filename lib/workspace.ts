@@ -8,9 +8,6 @@ import { instance, membership, oauthGrant, organization, workspace, workspaceMem
 // among workspaces the user can already open; they never grant access.
 export const CURRENT_ORG_COOKIE = "zq_org";
 export const CURRENT_WS_COOKIE = "zq_ws";
-// The last workspace opened by its URL, as "<org slug>/<workspace slug>".
-// proxy.ts sets it; /app sends you back there.
-export const LAST_PLACE_COOKIE = "zq_at";
 // Set by proxy.ts from the URL (lib/paths.ts placeOf): which account and
 // workspace this request is about. Always overwritten there, never trusted
 // from the client.
@@ -93,36 +90,31 @@ export async function placeFromRequest(): Promise<{ org: string | null; ws: stri
 
 // The workspace this request acts on. A URL naming an account or a
 // workspace decides it: null when the person can't open it (the page is a
-// 404 then). Without one (/app, /account, server actions posted from
-// elsewhere): the last workspace opened, else the first one.
+// 404 then). Without one (/account, server actions posted from elsewhere):
+// the last one picked in the switcher, else the first one.
 export async function getUserWorkspace(userId: string): Promise<UserWorkspace | null> {
   const all = await listUserWorkspaces(userId);
   if (all.length === 0) return null;
-  let last: string | undefined;
   let wantedWs: string | undefined;
   let wantedOrg: string | undefined;
   try {
     const jar = await cookies();
-    last = jar.get(LAST_PLACE_COOKIE)?.value;
     wantedWs = jar.get(CURRENT_WS_COOKIE)?.value;
     wantedOrg = jar.get(CURRENT_ORG_COOKIE)?.value;
   } catch {
     wantedWs = undefined;
   }
-  const [lastOrg, lastWs] = (last ?? "").split("/");
   const place = await placeFromRequest();
   if (place.org) {
     const inOrg = all.filter((w) => w.organizationSlug === place.org);
     if (place.ws) return inOrg.find((w) => w.workspaceSlug === place.ws) ?? null;
     return (
-      inOrg.find((w) => w.organizationSlug === lastOrg && w.workspaceSlug === lastWs) ??
       inOrg.find((w) => w.workspaceId === wantedWs) ??
       inOrg[0] ??
       null
     );
   }
   return (
-    all.find((w) => w.organizationSlug === lastOrg && w.workspaceSlug === lastWs) ??
     all.find((w) => w.workspaceId === wantedWs) ??
     all.find((w) => w.organizationId === wantedOrg) ??
     all[0]
@@ -181,4 +173,18 @@ export async function hasInstance(workspaceId: string) {
 // first workspace is called "Default", so the organization name says more.
 export function workspaceLabel(w: { organizationName: string; workspaceName: string }) {
   return w.workspaceName && w.workspaceName !== "Default" ? w.workspaceName : w.organizationName;
+}
+
+// Where a signed-in person starts: their own account page, /<username>,
+// which lists every workspace they're in (their own or ones they were
+// invited to). lib/paths.ts has the URL scheme.
+export async function homePathFor(userId: string): Promise<string> {
+  const [own] = await db
+    .select({ slug: organization.slug })
+    .from(organization)
+    .where(and(eq(organization.ownerUserId, userId), eq(organization.kind, "personal")))
+    .limit(1);
+  if (own) return `/${own.slug}`;
+  const [first] = await listUserWorkspaces(userId);
+  return first ? `/${first.organizationSlug}` : "/signin";
 }

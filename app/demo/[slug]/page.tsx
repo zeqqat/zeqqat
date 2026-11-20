@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // beside Zeqqat's activity. Replays of real runs with the names changed
 // (lib/demo-replays.ts); nobody's Dokploy is touched.
 export default async function DemoPage({ params }: Props) {
-  if (edition() === "self-hosted") redirect("/app");
+  if (edition() === "self-hosted") redirect("/signin");
   const { slug } = await params;
   const replay = replayBySlug(slug);
   if (!replay) notFound();

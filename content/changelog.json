@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.5.2",
+    "date": "2026-11-20",
+    "at": "2026-11-20T12:12:53Z",
+    "changes": [
+      "No more /app: signed in, you start on your own account page, /<username>",
+      "Every Dashboard link and sign-in now land there too"
+    ]
+  },
+  {
     "version": "0.5.1",
     "date": "2026-11-20",
     "at": "2026-11-20T11:48:34Z",

@@ -7,7 +7,6 @@ import { placeOf } from "./lib/paths";
 const PLACE_ORG_HEADER = "x-zq-org";
 const PLACE_WS_HEADER = "x-zq-ws";
 const PATH_HEADER = "x-zq-path";
-const LAST_PLACE_COOKIE = "zq_at";
 
 // A nonce-based policy rather than 'unsafe-inline': the consent screen
 // renders a client name that the client itself chose at registration, so
@@ -81,21 +80,6 @@ function withCsp(request: NextRequest) {
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("content-security-policy", csp);
-  // Remember the workspace, so /app (the way back in) returns to it. Only
-  // on page loads: a prefetch isn't a visit.
-  const prefetch = request.headers.get("next-router-prefetch") || request.headers.get("purpose") === "prefetch";
-  if (place?.kind === "workspace" && request.method === "GET" && !prefetch) {
-    const value = `${place.org}/${place.ws}`;
-    if (request.cookies.get(LAST_PLACE_COOKIE)?.value !== value) {
-      response.cookies.set(LAST_PLACE_COOKIE, value, {
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-        secure: request.nextUrl.protocol === "https:",
-        maxAge: 60 * 60 * 24 * 365,
-      });
-    }
-  }
   return response;
 }
 

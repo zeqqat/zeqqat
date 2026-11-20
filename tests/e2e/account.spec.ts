@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openFirstWorkspace } from "./workspace";
 
 // The account menu's name line opens /account, where you change your
 // picture, name and username. A renamed account keeps its old username:
@@ -9,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("the name line in the account menu opens the profile page, even before Dokploy is connected", async ({ page }) => {
-  await page.goto("/app");
+  await openFirstWorkspace(page);
   await page.getByRole("button", { name: "Account menu" }).click();
   const id = page.locator(".zq-pop-user");
   await expect(id).toHaveAttribute("href", "/account");
@@ -52,7 +53,7 @@ test("a reserved username is refused", async ({ page }) => {
 });
 
 test("the side menu ends with the pattern strip under the version", async ({ page }) => {
-  await page.goto("/app/releases");
+  await page.goto(`${await openFirstWorkspace(page)}/releases`);
   const strip = page.locator(".zq-side-pattern");
   await expect(strip).toBeVisible();
   const box = await strip.boundingBox();

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openFirstWorkspace } from "./workspace";
 
 // The test user has no Dokploy yet. Until they connect one, the side menu
 // pages don't open: a click says to connect first (lib/setup-gate.ts). The
@@ -8,7 +9,7 @@ const HELD = ["MCP URLs", "Dokploy Instances", "Dokploy integrations", "Policies
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto("/app");
+  await openFirstWorkspace(page);
   await expect(page.getByRole("heading", { name: /Connect your\s+Dokploy/ })).toBeVisible();
 });
 
@@ -33,13 +34,13 @@ test("the modal's button shakes the heading and puts the cursor in the form", as
 });
 
 test("a held-back page opened by its address goes to the overview and says why", async ({ page }) => {
-  await page.goto("/app/mcp-urls");
+  await page.goto(`${await openFirstWorkspace(page)}/mcp-urls`);
   await expect(page).toHaveURL(/^[^?]*\/[a-z0-9_]+\/[a-z0-9-]+$/);
   await expect(page.getByRole("dialog", { name: /Connect your\s+Dokploy first/ })).toBeVisible();
 });
 
 test("Releases stays open", async ({ page }) => {
-  await page.goto("/app/releases");
+  await page.goto(`${await openFirstWorkspace(page)}/releases`);
   await expect(page).toHaveURL(/\/[a-z0-9-]+\/releases$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".zq-rel").first()).toBeVisible();

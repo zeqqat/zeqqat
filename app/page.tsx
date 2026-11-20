@@ -50,8 +50,8 @@ const PROOF = [
 
 export default function LandingPage() {
   // The landing page sells zeqqat.com. A self-hosted install opens straight
-  // into the app (which sends signed-out visitors to sign in).
-  if (edition() === "self-hosted") redirect("/app");
+  // on sign-in, which takes signed-in people to their account page.
+  if (edition() === "self-hosted") redirect("/signin");
 
   return (
     <div className="zq">

@@ -23,7 +23,7 @@ import { AgentMark } from "./Marks";
 // right, step by step and in step with each other, so a visitor sees what
 // the agent got and what Zeqqat recorded at the same moment. The right side
 // uses the app's own Activity components (request card, call cards, lookup
-// lines), so it looks exactly like /app/activity. Everything is pre-written
+// lines), so it looks exactly like a workspace's Activity page. Everything is pre-written
 // (lib/demo-replays.ts); nothing here talks to a server.
 
 type Beat =
@@ -235,7 +235,7 @@ export function DemoReplay({ replay }: { replay: Replay }) {
         </header>
         <div className="zq-demo-log">
           {(() => {
-            // Each turn is one request. Like /app/activity: a list of
+            // Each turn is one request. Like a workspace's Activity page: a list of
             // request cards (newest first), and a card opens its calls.
             const reqs = replay.turns
               .map((turn, ti) => {
