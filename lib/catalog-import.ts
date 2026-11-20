@@ -90,6 +90,16 @@ export async function importSpec(tx: Tx, p: ImportParams): Promise<ImportSummary
     }))!;
   }
 
+  // The same file can be relabelled (the bundled Dokploy spec turned out to be
+  // byte for byte the one Dokploy ships at a release tag): the bytes stay,
+  // only where they came from is corrected.
+  if (!newSnapshot && p.release && (snapshot.release !== p.release || (p.sourceUrl && snapshot.sourceUrl !== p.sourceUrl))) {
+    await tx
+      .update(integrationApiSpecSnapshot)
+      .set({ release: p.release, sourceUrl: p.sourceUrl ?? snapshot.sourceUrl })
+      .where(eq(integrationApiSpecSnapshot.id, snapshot.id));
+  }
+
   const existingRows = await tx
     .select({ name: apiEndpoint.name, action: apiEndpoint.action, removedAt: apiEndpoint.removedAt })
     .from(apiEndpoint)
@@ -152,7 +162,8 @@ export async function importSpec(tx: Tx, p: ImportParams): Promise<ImportSummary
           queryParams: sql`excluded.query_params`,
           bodyEncoding: sql`excluded.body_encoding`,
           credentialScheme: sql`excluded.credential_scheme`,
-          kind: sql`excluded.kind`,
+          // A kind the publisher set on the integration's page stays.
+          kind: sql`case when ${apiEndpoint.kindSource} = 'accepted' then ${apiEndpoint.kind} else excluded.kind end`,
           importWarnings: sql`excluded.import_warnings`,
           removedAt: sql`null`,
         },

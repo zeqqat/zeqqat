@@ -12,7 +12,7 @@ import { PathSwitch } from "./PathSwitch";
 import { ThemeToggle } from "./ThemeToggle";
 import { VersionPill } from "./VersionPill";
 
-type Pane = "overview" | "mcp-urls" | "dokploy-instances" | "tools" | "policies" | "activity" | "members" | "settings";
+type Pane = "overview" | "mcp-urls" | "dokploy-instances" | "dokploy-integrations" | "policies" | "activity" | "members" | "settings";
 
 // `also` lists other paths that belong to the same pane. `icon` sits before
 // the label. An instance page (/app/dokploy-instances/<id>) highlights Dokploy Instances.
@@ -20,7 +20,7 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: 
   { pane: "overview", label: "Overview", href: "/app" },
   { pane: "mcp-urls", label: "MCP URLs", href: "/app/mcp-urls" },
   { pane: "dokploy-instances", label: "Dokploy Instances", href: "/app/dokploy-instances", icon: <DokployMark size={15} /> },
-  { pane: "tools", label: "Tools", href: "/app/tools" },
+  { pane: "dokploy-integrations", label: "Dokploy integrations", href: "/app/dokploy-integrations", icon: <DokployMark size={15} /> },
   { pane: "policies", label: "Policies", href: "/app/policies" },
   { pane: "activity", label: "Activity", href: "/app/activity" },
   { pane: "members", label: "Members", href: "/app/team" },
@@ -29,8 +29,9 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: 
 
 // The account level (/app/org): the account's own pages, with its own menu.
 // The same for your personal account and an organization.
-const ACCOUNT_ITEMS: { label: string; href: string }[] = [
+const ACCOUNT_ITEMS: { label: string; href: string; icon?: React.ReactNode }[] = [
   { label: "Workspaces", href: "/app/org" },
+  { label: "Dokploy integrations", href: "/app/org/dokploy-integrations", icon: <DokployMark size={15} /> },
   { label: "Members", href: "/app/org/members" },
   { label: "Settings", href: "/app/org/settings" },
 ];
@@ -375,6 +376,7 @@ export function AppShell({
                       aria-current={isActive ? "page" : undefined}
                       onClick={() => setDrawer(false)}
                     >
+                      {item.icon}
                       {item.label}
                     </a>
                   );

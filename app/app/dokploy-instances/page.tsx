@@ -36,6 +36,8 @@ export default async function DokployInstancesPage({
         lastStatus: instance.lastStatus,
         lastVersion: instance.lastVersion,
         lastValidatedAt: instance.lastValidatedAt,
+        specVersion: instance.specVersion,
+        specCheckedAt: instance.specCheckedAt,
         appSlug: integration.slug,
         appName: integration.name,
         appLogo: integration.logoUrl,

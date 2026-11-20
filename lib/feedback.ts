@@ -33,8 +33,8 @@ export function summaryProblem(summary: string, current: string | null): string 
 export type Submitted = { id: string; publisher: string; duplicate: boolean };
 
 export async function submitSuggestion(
-  ctx: McpContext,
-  e: FoundEndpoint,
+  ctx: Pick<McpContext, "organizationId" | "userId" | "requestId">,
+  e: Pick<FoundEndpoint, "id" | "summary" | "orgSlug" | "organizationId">,
   summary: string,
   note: string | null,
 ): Promise<{ ok: true; value: Submitted } | { ok: false; error: string }> {

@@ -3,6 +3,7 @@ import { db } from "../db";
 import { callLog, connection, connectionGrant, instance, oauthGrant } from "../db/schema";
 import { decryptCredential } from "./crypto";
 import { normalizeBaseUrl, testDokployConnection } from "./dokploy-check";
+import { fetchDokploySpec } from "./instance-spec";
 import type { Usage } from "./mcp-urls";
 import { appCallsOnly } from "./overview";
 
@@ -113,6 +114,8 @@ type InstanceRow = {
   lastStatus: string | null;
   lastVersion: string | null;
   lastValidatedAt: Date | null;
+  specVersion?: string | null;
+  specCheckedAt?: Date | null;
 };
 
 // Re-checks Dokploy instances whose last check is older than STALE_MS (the
@@ -121,6 +124,9 @@ type InstanceRow = {
 // the page longer than BUDGET_MS: anything slower renders from what's
 // stored and finishes in the background.
 const STALE_MS = 10 * 60_000;
+// The instance's own API document is large (over a megabyte for Dokploy), so
+// it's read again only every few hours, or as soon as the version changes.
+const SPEC_STALE_MS = 6 * 60 * 60_000;
 const BUDGET_MS = 3_000;
 
 export async function freshDokploy(rows: InstanceRow[]): Promise<Map<string, Freshness>> {
@@ -147,6 +153,17 @@ export async function freshDokploy(rows: InstanceRow[]): Promise<Map<string, Fre
         .update(instance)
         .set({ lastValidatedAt: new Date(), lastStatus: status, lastVersion: check.version ?? r.lastVersion })
         .where(eq(instance.id, r.id));
+    }
+    const version = f.version;
+    const specStale = !r.specCheckedAt || now - r.specCheckedAt.getTime() > SPEC_STALE_MS || (version && r.specVersion !== version);
+    if (specStale && f.status === "ok") {
+      const spec = await fetchDokploySpec(normalizeBaseUrl(r.baseUrl) ?? r.baseUrl, key).catch(() => null);
+      if (spec) {
+        await db
+          .update(instance)
+          .set({ specOps: spec.ops, specVersion: version ?? spec.version, specCheckedAt: new Date() })
+          .where(eq(instance.id, r.id));
+      }
     }
   });
   await Promise.race([Promise.allSettled(jobs), new Promise((r) => setTimeout(r, BUDGET_MS))]);

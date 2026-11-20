@@ -11,6 +11,7 @@ describe("openWithoutDokploy", () => {
       "/app/dokploy-instances",
       "/app/dokploy-instances/abc",
       "/app/tools",
+      "/app/dokploy-integrations",
       "/app/policies/new",
       "/app/activity",
       "/app/team",

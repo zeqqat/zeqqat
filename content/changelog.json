@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.4.11",
+    "date": "2026-11-20",
+    "at": "2026-11-20T08:31:01Z",
+    "changes": [
+      "Tools is now Dokploy integrations, in each workspace and at the account level: one card per integration with its version, tool count and kinds",
+      "An integration's page: search with a kind filter, every instance using it compared with its tools, and the spec it was built from",
+      "Publishers can fix a tool's description and kind; everyone else can suggest a fix",
+      "Zeqqat reads each Dokploy's own API and shows tools it has that the integration doesn't, kept off until reviewed"
+    ]
+  },
+  {
     "version": "0.4.10",
     "date": "2026-11-20",
     "at": "2026-11-20T08:05:39Z",

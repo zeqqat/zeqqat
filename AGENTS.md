@@ -173,6 +173,38 @@ sideways. Never label anything "Service": Dokploy uses "service" for an
 app or database inside a project, so the word is ambiguous to users and
 agents.
 
+**Dokploy integrations.** An integration is the list of tools that reach an
+instance (`@zeqqat/dokploy`), so its pages never show an instance name on
+the card: several instances can use one. The workspace menu's "Dokploy
+integrations" (`/app/dokploy-integrations`) lists the integrations its own
+instances use; the account level (`/app/org/dokploy-integrations`) lists
+those of every workspace the viewer can open, plus any the account
+published, with "+ Add integration". Both use `components/IntegrationViews.tsx`
+(data in `lib/integrations.ts`, scope in `lib/integration-scope.ts`). A card
+is the logo, `@org/slug`, the version far right (the newest snapshot's
+`release`), the tool count and the kind counts. One integration's page has
+Tools (search, a sliders filter of kinds shown as coloured pills with
+counts, under the search after All), Instances (each instance in scope, its
+Dokploy version, and how its own API compares) and About (published by, and
+"Built from", which opens the saved spec at `.../<id>/spec`). The publisher
+(an owner of the integration's org) edits a tool's description and kind in
+place (`kind_source` / `summary_source` = `accepted`, which imports never
+overwrite); anyone else's edit becomes a suggestion in the publisher's
+review queue (`/app/feedback`). `/app/tools` redirects to the workspace page.
+
+**An instance's own API.** Dokploy builds its OpenAPI document at runtime
+(`settings.getOpenApiDocument`), and it can list operations the spec file
+in Dokploy's repo doesn't (v0.31.2 serves `application.deployNginxQuickstart`;
+the repo file at the same tag, which is byte for byte the bundled catalog
+spec, doesn't). `freshDokploy` reads it every few hours or when the version
+changes (`lib/instance-spec.ts`, `instance.spec_ops`). The Instances tab
+and the instance's Manage tab compare it with the integration: tools the
+instance has that the integration doesn't stay off until the publisher
+reviews them (the publisher sees "N new tools ... not activated. Review
+them first", listed at `?tab=new`); tools the integration has that an
+older Dokploy doesn't get an "Update Dokploy" link. Nothing here makes a
+tool callable: activating one still means adding it to the catalog.
+
 **Connect Dokploy first.** Until a workspace has its first instance,
 everyone in it can open only the overview and Releases
 (`lib/setup-gate.ts`). `app/app/layout.tsx` decides, `components/AppShell.tsx`

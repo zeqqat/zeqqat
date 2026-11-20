@@ -127,6 +127,13 @@
       "when": 1794851942017,
       "tag": "0017_signup_reported_at",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795162881117,
+      "tag": "0018_sloppy_pet_avengers",
+      "breakpoints": true
     }
   ]
 }

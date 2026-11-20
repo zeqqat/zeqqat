@@ -345,6 +345,10 @@ export const apiEndpoint = pgTable("api_endpoint", {
   // map HTTP verbs to read/write semantics reliably. An endpoint the kind
   // map doesn't cover yet is imported as `delete` (lib/importer/openapi.ts).
   kind: text("kind").notNull(),
+  // Where kind came from: 'spec' (kinds.json or the import) or 'accepted'
+  // (the publisher set it on the integration's page). Imports never
+  // overwrite an accepted kind.
+  kindSource: text("kind_source").notNull().default("spec"),
   // Problems the importer hit on this endpoint. Imports never abort over
   // one bad endpoint; they record it here.
   importWarnings: jsonb("import_warnings").notNull().default(sql`'[]'::jsonb`).$type<string[]>(),
@@ -362,6 +366,7 @@ export const apiEndpoint = pgTable("api_endpoint", {
   check("api_endpoint_body_encoding_check", sql`${t.bodyEncoding} in ('json','form')`),
   check("api_endpoint_kind_check", sql`${t.kind} in ('read','create','edit','delete')`),
   check("api_endpoint_summary_source_check", sql`${t.summarySource} in ('spec','accepted')`),
+  check("api_endpoint_kind_source_check", sql`${t.kindSource} in ('spec','accepted')`),
 ]);
 
 export const instance = pgTable("instance", {
@@ -385,6 +390,14 @@ export const instance = pgTable("instance", {
   // whether the key was accepted. Display only, never used for access.
   lastVersion: text("last_version"),
   lastStatus: text("last_status"), // 'ok' | 'bad_key' | 'unreachable' | 'not_dokploy'
+  // The API this instance serves, read from its own OpenAPI document
+  // (Dokploy: settings.getOpenApiDocument) on the same check as the version.
+  // Compared with its integration's endpoints to show tools the instance has
+  // that the integration doesn't, and the other way round. Display only:
+  // a tool missing from the integration is never callable from here.
+  specVersion: text("spec_version"),
+  specOps: jsonb("spec_ops").$type<{ name: string; method: string }[]>(),
+  specCheckedAt: timestamp("spec_checked_at", { withTimezone: true }),
   // Null follows the latest import; set, the instance stays on that spec.
   pinnedSnapshotId: uuid("pinned_snapshot_id").references(() => integrationApiSpecSnapshot.id, {
     onDelete: "set null",

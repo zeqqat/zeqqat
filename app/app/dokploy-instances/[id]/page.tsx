@@ -10,6 +10,7 @@ import { instance, integration } from "../../../../db/schema";
 import { removeInstanceAction, retestInstanceAction, updateDokployAction } from "../../../../lib/actions/instances";
 import { requireWorkspace } from "../../../../lib/guard";
 import { freshDokploy, instanceCounts, usageByInstance } from "../../../../lib/instance-cards";
+import { integrationCards, integrationInstances } from "../../../../lib/integrations";
 import { addedBy, instanceCalls, instancePeople, instanceUrls } from "../../../../lib/instance-page";
 import { changedPart } from "../../../../lib/version-diff";
 
@@ -76,8 +77,11 @@ export default async function InstanceDetailPage({
       lastStatus: instance.lastStatus,
       lastVersion: instance.lastVersion,
       lastValidatedAt: instance.lastValidatedAt,
+      specVersion: instance.specVersion,
+      specCheckedAt: instance.specCheckedAt,
       createdAt: instance.createdAt,
       createdByUserId: instance.createdByUserId,
+      integrationId: instance.integrationId,
       appSlug: integration.slug,
       appName: integration.name,
       appLogo: integration.logoUrl,
@@ -97,7 +101,12 @@ export default async function InstanceDetailPage({
     instanceCalls(ws.workspaceId, inst.id),
     addedBy(inst.createdByUserId),
   ]);
-  const people = await instancePeople(ws.workspaceId, inst.id, urls);
+  const [people, [integ], compared] = await Promise.all([
+    instancePeople(ws.workspaceId, inst.id, urls),
+    integrationCards([inst.integrationId]),
+    integrationInstances(inst.integrationId, [ws.workspaceId]),
+  ]);
+  const mine = compared.find((c) => c.id === inst.id);
 
   const f = fresh.get(inst.id);
   let host = inst.baseUrl;
@@ -171,6 +180,39 @@ export default async function InstanceDetailPage({
             </span>
           </div>
         </div>
+
+        {integ && (
+          <a className="zq-mu-mrow zq-in-mrow" href={`/app/dokploy-integrations/${integ.id}`}>
+            <div className="zq-mu-mrow-h">
+              <span className="zq-mu-mrow-t">
+                <b>Integration</b>
+                <small className="zq-in-l1" style={{ flexWrap: "wrap", gap: 6 }}>
+                  @{integ.orgSlug}/{integ.slug}
+                  {integ.release && <span className="zq-vp">{integ.release}</span>}
+                  <span>· {integ.toolCount} tools</span>
+                </small>
+                {mine?.extra && (mine.extra.length > 0 || (mine.missing?.length ?? 0) > 0) && (
+                  <small>
+                    {mine.extra.length > 0 && (
+                      <>
+                        This Dokploy has <span className="zq-in-u">{mine.extra.length === 1 ? "1 tool" : `${mine.extra.length} tools`}</span> the
+                        integration doesn&rsquo;t. {mine.extra.length === 1 ? "It stays" : "They stay"} off until @{integ.orgSlug} reviews{" "}
+                        {mine.extra.length === 1 ? "it" : "them"}.{" "}
+                      </>
+                    )}
+                    {(mine.missing?.length ?? 0) > 0 && (
+                      <>
+                        <span className="zq-in-u">{mine.missing!.length === 1 ? "1 tool" : `${mine.missing!.length} tools`}</span> in the integration{" "}
+                        {mine.missing!.length === 1 ? "isn't" : "aren't"} on this Dokploy.
+                      </>
+                    )}
+                  </small>
+                )}
+              </span>
+              <span className="zq-in-go" aria-hidden="true">›</span>
+            </div>
+          </a>
+        )}
 
         {isDokploy && isOwner && behind ? (
           <ManageRow
