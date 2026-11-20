@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IntegrationMark } from "./Marks";
+import { WhatIsThis, WhatLink } from "./WhatIsThis";
 import { changedPart } from "../lib/version-diff";
 import { Icon, PeriodPick, Spark, type Period, type UrlUsage } from "./McpUrls";
 
@@ -173,7 +174,17 @@ export function InstanceCardView({ c, period, onPeriod, linked = true }: { c: In
   );
 }
 
-export function InstanceCards({ cards, addHref, emptyText }: { cards: InstanceCard[]; addHref: string | null; emptyText: string }) {
+export function InstanceCards({
+  cards,
+  addHref,
+  emptyText,
+  what = false,
+}: {
+  cards: InstanceCard[];
+  addHref: string | null;
+  emptyText: string;
+  what?: boolean;
+}) {
   // Same head as the MCP URLs page: the count on the left, the add button on the right.
   return (
     <div>
@@ -193,6 +204,12 @@ export function InstanceCards({ cards, addHref, emptyText }: { cards: InstanceCa
         </span>
       </div>
       {cards.length === 0 && <p className="zq-empty">{emptyText}</p>}
+      {cards.length > 0 && (
+        <WhatIsThis open={what}>
+          An instance is one Dokploy install (on Dokploy Cloud, your account). Zeqqat makes API calls to it with an{" "}
+          <WhatLink href="/app/dokploy-integrations?what=1">integration</WhatLink>.
+        </WhatIsThis>
+      )}
       {cards.length > 0 && (
         <div className="zq-di-list">
           {cards.map((c) => (

@@ -7027,3 +7027,7 @@ button.zq-demo-open {
 .zq .zq-in-whatb .zq-info{position:static;width:22px;height:22px}
 .zq .zq-in-whatb .zq-info svg{width:14px;height:14px}
 .zq .zq-in-what .zq-bubble.zq-in-wb{top:28px;left:0;right:auto;width:min(380px,calc(100vw - 32px));max-width:none;font-size:12.5px;line-height:1.6;color:var(--fg)}
+.zq .zq-in-wlink{display:inline-flex;align-items:center;color:var(--fg);text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--line2)}
+.zq .zq-in-wlink .zq-info{position:static;width:18px;height:18px;display:inline-grid}
+.zq .zq-in-wlink .zq-info svg{width:13px;height:13px}
+.zq .zq-in-wlink:hover .zq-info{color:var(--fg)}

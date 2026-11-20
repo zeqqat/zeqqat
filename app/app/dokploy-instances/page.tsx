@@ -172,6 +172,7 @@ export default async function DokployInstancesPage({
         cards={cards}
         addHref={isOwner && !formOpen ? "/app/dokploy-instances?add=1" : null}
         emptyText={isOwner ? "No Dokploy connected yet." : "No Dokploy connected yet. An owner of this workspace adds it."}
+        what={params.what === "1"}
       />
     </div>
   );

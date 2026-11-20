@@ -1,6 +1,6 @@
 import { CountHead } from "./AccountPages";
 import { CrumbLast } from "./AppShell";
-import { IntegrationVersion, KindPills, ToolFinder, WhatIsThis } from "./Integrations";
+import { IntegrationVersion, KindPills, ToolFinder, IntegrationsWhat } from "./Integrations";
 import { DokployMark } from "./Marks";
 import { normalizeBaseUrl } from "../lib/dokploy-check";
 import { reviewableOrgIds } from "../lib/feedback";
@@ -69,7 +69,9 @@ export async function IntegrationList({
   workspaceIds,
   empty,
   account,
+  what = false,
 }: {
+  what?: boolean;
   userId: string;
   ids: string[];
   base: string;
@@ -88,7 +90,7 @@ export async function IntegrationList({
           </a>
         </CountHead>
       )}
-      {cards.length > 0 && <WhatIsThis />}
+      {cards.length > 0 && <IntegrationsWhat open={what} />}
       {cards.length === 0 && !account ? (
         <p className="zq-empty">{empty}</p>
       ) : (

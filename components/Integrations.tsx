@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { suggestToolAction, updateToolAction } from "../lib/actions/integrations";
 import type { Kind, KindCounts, ToolRow } from "../lib/integrations";
+import { WhatIsThis, WhatLink } from "./WhatIsThis";
 
 const KIND_LABEL: Record<Kind, string> = { read: "Read", create: "Create", edit: "Edit", delete: "Delete" };
 const KIND_ORDER: Kind[] = ["read", "create", "edit", "delete"];
@@ -294,44 +295,13 @@ function ToolEditor({ row, publisher, publisherSlug, onDone }: { row: ToolRow; p
   );
 }
 
-// "What is this? ⓘ" above the integration cards; a click drops the
-// explanation down in the same bubble every ⓘ uses.
-export function WhatIsThis() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+
+export function IntegrationsWhat({ open }: { open: boolean }) {
   return (
-    <div className="zq-in-what" ref={ref}>
-      <span className="zq-info-inline">
-        <button type="button" className="zq-in-whatb" aria-expanded={open} aria-controls="zq-in-what-text" onClick={() => setOpen((v) => !v)}>
-          What is this?
-          <span className="zq-info" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5M12 8v.01" />
-            </svg>
-          </span>
-        </button>
-        {open && (
-          <span className="zq-bubble zq-in-wb" id="zq-in-what-text" role="note">
-            An MCP tool is a Dokploy API endpoint with a description, so your agent knows what it does and when to use it. An
-            integration is all of Dokploy&rsquo;s API endpoints, made into MCP tools. An instance is one Dokploy install (on Dokploy
-            Cloud, your account), and every instance uses one integration.
-          </span>
-        )}
-      </span>
-    </div>
+    <WhatIsThis open={open}>
+      An MCP tool is a Dokploy API endpoint with a description, so your agent knows what it does and when to use it. An
+      integration is all of Dokploy&rsquo;s API endpoints, made into MCP tools. Zeqqat uses an integration to make API calls to an{" "}
+      <WhatLink href="/app/dokploy-instances?what=1">instance</WhatLink>.
+    </WhatIsThis>
   );
 }
