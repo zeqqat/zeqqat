@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.3",
+    "date": "2026-11-20",
+    "at": "2026-11-20T12:26:00Z",
+    "changes": [
+      "zeqqat_whoami now says who the agent is acting for (name and username) and links to the workspace's dashboard page"
+    ]
+  },
+  {
     "version": "0.5.2",
     "date": "2026-11-20",
     "at": "2026-11-20T12:12:53Z",

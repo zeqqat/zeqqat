@@ -82,6 +82,11 @@ const CONTEXT_SCHEMA = {
       properties: { version: { type: "string" }, latest: { type: "string" }, updateAvailable: { type: "boolean" } },
       required: ["version"],
     },
+    you: {
+      type: ["object", "null"],
+      properties: { name: { type: "string" }, username: { type: ["string", "null"] } },
+    },
+    dashboard: { type: "string" },
     workspace: { type: "string" },
     connection: { type: ["string", "null"] },
     integrations: {

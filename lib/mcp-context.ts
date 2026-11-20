@@ -1,9 +1,11 @@
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
-import { apiEndpoint, connectionGrant, instance, integration, organization } from "../db/schema";
+import { apiEndpoint, connectionGrant, instance, integration, organization, user, workspace } from "../db/schema";
 import { integrationRef } from "./catalog";
 import { releaseStatus } from "./changelog";
+import { publicUrl } from "./env";
 import type { McpContext } from "./mcp-auth";
+import { wsBase } from "./paths";
 import { accessFor, accessSummary, type InstanceAccess } from "./policies";
 
 // The context every tool result carries (project doc
@@ -51,8 +53,16 @@ export type ContextZeqqat = {
   updateAvailable: boolean;
 };
 
+// The person the agent is acting for (null on a public MCP URL, which has
+// no sign-in). Only in the full context (zeqqat_whoami).
+export type ContextCaller = { name: string; username: string | null };
+
 export type ZeqqatContext = {
   zeqqat?: ContextZeqqat;
+  you?: ContextCaller | null;
+  // The workspace's page in the dashboard (/<username>/<workspace>), so the
+  // agent can hand the person a link. Only in the full context.
+  dashboard?: string;
   account: ContextAccount;
   workspace: string;
   mcpUrl: string | null;
@@ -187,8 +197,27 @@ export async function buildContext(ctx: McpContext, opts: { full?: boolean } = {
   const stats = await catalogStats([...new Set(instances.map((i) => i.integrationId))]);
   const context = contextFrom(ctx, instances, { ...opts, stats });
   if (!opts.full) return context;
-  const r = await releaseStatus();
-  return { zeqqat: { version: r.current, latest: r.latest, updateAvailable: r.updateAvailable }, ...context };
+  const [r, you, dashboard] = await Promise.all([releaseStatus(), callerOf(ctx.userId), dashboardUrl(ctx)]);
+  return { zeqqat: { version: r.current, latest: r.latest, updateAvailable: r.updateAvailable }, you, dashboard, ...context };
+}
+
+// The caller's display name and username (their personal account's slug;
+// null if they somehow have none). Never their email.
+async function callerOf(userId: string | null): Promise<ContextCaller | null> {
+  if (!userId) return null;
+  const [row] = await db
+    .select({ name: user.name, username: organization.slug })
+    .from(user)
+    .leftJoin(organization, and(eq(organization.ownerUserId, user.id), eq(organization.kind, "personal")))
+    .where(eq(user.id, userId))
+    .limit(1);
+  return row ? { name: row.name, username: row.username ?? null } : null;
+}
+
+async function dashboardUrl(ctx: McpContext): Promise<string> {
+  const [ws] = await db.select({ slug: workspace.slug }).from(workspace).where(eq(workspace.id, ctx.workspaceId)).limit(1);
+  const base = publicUrl().replace(/\/$/, "");
+  return ws ? base + wsBase(ctx.organizationSlug, ws.slug) : base + `/${ctx.organizationSlug}`;
 }
 
 // Whether anything this connection reaches lets this caller delete. Used

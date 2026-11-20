@@ -139,7 +139,7 @@ in through one are "connected".
 **Dokploy Instances, not integrations, in the UI.** The menu item is the
 Dokploy logo plus "Dokploy Instances" (`<ws>/dokploy-instances`, instances
 grouped under their app; one instance's page is
-`<ws>/dokploy-instances/<id>`, and the old `<ws>/instances/<id>` still lands there). "Integration" is the code's
+`<ws>/dokploy-instances/<id>`). "Integration" is the code's
 word for a published tool set (`@zeqqat/dokploy`), not a menu label: people
 think "my Dokploy", not "my integration". Once Zeqqat leaves the Dokploy
 ecosystem the page becomes "Apps", each app listing its instances or
@@ -474,8 +474,12 @@ result, and in `structuredContent.context`. Every tool description points
 to `zeqqat_whoami`, whose result is the full context: every instance, plus
 each integration's `categories` (distinct first spec tag of its live
 endpoints). It also leads with `zeqqat` (`version`, `latest`,
-`updateAvailable`, from `releaseStatus` in `lib/changelog.ts`). Other results and `instructions` leave categories out to stay
-small. Every built-in declares an `outputSchema`
+`updateAvailable`, from `releaseStatus` in `lib/changelog.ts`), then
+`you` (the caller's `name` and `username`, never their email; null on a
+public MCP URL) and `dashboard` (the full address of the workspace's page,
+`https://<site>/<username>/<workspace>`, so the agent can hand the person
+a link). Other results and `instructions` leave categories, `you` and
+`dashboard` out to stay small. Every built-in declares an `outputSchema`
 (`{ context, result }`; `zeqqat_run`'s result is any JSON). JSON keys the
 agent sees are camelCase; Postgres columns stay snake_case.
 
