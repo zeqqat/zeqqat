@@ -238,8 +238,8 @@ means `/<username>/<workspace>`.
   workspaces (the account level, `app/[org]/page.tsx` +
   `app/[org]/account-home.tsx`); anyone else, signed in or not, sees the
   public page (what it publishes).
-- `/<username>/members`, `/settings`, `/dokploy-integrations`: the
-  account's own pages (`app/[org]/(account)/`).
+- `/<username>/members`, `/settings`, `/dokploy-integrations`, `/policies`:
+  the account's own pages (`app/[org]/(account)/`).
 - `<ws>` and `<ws>/...`: one workspace's pages (`app/[org]/[ws]/`). A dotted
   second segment is a tool or policy page instead (`app/[org]/[ws]/page.tsx`
   dispatches to `tool-page.tsx`); workspace slugs never have dots.
@@ -324,7 +324,23 @@ same slug. Explicit allow list: anything not listed is denied, including
 tools a later spec adds; kinds only help fill the list in the editor.
 Every save bumps `version` and writes a revision (history, restore).
 `spec_release` records the spec reviewed; the dashboard warns, never
-blocks. Public policies are listed on `/<ns>` and at
+blocks. **Policies pages** (`components/PolicyViews.tsx`, `components/PolicyClient.tsx`,
+data in `lib/policy-pages.ts`): policies belong to the account, so they are
+made and edited at `/<username>/policies` (every policy the account owns,
+used or not, plus "+ New policy" for owners); `<ws>/policies` lists only the
+ones used in that workspace and links to the account's pages. A card is the
+full name (`@acme/dokploy.policy.` dim, the name bold, opening scrolled to
+its end when it doesn't fit) with the version, the Read / Create / Edit /
+Delete pills as allowed/total (they scroll sideways on a phone, never shrink),
+and "2 MCP URLs · 1 instance". Default policy is always first and has its own
+page (`/policies/default`: Map, read-only MCP tools). A policy's page has Map
+(each MCP URL → shield + calls in the last 7 days under this policy, from
+`call_log.policy_name` → instance), MCP tools (search plus a "Show" filter:
+All stands alone, Allowed / New / kinds add up, removing the last pick
+brings All back; toggles for owners, a save bar "Save as vN") and Manage
+(new MCP tools to review first, with a blue dot on the tab; created by,
+name, what agents read, public, workspaces, integration, delete).
+Public policies are listed on `/<ns>` and at
 `/<ns>/<integration>.policy.<name>`; copying makes the installer's own copy
 (`copied_from_*`), which only gets an "update available" note. Only org
 owners write policies. A policy attached to a grant can't be deleted.

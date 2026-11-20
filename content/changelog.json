@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.7",
+    "date": "2026-11-20",
+    "at": "2026-11-20T18:03:10Z",
+    "changes": [
+      "Agent notes describe the new Policies pages"
+    ]
+  },
+  {
     "version": "0.5.6",
     "date": "2026-11-20",
     "at": "2026-11-20T18:01:53Z",
