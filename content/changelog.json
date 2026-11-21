@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.13",
+    "date": "2026-11-21",
+    "at": "2026-11-21T07:20:45Z",
+    "changes": [
+      "Blog: Vercel Alternatives You Can Self-Host, and How to Move Your Next.js App"
+    ]
+  },
+  {
     "version": "0.5.12",
     "date": "2026-11-21",
     "at": "2026-11-21T06:49:07Z",
