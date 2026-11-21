@@ -4405,6 +4405,87 @@ span.zq-pill-ic {
   z-index: 2;
 }
 
+/* a call on a request page: the JSON sits in a drawer, closed at first */
+button.zq-rc-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.zq-cc-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.zq-cc-chev {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.18s ease;
+}
+.zq-cc.is-drawer:hover .zq-cc-chev {
+  stroke: var(--fg);
+}
+.zq-cc.is-open .zq-cc-chev {
+  transform: rotate(180deg);
+}
+.zq-cc.is-drawer .zq-cc-why {
+  position: static;
+}
+.zq-cc-drawer {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  animation: zq-drawer-open 0.18s ease-out;
+}
+.zq-cc-drawer[hidden] {
+  display: none;
+}
+.zq-cc-drawer .zq-json-box {
+  margin-top: 0;
+}
+.zq .zq-cc-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--dim);
+  text-decoration: none;
+}
+.zq .zq-cc-open:hover {
+  color: var(--fg);
+}
+.zq-cc-open:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+@keyframes zq-drawer-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zq-cc-chev,
+  .zq-cc-drawer {
+    transition: none;
+    animation: none;
+  }
+}
+
 /* the Zeqqat tool behind a quiet line, small and faint, before its text */
 .zq-look-tool {
   font-family: inherit;

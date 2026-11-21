@@ -4,6 +4,7 @@ import { JsonView } from "./JsonView";
 import { Chain } from "./Parts";
 import { Clock } from "./Time";
 import { ToolName } from "./ToolName";
+import { CallDrawer } from "./CallDrawer";
 
 const SHIELD = (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -35,34 +36,58 @@ function why(call: ActivityCall): { tone: "blocked" | "error"; text: string } | 
 }
 
 // One call to an app: the chain and time on top, the full tool name, the
-// endpoint's plain description, then what it was called with.
+// endpoint's plain description, then what it was called with. With `href`
+// (a request page's list) the JSON starts closed: a click on the card opens
+// it like a drawer, with a link to the call's own page inside. Without it
+// (the call page, the landing demo) everything shows.
 export function CallCard({ call, href }: { call: ActivityCall; href?: string }) {
   const w = why(call);
   const summary = { instance: call.instanceAlias, connection: call.connectionName, inputs: call.inputs ?? {} };
+  const chain = (
+    <Chain
+      state={call.state}
+      integrationSlug={call.integrationSlug ?? ""}
+      integrationName={call.integrationRef ?? call.toolName}
+      instance={call.instanceAlias}
+    />
+  );
+  const clock = <Clock iso={call.at} ms={call.state === "running" || call.state === "blocked" ? null : call.durationMs} />;
+  const notes = (
+    <>
+      {call.summary && <div className="zq-cc-desc">{call.summary}</div>}
+      {w && <div className={`zq-cc-why is-${w.tone}`}>{w.text}</div>}
+    </>
+  );
+  const json = (
+    <div className="zq-json-box has-info">
+      <InfoBubble title="Call summary">{CALL_SUMMARY_TEXT}</InfoBubble>
+      <JsonView value={summary} />
+    </div>
+  );
+  const hidden =
+    call.redactions > 0 ? (
+      <span className="zq-cc-red">
+        {SHIELD}
+        {call.redactions === 1 ? "1 secret hidden" : `${call.redactions} secrets hidden`}
+      </span>
+    ) : null;
+
+  if (href) {
+    return (
+      <CallDrawer toolName={call.toolName} href={href} chain={chain} clock={clock} notes={<>{notes}{hidden}</>}>
+        {json}
+      </CallDrawer>
+    );
+  }
   return (
-    <div className={`zq-cc${href ? " is-link" : ""}`}>
-      {href && <a className="zq-rc-link" href={href} aria-label={`Open call: ${call.toolName}`} />}
-      <Chain
-        state={call.state}
-        integrationSlug={call.integrationSlug ?? ""}
-        integrationName={call.integrationRef ?? call.toolName}
-        instance={call.instanceAlias}
-      />
-      <Clock iso={call.at} ms={call.state === "running" || call.state === "blocked" ? null : call.durationMs} />
+    <div className="zq-cc">
+      {chain}
+      {clock}
       <div className="zq-cc-txt">
-        <ToolName name={call.toolName} href={href} />
-        {call.summary && <div className="zq-cc-desc">{call.summary}</div>}
-        {w && <div className={`zq-cc-why is-${w.tone}`}>{w.text}</div>}
-        <div className="zq-json-box has-info">
-          <InfoBubble title="Call summary">{CALL_SUMMARY_TEXT}</InfoBubble>
-          <JsonView value={summary} />
-        </div>
-        {call.redactions > 0 && (
-          <span className="zq-cc-red">
-            {SHIELD}
-            {call.redactions === 1 ? "1 secret hidden" : `${call.redactions} secrets hidden`}
-          </span>
-        )}
+        <ToolName name={call.toolName} />
+        {notes}
+        {json}
+        {hidden}
       </div>
     </div>
   );
