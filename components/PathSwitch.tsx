@@ -60,7 +60,7 @@ function Down() {
   );
 }
 
-type Ws = { id: string; name: string };
+type Ws = { id: string; name: string; slug?: string };
 
 export function PathSwitch({
   accounts,
@@ -171,7 +171,8 @@ export function PathSwitch({
             aria-expanded={open === "workspace"}
             onClick={() => toggle("workspace")}
           >
-            <span className="zq-path-n">{currentWorkspace.name}</span>
+            {/* The path shows the workspace's address part, as in the URL (lowercase): Gaita, 2026-11-21. */}
+            <span className="zq-path-n">{currentWorkspace.slug ?? currentWorkspace.name}</span>
             <Down />
           </button>
         </>

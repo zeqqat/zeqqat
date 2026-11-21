@@ -230,6 +230,20 @@ other URL; the `zq_org` / `zq_ws` cookies are only a fallback. A personal
 account has members too (people in its workspaces), but nobody else can
 ever be its owner.
 `pnpm exec tsx tests/e2e/accounts-seed.ts` runs it locally with three accounts.
+A workspace's Settings (`app/[org]/[ws]/settings/page.tsx`, head in
+`components/SettingsHead.tsx`, `.zq-st-*` CSS) is one card: workspace name,
+`@account / workspace` (the lowercase address part) and icon counts
+(instances, MCP URLs, people, policies used; no graphs), then tabs: General
+(Workspace name, Address), Transfer (personal accounts only) and Delete
+(owners, when the account has another workspace). The top path shows the
+workspace's address part (`slug`), not its display name.
+An account's Settings (`app/[org]/(account)/settings/page.tsx`) uses the same
+card (avatar, name, @username, counts of workspaces, people, instances, MCP
+URLs, policies). Organization owners get Organization name, Username (old
+one kept as a `username_alias`) and a Delete tab (`lib/actions/org-settings.ts`);
+delete is refused while the organization publishes integrations or other
+accounts' MCP URLs use its policies. A personal account's name and username
+link to /account.
 
 **Members pages** (`components/Members.tsx`, `components/members.css`,
 `lib/members.ts`, `lib/actions/members.ts`). A workspace member is always

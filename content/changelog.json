@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.5.12",
+    "date": "2026-11-21",
+    "at": "2026-11-21T06:49:07Z",
+    "changes": [
+      "Workspace Settings: a card with the workspace name, @account / workspace and counts, then General, Transfer and Delete tabs",
+      "The top path shows the workspace's address (lowercase), like the URL",
+      "Account Settings: the same card with counts; organization owners can rename the organization, change its username (the old one keeps redirecting) and delete it"
+    ]
+  },
+  {
     "version": "0.5.11",
     "date": "2026-11-21",
     "at": "2026-11-21T05:45:40Z",

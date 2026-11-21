@@ -7176,3 +7176,24 @@ button.zq-demo-open {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* Settings pages (app/[org]/[ws]/settings, app/[org]/(account)/settings):
+   the card on top, then tabs, inside one .zq-in-card (Gaita, 2026-11-21). */
+.zq-st-msg { margin-bottom: 14px; }
+.zq-st-head { align-items: flex-start; }
+.zq-st-mark {
+  width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: 10px; color: #fff; font-size: 16px; font-weight: 600;
+}
+.zq-st-mark.is-ws { border: 1px solid var(--line2); background: color-mix(in srgb, var(--fg) 8%, var(--panel)); color: var(--dim); }
+.zq-st-head .zq-mu-pt { display: grid; gap: 7px; }
+.zq-st-addr { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zq-st-addr i { font-style: normal; color: var(--faint); margin: 0 -2px; }
+.zq-st-nums { justify-content: flex-start !important; gap: 14px; flex-wrap: wrap; }
+.zq-st-nums .zq-acc-num { font-size: 12.5px; }
+.zq-mb-list .zq-mu-mrow-t small { line-height: 1.45; }
+.zq-st-url { overflow-wrap: anywhere; }
+.zq-st-form { display: grid; gap: 8px; }
+.zq-st-form .zq-select { width: 100%; }
+.zq-st-av .zq-acc-av.is-lg { width: 42px; height: 42px; border-radius: 10px; font-size: 16px; }
+.zq-st-av .zq-acc-av.is-lg.is-person { border-radius: 50%; }
