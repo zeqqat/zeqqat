@@ -217,7 +217,12 @@ access control: the server actions keep their own checks.
 
 **Accounts and the path switcher.** An account is a personal account
 (`organization.kind = 'personal'`, created at sign-up, its slug is the
-user's username, one owner forever) or an organization. The top bar's path
+user's username, one owner forever) or an organization. **An account can
+have no workspace.** Sign-up and "+ New organization" make the account
+only; its first workspace comes from Setup (`/<username>/setup`) or the
+account page. `requireAccount` (`lib/guard.ts`) serves account pages
+whether or not a workspace exists; never create a placeholder workspace
+to satisfy a check. The top bar's path
 is the switcher (`components/PathSwitch.tsx`): one click on `@username` or
 the workspace opens a list whose first row opens it ("Open ›"), then the
 others to switch to, then + New. Your own account is first, with a "you"

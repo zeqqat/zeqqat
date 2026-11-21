@@ -178,7 +178,7 @@ async function ownerCount(organizationId: string) {
 // Org owners are admins of every workspace in the org.
 export async function changeOrgRoleAction(formData: FormData) {
   const base = await here();
-  const { ws } = await requireOrgOwner();
+  const { acct: ws } = await requireOrgOwner();
   const membershipId = formData.get("membership_id")?.toString() ?? "";
   const role = formData.get("role")?.toString() === "owner" ? "owner" : "member";
   const row = await db.query.membership.findFirst({
@@ -197,7 +197,7 @@ export async function changeOrgRoleAction(formData: FormData) {
 // Removes someone from the whole org: every workspace, every agent.
 export async function removeFromOrgAction(formData: FormData) {
   const base = await here();
-  const { user, ws } = await requireOrgOwner();
+  const { user, acct: ws } = await requireOrgOwner();
   const membershipId = formData.get("membership_id")?.toString() ?? "";
   const row = await db.query.membership.findFirst({
     where: and(eq(membership.id, membershipId), eq(membership.organizationId, ws.organizationId)),

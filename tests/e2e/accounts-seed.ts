@@ -50,7 +50,7 @@ async function main() {
   const { syncOfficialCatalog } = await import("../../lib/official-catalog");
   const { auth } = await import("../../lib/auth");
   const { makeSignature } = await import("better-auth/crypto");
-  const { listUserWorkspaces } = await import("../../lib/workspace");
+  const { listUserAccounts } = await import("../../lib/workspace");
   const { encryptCredential } = await import("../../lib/crypto");
   const { newId } = await import("../../lib/id");
   const { eq } = await import("drizzle-orm");
@@ -86,13 +86,17 @@ async function main() {
 
   await syncOfficialCatalog();
   const [dokploy] = await db.select().from(schema.integration).where(eq(schema.integration.slug, "dokploy")).limit(1);
-  const [personal] = await listUserWorkspaces(me.id);
 
   async function ws(orgId: string, name: string) {
     const id = newId();
     await db.insert(schema.workspace).values({ id, organizationId: orgId, slug: name.toLowerCase().replace(/\W+/g, "-"), name, setupCompletedAt: new Date() });
     return id;
   }
+
+  // Sign-up makes no workspace; the personal one is made here, as Setup would.
+  const [mine] = await listUserAccounts(me.id);
+  await db.update(schema.organization).set({ setupCompletedAt: new Date() }).where(eq(schema.organization.id, mine.organizationId));
+  const personal = { organizationId: mine.organizationId, workspaceId: await ws(mine.organizationId, "Default") };
   async function org(slug: string, name: string, owner: string) {
     const id = newId();
     await db.insert(schema.organization).values({ id, slug, displayName: name, kind: "organization", ownerUserId: owner });

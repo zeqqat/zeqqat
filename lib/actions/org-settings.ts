@@ -22,7 +22,7 @@ function pgCode(err: unknown) {
 }
 
 async function ownedOrg() {
-  const { user, ws } = await requireOrgOwner();
+  const { user, acct: ws } = await requireOrgOwner();
   const back = accountBase(ws.organizationSlug) + "/settings";
   if (ws.organizationKind !== "organization") redirect(back);
   return { user, ws, back };

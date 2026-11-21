@@ -4,7 +4,7 @@ import { CrumbLast } from "../../../../../components/AppShell";
 import { AccountInstanceView } from "../../../../../components/AccountInstanceView";
 import { db } from "../../../../../db";
 import { connection, instance, integration, workspace, workspaceInstance } from "../../../../../db/schema";
-import { hereAccount, requireWorkspace } from "../../../../../lib/guard";
+import { hereAccount, requireAccount } from "../../../../../lib/guard";
 import { cardsFor } from "../../../../../lib/instance-cards";
 
 // One instance at the account level: its card, then which workspaces may use
@@ -17,7 +17,7 @@ export default async function AccountInstancePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const acct = await hereAccount();
-  const { ws } = await requireWorkspace();
+  const { acct: ws } = await requireAccount();
   const { id } = await params;
   const query = await searchParams;
   const [row] = await db

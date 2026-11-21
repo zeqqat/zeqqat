@@ -47,14 +47,7 @@ export async function runSignupTransaction(userId: string, name: string, email: 
       ownerUserId: userId,
     });
 
-    const workspaceId = newId();
-    await tx.insert(schema.workspace).values({
-      id: workspaceId,
-      organizationId,
-      slug: "default",
-      name: "Default",
-    });
-
+    // No workspace yet: the person names their first one in Setup.
     await tx.insert(schema.membership).values({
       id: newId(),
       userId,

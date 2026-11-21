@@ -4,7 +4,7 @@
 //
 // The app only has Google sign-in, so the test user and session are made
 // directly through Better Auth's own adapter (which also runs the signup
-// hook that creates the workspace), and the cookie is signed the same way
+// hook that makes the personal account), and the cookie is signed the same way
 // Better Auth signs it.
 
 import { spawn, type ChildProcess } from "node:child_process";
@@ -88,11 +88,14 @@ function standaloneServer(): [string, string[]] {
 
 async function signInTestUser() {
   const { db } = await import("../../db");
-  const { organization } = await import("../../db/schema");
+  const { organization, workspace } = await import("../../db/schema");
+  const { newId } = await import("../../lib/id");
   const { eq } = await import("drizzle-orm");
-  // The main test user has done Setup; the fresh one hasn't.
+  // The main test user has done Setup (one workspace, "production"); the
+  // fresh one hasn't, so has no workspace at all.
   const main = await writeSession("E2E User", "e2e@example.com", STORAGE_STATE);
-  await db.update(organization).set({ setupCompletedAt: new Date() }).where(eq(organization.ownerUserId, main));
+  const [own] = await db.update(organization).set({ setupCompletedAt: new Date() }).where(eq(organization.ownerUserId, main)).returning({ id: organization.id });
+  await db.insert(workspace).values({ id: newId(), organizationId: own.id, slug: "production", name: "production", setupCompletedAt: new Date() });
   await writeSession("Fresh User", "fresh@example.com", FRESH_STATE);
 }
 

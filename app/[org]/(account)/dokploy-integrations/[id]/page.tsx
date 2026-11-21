@@ -1,5 +1,5 @@
 import { IntegrationDetail } from "../../../../../components/IntegrationViews";
-import { hereAccount, requireWorkspace } from "../../../../../lib/guard";
+import { hereAccount, requireAccount } from "../../../../../lib/guard";
 import { accountScope, mustInclude } from "../../../../../lib/integration-scope";
 
 export default async function AccountIntegrationPage({
@@ -10,7 +10,7 @@ export default async function AccountIntegrationPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const acct = await hereAccount();
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const { ids, workspaceIds } = await accountScope(user.id, ws);
   mustInclude(ids, id);

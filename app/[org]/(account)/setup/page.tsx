@@ -67,8 +67,7 @@ export default async function SetupPage({
       db.select({ slug: workspace.slug }).from(workspace).innerJoin(organization, eq(organization.id, workspace.organizationId)).where(and(eq(organization.id, own.id))),
     ]);
     const choices = insts.map(({ baseUrl, ...r }) => ({ ...r, host: baseUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "") }));
-    // The empty workspace from sign-up gets this name, so it isn't a clash.
-    const existing = wss.length === 1 ? [] : wss.map((w) => w.slug);
+    const existing = wss.map((w) => w.slug);
     return (
       <div className="zq-ob">
         <Stepper steps={[{ label: `Dokploy: ${st.alias}`, state: "done" }, { label: "Name your workspace", state: "now" }, { label: "Connect an agent", state: "todo" }]} />

@@ -7,19 +7,19 @@ import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { instance, membership, oauthGrant, oauthToken, organization, workspace } from "../../db/schema";
 import { publicUrl } from "../env";
-import { hrefIn, requireOrgOwner, requireOwner, requireUser } from "../guard";
+import { hrefIn, requireOrgOwner, requireOwner, requireUser, requireWorkspaceOrgOwner } from "../guard";
 import { accountBase, isReservedWorkspaceSlug, wsBase } from "../paths";
 import { newId } from "../id";
 import { deleteInstances, giveInstance } from "../instance-ops";
 import { personalAccountOf } from "../setup";
-import { connection } from "../../db/schema";
 import { transferWorkspace } from "../transfer";
 import { isReserved, isValidOrgSlug, normalizeSlug } from "../username";
 import { heldByOldUsername } from "../username-alias";
-import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserWorkspaces } from "../workspace";
+import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserAccounts, listUserWorkspaces } from "../workspace";
 
 import { inWorkspace } from "../instance-scope";
-async function setCurrent(organizationId: string, workspaceId: string) {
+// The current account, and the current workspace when there is one.
+async function setCurrent(organizationId: string, workspaceId: string | null) {
   const jar = await cookies();
   const opts = {
     path: "/",
@@ -29,7 +29,8 @@ async function setCurrent(organizationId: string, workspaceId: string) {
     maxAge: 60 * 60 * 24 * 365,
   };
   jar.set(CURRENT_ORG_COOKIE, organizationId, opts);
-  jar.set(CURRENT_WS_COOKIE, workspaceId, opts);
+  if (workspaceId) jar.set(CURRENT_WS_COOKIE, workspaceId, opts);
+  else jar.delete(CURRENT_WS_COOKIE);
 }
 
 // Picking an org lands on its first workspace you can open; picking a
@@ -52,13 +53,15 @@ export async function switchWorkspaceAction(formData: FormData) {
 export async function openAccountAction(formData: FormData) {
   const user = await requireUser();
   const orgId = formData.get("organization_id")?.toString() ?? "";
+  const acct = (await listUserAccounts(user.id)).find((a) => a.organizationId === orgId);
+  if (!acct) redirect(await homePathFor(user.id));
   const all = await listUserWorkspaces(user.id);
   const jar = await cookies();
   const curWs = jar.get(CURRENT_WS_COOKIE)?.value;
   const target = all.find((w) => w.organizationId === orgId && w.workspaceId === curWs) ?? all.find((w) => w.organizationId === orgId);
-  if (!target) redirect(await homePathFor(user.id));
-  await setCurrent(target.organizationId, target.workspaceId);
-  redirect(accountBase(target.organizationSlug));
+  // An account with no workspace yet still opens; only the account is remembered.
+  await setCurrent(orgId, target?.workspaceId ?? null);
+  redirect(accountBase(acct.organizationSlug));
 }
 
 // A workspace's slug is the second part of its pages' URLs
@@ -85,7 +88,7 @@ export type FormState = { error?: string };
 // "Engineering". Only org owners create them; they're admins of it by
 // being org owners, so no member row is needed.
 export async function createWorkspaceAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const { ws } = await requireOrgOwner();
+  const { acct: ws } = await requireOrgOwner();
   const made = await makeWorkspace(ws.organizationId, formData);
   if ("error" in made) return made;
   await setCurrent(ws.organizationId, made.id);
@@ -107,11 +110,10 @@ async function freeSlug(organizationId: string, base: string, except?: string) {
   return `${base}-${k}`;
 }
 
-// A new workspace plus the account's instances ticked for it. When the
-// account still has only the empty workspace made at sign-up (no instance,
-// no MCP URL), that one is named instead, so nobody ends up with a stray
-// "Default".
-async function makeWorkspace(organizationId: string, formData: FormData, reuseEmpty = false): Promise<{ error: string } | { id: string; slug: string }> {
+// A new workspace plus the account's instances ticked for it.
+// `fromSetup`: the account's first workspace, which still asks where Zeqqat
+// should run (cloud); later ones don't.
+async function makeWorkspace(organizationId: string, formData: FormData, fromSetup = false): Promise<{ error: string } | { id: string; slug: string }> {
   const name = (formData.get("name")?.toString() ?? "").trim();
   const base = toSlug(name);
   if (!name || !base) return { error: "Give the workspace a name, for example production." };
@@ -120,19 +122,10 @@ async function makeWorkspace(organizationId: string, formData: FormData, reuseEm
   const mine = ids.length
     ? await db.select({ id: instance.id }).from(instance).where(and(eq(instance.organizationId, organizationId), inArray(instance.id, ids)))
     : [];
-  let target: string | null = null;
-  if (reuseEmpty) {
-    const wss = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, organizationId));
-    if (wss.length === 1) {
-      const [hasUrl] = await db.select({ id: connection.id }).from(connection).where(eq(connection.workspaceId, wss[0].id)).limit(1);
-      if (!hasUrl) target = wss[0].id;
-    }
-  }
-  const slug = await freeSlug(organizationId, base, target ?? undefined);
-  const id = target ?? newId();
+  const slug = await freeSlug(organizationId, base);
+  const id = newId();
   await db.transaction(async (tx) => {
-    if (target) await tx.update(workspace).set({ slug, name: name.slice(0, 60) }).where(eq(workspace.id, target));
-    else await tx.insert(workspace).values({ id, organizationId, slug, name: name.slice(0, 60), setupCompletedAt: new Date() });
+    await tx.insert(workspace).values({ id, organizationId, slug, name: name.slice(0, 60), setupCompletedAt: fromSetup ? null : new Date() });
     for (const m of mine) await giveInstance(tx, id, m.id);
   });
   return { id, slug };
@@ -151,7 +144,8 @@ export async function setupWorkspaceAction(_prev: FormState, formData: FormData)
 }
 
 
-// A new organization, owned by whoever creates it, with one workspace.
+// A new organization, owned by whoever creates it. Its first workspace is
+// made from its page, like any other.
 export async function createOrgAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireUser();
   const name = (formData.get("name")?.toString() ?? "").trim();
@@ -162,18 +156,16 @@ export async function createOrgAction(_prev: FormState, formData: FormData): Pro
   if (await heldByOldUsername(slug)) return { error: `The handle @${slug} is taken.` };
 
   const orgId = newId();
-  const wsId = newId();
   try {
     await db.transaction(async (tx) => {
       await tx.insert(organization).values({ id: orgId, slug, displayName: name.slice(0, 60), kind: "organization", ownerUserId: user.id });
-      await tx.insert(workspace).values({ id: wsId, organizationId: orgId, slug: "default", name: "Default" });
       await tx.insert(membership).values({ id: newId(), userId: user.id, organizationId: orgId, role: "owner" });
     });
   } catch (err) {
     if (pgCode(err) === "23505") return { error: `The handle @${slug} is taken.` };
     throw err;
   }
-  await setCurrent(orgId, wsId);
+  await setCurrent(orgId, null);
   redirect(accountBase(slug));
 }
 
@@ -189,7 +181,7 @@ export async function renameWorkspaceAction(formData: FormData) {
 // Deletes a workspace and everything in it (instances, keys, connections).
 // Never the org's last workspace.
 export async function deleteWorkspaceAction(formData: FormData) {
-  const { ws } = await requireOrgOwner();
+  const { ws } = await requireWorkspaceOrgOwner();
   if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect(hrefIn(ws, "/settings?error=confirm"));
   const siblings = await db.select({ id: workspace.id, slug: workspace.slug }).from(workspace).where(eq(workspace.organizationId, ws.organizationId));
   if (siblings.length <= 1) redirect(hrefIn(ws, "/settings?error=last"));
@@ -241,7 +233,7 @@ export async function removeHostedDataAction(formData: FormData) {
 // your personal namespace into an organization you own. Old connection URLs
 // keep working and tell agents the new one.
 export async function transferWorkspaceAction(formData: FormData) {
-  const { user, ws } = await requireOrgOwner();
+  const { user, ws } = await requireWorkspaceOrgOwner();
   if (ws.organizationKind !== "personal") redirect(hrefIn(ws, "/settings?error=transfer_personal"));
   if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect(hrefIn(ws, "/settings?error=confirm_transfer"));
   const target = formData.get("to_org")?.toString() ?? "";

@@ -8,7 +8,7 @@ import { instance, integration, workspace } from "../../db/schema";
 import { decryptCredential, encryptCredential } from "../crypto";
 import { CONNECTION_MESSAGES, normalizeBaseUrl, testDokployConnection } from "../dokploy-check";
 import { primaryConnection } from "../connections";
-import { accountHref, here, hrefIn, requireOrgOwner, requireOwner } from "../guard";
+import { accountHref, here, hrefIn, requireAccount, requireOrgOwner, requireOwner, requireWorkspaceOrgOwner } from "../guard";
 import { newId } from "../id";
 import { deleteInstances, giveInstance, takeInstance } from "../instance-ops";
 import { syncOfficialCatalog } from "../official-catalog";
@@ -39,16 +39,17 @@ function pgCode(err: unknown) {
 // Every new instance gets a workspace-default grant (read, create and edit
 // on, delete off): without one, the executor allows nothing.
 export async function connectDokployAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
-  const { user, ws } = await requireOrgOwner();
-  const base = hrefIn(ws);
+  const { user, acct, ws } = await requireOrgOwner();
   const nx = nextOf(formData);
-  const toWorkspace = nx === "dokploy-instances" || nx === "overview";
+  // From a workspace's pages it also joins that workspace.
+  const toWorkspace = (nx === "dokploy-instances" || nx === "overview") && ws ? ws : null;
+  const base = ws ? hrefIn(ws) : accountHref(acct);
 
   const alias = (formData.get("alias")?.toString() ?? "").trim().toLowerCase();
   const baseUrlRaw = (formData.get("base_url")?.toString() ?? "").trim();
   const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
   const next =
-    nx === "setup" ? accountHref(ws, "/setup") : nx === "account" ? accountHref(ws, "/dokploy-instances") : nx === "dokploy-instances" ? `${base}/dokploy-instances` : base;
+    nx === "setup" ? accountHref(acct, "/setup") : nx === "account" || !toWorkspace ? accountHref(acct, "/dokploy-instances") : nx === "dokploy-instances" ? `${base}/dokploy-instances` : base;
   const values = { alias, baseUrl: baseUrlRaw };
 
   if (!alias || !baseUrlRaw || !apiKey) return { error: "Fill in the name, the URL and the API key.", values };
@@ -75,7 +76,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
     await db.transaction(async (tx) => {
       await tx.insert(instance).values({
         id: instanceId,
-        organizationId: ws.organizationId,
+        organizationId: acct.organizationId,
         integrationId: dokploy.id,
         alias,
         baseUrl: result.baseUrl!,
@@ -85,10 +86,10 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
         lastStatus: "ok",
         createdByUserId: user.id,
       });
-      if (toWorkspace) await giveInstance(tx, ws.workspaceId, instanceId);
+      if (toWorkspace) await giveInstance(tx, toWorkspace.workspaceId, instanceId);
     });
     // First instance in a workspace: make sure it has a URL to hand out.
-    if (toWorkspace) await primaryConnection(ws, user.id);
+    if (toWorkspace) await primaryConnection(toWorkspace, user.id);
   } catch (err) {
     if (pgCode(err) === "23505") return { error: `You already have an instance called "${alias}". Pick another name.`, values };
     throw err;
@@ -103,7 +104,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
 // is checked by the first real call.
 export async function connectAppAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
   const base = await here();
-  const { user, ws } = await requireOrgOwner();
+  const { user, ws } = await requireWorkspaceOrgOwner();
 
   const integrationId = formData.get("integration_id")?.toString() ?? "";
   const alias = (formData.get("alias")?.toString() ?? "").trim().toLowerCase();
@@ -165,12 +166,12 @@ async function ownedInstance(organizationId: string, instanceId: string) {
 // The page the form sits on: the account's Dokploy Instances (base=account)
 // or the current workspace's.
 async function pageBase(formData: FormData) {
-  const { ws } = await requireOwner();
-  return formData.get("base")?.toString() === "account" ? accountHref(ws) : hrefIn(ws);
+  const { acct, ws } = await requireAccount();
+  return formData.get("base")?.toString() === "account" || !ws ? accountHref(acct) : hrefIn(ws);
 }
 
 export async function replaceKeyAction(_prev: ConnectState, formData: FormData): Promise<ConnectState> {
-  const { ws } = await requireOrgOwner();
+  const { acct: ws } = await requireOrgOwner();
   const base = await pageBase(formData);
   const instanceId = formData.get("instance_id")?.toString() ?? "";
   const apiKey = (formData.get("api_key")?.toString() ?? "").trim();
@@ -237,7 +238,7 @@ export async function retestInstanceAction(formData: FormData) {
 // new image and restarts, so agents get errors for a minute or two. Owners
 // only, behind a confirm on the instance's Manage tab.
 export async function updateDokployAction(formData: FormData) {
-  const { ws } = await requireOrgOwner();
+  const { acct: ws } = await requireOrgOwner();
   const here_ = await pageBase(formData);
   const inst = await ownedInstance(ws.organizationId, formData.get("instance_id")?.toString() ?? "");
   if (!inst) redirect(`${here_}/dokploy-instances`);
@@ -266,7 +267,7 @@ export async function updateDokployAction(formData: FormData) {
 // for it. call_log rows keep their history: their instance_id is a plain
 // reference, so it's cleared first rather than blocking the delete.
 export async function removeInstanceAction(formData: FormData) {
-  const { ws } = await requireOrgOwner();
+  const { acct: ws } = await requireOrgOwner();
   const base = await pageBase(formData);
   const inst = await ownedInstance(ws.organizationId, formData.get("instance_id")?.toString() ?? "");
   if (!inst) redirect(`${base}/dokploy-instances`);
@@ -284,11 +285,11 @@ export async function removeInstanceAction(formData: FormData) {
 // The account owner decides which workspaces use an instance (the toggles
 // on its Workspaces tab, and the workspace's "Add an instance").
 export async function setInstanceWorkspaceAction(formData: FormData) {
-  const { ws } = await requireOrgOwner();
+  const { acct: ws, ws: cur } = await requireOrgOwner();
   const inst = await ownedInstance(ws.organizationId, formData.get("instance_id")?.toString() ?? "");
   const target = formData.get("workspace_id")?.toString() ?? "";
   const on = formData.get("on")?.toString() === "on";
-  const back = formData.get("back")?.toString() === "workspace" ? hrefIn(ws, "/dokploy-instances") : accountHref(ws, `/dokploy-instances/${inst?.id ?? ""}?tab=workspaces`);
+  const back = formData.get("back")?.toString() === "workspace" && cur ? hrefIn(cur, "/dokploy-instances") : accountHref(ws, `/dokploy-instances/${inst?.id ?? ""}?tab=workspaces`);
   if (!inst) redirect(accountHref(ws, "/dokploy-instances"));
   const [w] = await db.select({ id: workspace.id }).from(workspace).where(and(eq(workspace.id, target), eq(workspace.organizationId, ws.organizationId)));
   if (!w) redirect(back);
@@ -303,7 +304,7 @@ export async function setInstanceWorkspaceAction(formData: FormData) {
 // "Add an instance" on a workspace's Dokploy Instances page: some of the
 // account's instances, ticked.
 export async function giveInstancesAction(formData: FormData) {
-  const { ws } = await requireOrgOwner();
+  const { ws } = await requireWorkspaceOrgOwner();
   const ids = formData.getAll("instance_id").map(String);
   if (ids.length) {
     const mine = await db.select({ id: instance.id }).from(instance).where(and(eq(instance.organizationId, ws.organizationId), inArray(instance.id, ids)));

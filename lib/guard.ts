@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { accountBase, wsBase } from "./paths";
 import { getServerSession } from "./session";
 import { renamedTo } from "./username-alias";
-import { getUserWorkspace, PATH_HEADER, placeFromRequest, type UserWorkspace } from "./workspace";
+import { getUserAccount, getUserWorkspace, homePathFor, PATH_HEADER, placeFromRequest, type UserAccount, type UserWorkspace } from "./workspace";
 
 // Every page and server action starts with one of these. Owner-only
 // actions re-check the role on the server: hiding a button is a
@@ -39,11 +39,31 @@ export async function requireWorkspace(): Promise<{ user: Awaited<ReturnType<typ
       if (renamed && path) redirect(`/${renamed.slug}${path.slice(place.org.length + 1)}`);
       notFound();
     }
-    // The signup transaction guarantees every user has a workspace; a missing
-    // one here means that invariant broke, not a normal empty state.
-    redirect("/signin");
+    // No workspace yet (before Setup, or none left): start where they start.
+    redirect(await homePathFor(user.id));
   }
   return { user, ws };
+}
+
+// Account-level pages and actions: the account the URL names (or the last
+// one picked, or your own), whether or not it has a workspace yet. `ws` is
+// the current workspace when it's in that account.
+export async function requireAccount(): Promise<{ user: Awaited<ReturnType<typeof requireUser>>; acct: UserAccount; ws: UserWorkspace | null }> {
+  const user = await requireUser();
+  const acct = await getUserAccount(user.id);
+  if (!acct) {
+    const place = await placeFromRequest();
+    if (place.org) {
+      const renamed = await renamedTo(place.org);
+      const path = (await headers()).get(PATH_HEADER);
+      if (renamed && path) redirect(`/${renamed.slug}${path.slice(place.org.length + 1)}`);
+      notFound();
+    }
+    redirect("/signin");
+  }
+  const place = await placeFromRequest();
+  const w = place.org && !place.ws ? await getUserWorkspace(user.id) : place.ws ? null : await getUserWorkspace(user.id);
+  return { user, acct, ws: w && w.organizationId === acct.organizationId ? w : null };
 }
 
 // Where a workspace's (or an account's) pages live.
@@ -51,7 +71,7 @@ export function hrefIn(ws: Pick<UserWorkspace, "organizationSlug" | "workspaceSl
   return wsBase(ws.organizationSlug, ws.workspaceSlug) + path;
 }
 
-export function accountHref(ws: Pick<UserWorkspace, "organizationSlug">, path = ""): string {
+export function accountHref(ws: { organizationSlug: string }, path = ""): string {
   return accountBase(ws.organizationSlug) + path;
 }
 
@@ -63,8 +83,8 @@ export async function here(path = ""): Promise<string> {
 }
 
 export async function hereAccount(path = ""): Promise<string> {
-  const { ws } = await requireWorkspace();
-  return accountHref(ws, path);
+  const { acct } = await requireAccount();
+  return accountHref(acct, path);
 }
 
 // Workspace admin (org owners are admins of every workspace). Named for
@@ -77,8 +97,16 @@ export async function requireOwner() {
 
 export const requireAdmin = requireOwner;
 
-// Org-level changes: creating workspaces, changing who owns the org.
+// Account-level changes: creating workspaces, its instances and policies,
+// changing who owns it. Works before the account has any workspace.
 export async function requireOrgOwner() {
+  const ctx = await requireAccount();
+  if (ctx.acct.orgRole !== "owner") redirect(accountHref(ctx.acct, "?error=owner_only"));
+  return ctx;
+}
+
+// An account owner acting on one workspace (deleting or moving it).
+export async function requireWorkspaceOrgOwner() {
   const ctx = await requireWorkspace();
   if (ctx.ws.orgRole !== "owner") redirect(hrefIn(ctx.ws, "?error=owner_only"));
   return ctx;

@@ -1,12 +1,12 @@
 import { IntegrationList } from "../../../../components/IntegrationViews";
-import { hereAccount, requireWorkspace } from "../../../../lib/guard";
+import { hereAccount, requireAccount } from "../../../../lib/guard";
 import { accountScope } from "../../../../lib/integration-scope";
 
 // Every integration this account uses or published, across the workspaces
 // the viewer can open.
 export default async function AccountIntegrationsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const acct = await hereAccount();
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   const what = (await searchParams).what === "1";
   const { ids, workspaceIds } = await accountScope(user.id, ws);
   return (

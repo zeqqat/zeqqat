@@ -29,7 +29,7 @@ function pgCode(err: unknown): string | undefined {
 
 export async function savePolicyFormAction(formData: FormData) {
   const base = await hereAccount();
-  const { user, ws } = await requireOrgOwner();
+  const { user, acct: ws } = await requireOrgOwner();
   const id = formData.get("policy_id")?.toString() || undefined;
   const integrationId = formData.get("integration_id")?.toString() ?? "";
   const name = toPolicyName(formData.get("name")?.toString() ?? "");
@@ -62,7 +62,7 @@ export async function savePolicyFormAction(formData: FormData) {
 // key restricts it too); detach it in Connections first.
 export async function deletePolicyAction(formData: FormData) {
   const base = await hereAccount();
-  const { ws } = await requireOrgOwner();
+  const { acct: ws } = await requireOrgOwner();
   const list = policiesBase(formData, ws.organizationSlug, base);
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);
@@ -89,7 +89,7 @@ export async function copyPolicyAction(formData: FormData) {
 
 export async function updateCopyAction(formData: FormData) {
   const base = await hereAccount();
-  const { user, ws } = await requireOrgOwner();
+  const { user, acct: ws } = await requireOrgOwner();
   const id = formData.get("policy_id")?.toString() ?? "";
   await updateCopyFromSource(id, ws.organizationId, user.id);
   revalidatePath(`${base}/policies/${id}`);
@@ -99,7 +99,7 @@ export async function updateCopyAction(formData: FormData) {
 // The MCP tools tab saves the allow list alone; everything else stays.
 export async function savePolicyAllowAction(formData: FormData) {
   const base = await hereAccount();
-  const { user, ws } = await requireOrgOwner();
+  const { user, acct: ws } = await requireOrgOwner();
   const list = policiesBase(formData, ws.organizationSlug, base);
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);
@@ -123,7 +123,7 @@ export async function savePolicyAllowAction(formData: FormData) {
 // its own field; the rest keeps its value.
 export async function updatePolicyMetaAction(formData: FormData) {
   const base = await hereAccount();
-  const { user, ws } = await requireOrgOwner();
+  const { user, acct: ws } = await requireOrgOwner();
   const list = policiesBase(formData, ws.organizationSlug, base);
   const id = formData.get("policy_id")?.toString() ?? "";
   const existing = await getPolicy(id);

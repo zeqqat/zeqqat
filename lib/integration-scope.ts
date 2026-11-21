@@ -10,7 +10,7 @@ export async function workspaceScope(ws: UserWorkspace) {
   return { workspaceIds, ids: await integrationIdsForWorkspaces(workspaceIds) };
 }
 
-export async function accountScope(userId: string, ws: UserWorkspace) {
+export async function accountScope(userId: string, ws: { organizationId: string }) {
   const all = await listUserWorkspaces(userId);
   const workspaceIds = all.filter((w) => w.organizationId === ws.organizationId).map((w) => w.workspaceId);
   return { workspaceIds, ids: await integrationIdsForWorkspaces(workspaceIds, ws.organizationId) };

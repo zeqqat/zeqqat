@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { invitation, membership, oauthGrant, organization, workspace, workspaceMember } from "../../db/schema";
-import { requireWorkspace } from "../guard";
+import { requireAccount } from "../guard";
 import { newId } from "../id";
 import { listUserWorkspaces, type WsRole } from "../workspace";
 
@@ -30,7 +30,7 @@ function done(formData: FormData) {
 }
 
 async function ctx() {
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   return { user, ws, mine: await listUserWorkspaces(user.id) };
 }
 

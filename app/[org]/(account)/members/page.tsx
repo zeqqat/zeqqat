@@ -1,6 +1,6 @@
 import { CountHead, InviteButton } from "../../../../components/AccountPages";
 import { AccountMemberList, ErrorNote, InvitedList } from "../../../../components/Members";
-import { accountHref, requireWorkspace } from "../../../../lib/guard";
+import { accountHref, requireAccount } from "../../../../lib/guard";
 import { accountPeople, pendingInvites } from "../../../../lib/members";
 import { listUserWorkspaces } from "../../../../lib/workspace";
 
@@ -9,7 +9,7 @@ import { listUserWorkspaces } from "../../../../lib/workspace";
 // A personal account has members too (the people in its workspaces), but
 // nobody else can ever own it. Roles live on each person's page.
 export default async function AccountMembersPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   const { error } = await searchParams;
   const [people, invites, mine] = await Promise.all([
     accountPeople(ws.organizationId, user.id),

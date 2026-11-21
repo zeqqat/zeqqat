@@ -5,7 +5,7 @@ import { SettingsCounts, SettingsTabs } from "../../../../components/SettingsHea
 import { workspaceCards } from "../../../../lib/accounts";
 import { changeOrgUsernameAction, deleteOrgAction, renameOrgAction } from "../../../../lib/actions/org-settings";
 import { publicUrl } from "../../../../lib/env";
-import { requireWorkspace } from "../../../../lib/guard";
+import { requireAccount } from "../../../../lib/guard";
 import { accountScope } from "../../../../lib/integration-scope";
 import { accountPeople } from "../../../../lib/members";
 import { policyCards } from "../../../../lib/policy-pages";
@@ -27,7 +27,7 @@ const ERRORS: Record<string, [string, string]> = {
 };
 
 export default async function AccountSettingsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   const params = await searchParams;
   const personal = ws.organizationKind === "personal";
   const isOwner = ws.orgRole === "owner";

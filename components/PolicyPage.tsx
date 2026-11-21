@@ -9,7 +9,7 @@ import { PolicyCardBody, PolicyMapRows, PolicyTabs } from "./PolicyViews";
 import { db } from "../db";
 import { integration, organization, workspace } from "../db/schema";
 import { deletePolicyAction, savePolicyAllowAction, updatePolicyMetaAction } from "../lib/actions/policies";
-import { accountHref, hrefIn, requireWorkspace } from "../lib/guard";
+import { accountHref, hrefIn, requireAccount, requireWorkspace } from "../lib/guard";
 import { accountScope } from "../lib/integration-scope";
 import { getPolicy, policyWorkspaceIds } from "../lib/policies";
 import { defaultIntegrationId, personOf, policyCards, policyMap, policyTools } from "../lib/policy-pages";
@@ -33,10 +33,12 @@ export async function PolicyPageView({
   query: Record<string, string | string[] | undefined>;
   scope: "account" | "workspace";
 }) {
-  const { user, ws } = await requireWorkspace();
+  // The workspace's page needs the workspace; the account's works without one.
+  const wctx = scope === "workspace" ? await requireWorkspace() : null;
+  const { user, acct: ws } = wctx ? { user: wctx.user, acct: wctx.ws } : await requireAccount();
   const one = (k: string) => (typeof query[k] === "string" ? (query[k] as string) : "");
-  const workspaceIds = scope === "workspace" ? [ws.workspaceId] : (await accountScope(user.id, ws)).workspaceIds;
-  const listBase = scope === "workspace" ? hrefIn(ws, "/policies") : accountHref(ws, "/policies");
+  const workspaceIds = wctx ? [wctx.ws.workspaceId] : (await accountScope(user.id, ws)).workspaceIds;
+  const listBase = wctx ? hrefIn(wctx.ws, "/policies") : accountHref(ws, "/policies");
   const back = <input type="hidden" name="policies_base" value={listBase} />;
   const cards = await policyCards(ws.organizationId, workspaceIds, false);
   const card = cards.find((c) => c.id === id);

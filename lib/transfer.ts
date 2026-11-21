@@ -87,12 +87,6 @@ export async function transferWorkspace(params: { workspaceId: string; toOrganiz
       await tx.insert(membership).values({ id: newId(), userId: p.userId, organizationId: to.id, role: "member" }).onConflictDoNothing();
     }
 
-    // A personal namespace always keeps a workspace of its own.
-    const left = await tx.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, from.id)).limit(1);
-    if (!left.length) {
-      await tx.insert(workspace).values({ id: newId(), organizationId: from.id, slug: "default", name: "Default", setupCompletedAt: new Date() });
-    }
-
     // Open invites pointed at the old namespace.
     await tx
       .update(invitation)

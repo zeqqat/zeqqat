@@ -11,7 +11,7 @@ import { getServerSession } from "../../lib/session";
 import { policyPagePath, toCanonical, toolPagePath } from "../../lib/tool-names";
 import { isValidOrgSlug } from "../../lib/username";
 import { renamedTo } from "../../lib/username-alias";
-import { homePathFor, listUserWorkspaces } from "../../lib/workspace";
+import { homePathFor, listUserAccounts } from "../../lib/workspace";
 
 type Props = {
   params: Promise<{ org: string }>;
@@ -39,7 +39,7 @@ export default async function OrgPage({ params, searchParams }: Props) {
   }
 
   const session0 = await getServerSession();
-  if (session0?.user && (await listUserWorkspaces(session0.user.id)).some((w) => w.organizationId === org.id)) {
+  if (session0?.user && (await listUserAccounts(session0.user.id)).some((a) => a.organizationId === org.id)) {
     return (
       <AppFrame level="account">
         <AccountWorkspacesPage />

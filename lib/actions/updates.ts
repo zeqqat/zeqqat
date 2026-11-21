@@ -3,7 +3,7 @@
 import { adminTargets } from "../admin-targets";
 import { checkNow, forgetRemote, releaseStatus, type ReleaseStatus } from "../changelog";
 import { edition, siteHost } from "../edition";
-import { requireWorkspace } from "../guard";
+import { requireUser } from "../guard";
 import { deploySelf, deployState, findSelfCompose, type DeployState, type SelfCompose } from "../self-update";
 import { InstallError } from "../selfhost-install";
 import { listUserWorkspaces } from "../workspace";
@@ -13,12 +13,12 @@ import { listUserWorkspaces } from "../workspace";
 // update, and only through a Dokploy instance they already manage.
 
 export async function getReleaseStatus(): Promise<ReleaseStatus> {
-  await requireWorkspace();
+  await requireUser();
   return releaseStatus();
 }
 
 export async function checkForUpdates(): Promise<ReleaseStatus> {
-  await requireWorkspace();
+  await requireUser();
   return checkNow();
 }
 
@@ -32,7 +32,7 @@ export type UpdateRoute =
 
 async function locate(): Promise<{ route: UpdateRoute; self?: SelfCompose }> {
   if (edition() === "cloud") return { route: { kind: "cloud" } };
-  const { user } = await requireWorkspace();
+  const user = await requireUser();
   const targets = await adminTargets(user.id);
   if (!targets.length) {
     const isAdmin = (await listUserWorkspaces(user.id)).some((w) => w.wsRole === "admin");
@@ -67,6 +67,6 @@ export async function startUpdate(): Promise<{ ok: true; composeId: string } | {
 // Dokploy instances the caller already administers.
 export async function getUpdateDeploy(composeId: string): Promise<DeployState | null> {
   if (edition() === "cloud" || typeof composeId !== "string" || !/^[\w-]{1,64}$/.test(composeId)) return null;
-  const { user } = await requireWorkspace();
+  const user = await requireUser();
   return deployState(await adminTargets(user.id), composeId);
 }

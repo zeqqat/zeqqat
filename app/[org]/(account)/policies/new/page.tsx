@@ -3,7 +3,7 @@ import { CrumbLast } from "../../../../../components/AppShell";
 import { PolicyTools } from "../../../../../components/PolicyClient";
 import { Shield } from "../../../../../components/PolicyViews";
 import { savePolicyFormAction } from "../../../../../lib/actions/policies";
-import { hereAccount, requireWorkspace } from "../../../../../lib/guard";
+import { hereAccount, requireAccount } from "../../../../../lib/guard";
 import { accountScope } from "../../../../../lib/integration-scope";
 import { listPolicies, policyIntegrations } from "../../../../../lib/policies";
 import { policyTools } from "../../../../../lib/policy-pages";
@@ -18,7 +18,7 @@ const ERRORS: Record<string, string> = {
 // the quick way to make a variation.
 export default async function NewPolicyPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const acct = await hereAccount();
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   if (ws.orgRole !== "owner") redirect(`${acct}/policies`);
   const query = await searchParams;
   const integrations = await policyIntegrations(ws.organizationId);

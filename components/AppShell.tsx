@@ -119,7 +119,7 @@ export function AppShell({
   accounts: ShellAccount[]; // yours first, then organizations
   currentAccount: ShellAccount;
   workspaces: ShellWorkspace[]; // the current account's workspaces this user can open
-  currentWorkspace: ShellWorkspace;
+  currentWorkspace: ShellWorkspace | null;
   // An owner of the current account: may add workspaces to it.
   canCreateWorkspace?: boolean;
   initialMenu: MenuState;

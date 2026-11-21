@@ -88,7 +88,6 @@ async function ensureOfficialOrg(tx: Tx): Promise<string | null> {
       kind: "organization",
       ownerUserId: null,
     });
-    await tx.insert(workspace).values({ id: newId(), organizationId: orgId, slug: "default", name: "Default" });
     console.log(`[zeqqat] created the @${OFFICIAL_ORG_SLUG} system organization for the official catalog`);
     return orgId;
   }
@@ -113,7 +112,6 @@ async function ensureOfficialOrg(tx: Tx): Promise<string | null> {
     kind: "organization",
     ownerUserId,
   });
-  await tx.insert(workspace).values({ id: newId(), organizationId: orgId, slug: "default", name: "Default" });
   await tx.insert(membership).values({ id: newId(), userId: ownerUserId, organizationId: orgId, role: "owner" });
   console.log(`[zeqqat] created the @${OFFICIAL_ORG_SLUG} organization for the official catalog`);
   return orgId;

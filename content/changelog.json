@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.6.1",
+    "date": "2026-11-21",
+    "at": "2026-11-21T17:56:44Z",
+    "changes": [
+      "Signing up no longer creates an empty Default workspace. Your first workspace is the one you name in Setup.",
+      "A new organization starts with no workspace, and account pages work before one exists.",
+      "Empty Default workspaces left over from sign-up, in accounts that have not finished Setup, are removed."
+    ]
+  },
+  {
     "version": "0.6.0",
     "date": "2026-11-21",
     "at": "2026-11-21T13:19:36Z",

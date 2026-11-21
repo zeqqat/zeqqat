@@ -4,7 +4,7 @@ import { CrumbLast } from "../../../../../components/AppShell";
 import { AccountPersonPage, ErrorNote } from "../../../../../components/Members";
 import { db } from "../../../../../db";
 import { workspace } from "../../../../../db/schema";
-import { accountHref, requireWorkspace } from "../../../../../lib/guard";
+import { accountHref, requireAccount } from "../../../../../lib/guard";
 import { findAccountPerson, invitedBy } from "../../../../../lib/members";
 import { listUserWorkspaces } from "../../../../../lib/workspace";
 
@@ -18,7 +18,7 @@ export default async function AccountPersonRoute({
   params: Promise<{ username: string }>;
   searchParams: Promise<{ tab?: string; error?: string }>;
 }) {
-  const { user, ws } = await requireWorkspace();
+  const { user, acct: ws } = await requireAccount();
   const { username } = await params;
   const { tab: rawTab, error } = await searchParams;
   const { person } = await findAccountPerson(ws.organizationId, user.id, decodeURIComponent(username));

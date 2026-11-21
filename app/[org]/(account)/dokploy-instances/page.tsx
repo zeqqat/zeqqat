@@ -3,7 +3,7 @@ import { ConnectDokployForm } from "../../../../components/ConnectDokployForm";
 import { InstanceCards } from "../../../../components/InstanceCards";
 import { db } from "../../../../db";
 import { instance, integration, workspace, workspaceInstance } from "../../../../db/schema";
-import { hereAccount, requireWorkspace } from "../../../../lib/guard";
+import { hereAccount, requireAccount } from "../../../../lib/guard";
 import { cardsFor } from "../../../../lib/instance-cards";
 
 // The account owns its Dokploy instances (connected once, used by any of
@@ -11,7 +11,7 @@ import { cardsFor } from "../../../../lib/instance-cards";
 // instance's page decides which.
 export default async function AccountInstancesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const acct = await hereAccount();
-  const { ws } = await requireWorkspace();
+  const { acct: ws } = await requireAccount();
   const params = await searchParams;
   const isOwner = ws.orgRole === "owner";
   const rows = await db

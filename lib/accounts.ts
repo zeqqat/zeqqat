@@ -2,7 +2,7 @@ import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
 import { callLog, connection, membership, organization, workspaceInstance, workspaceMember } from "../db/schema";
 import { appCallsOnly } from "./overview";
-import { orgsOf, type UserWorkspace } from "./workspace";
+import type { UserAccount, UserWorkspace } from "./workspace";
 
 // The account level of the dashboard (/<username>): one account's
 // workspaces, members and settings. An account is a personal account
@@ -13,22 +13,17 @@ export type ShellAccount = { id: string; slug: string; name: string; kind: "pers
 
 // The accounts in the path's dropdown: your own first, then the
 // organizations you're in, in the order you joined them.
-export function accountsFor(all: UserWorkspace[], userId: string, personalOwnerId: Map<string, string | null>): ShellAccount[] {
-  const list = orgsOf(all).map((o) => ({
-    id: o.id,
-    slug: o.slug,
-    name: o.name,
-    kind: (o.kind === "personal" ? "personal" : "organization") as ShellAccount["kind"],
-    mine: o.kind === "personal" && personalOwnerId.get(o.id) === userId,
+export function accountsFor(all: UserAccount[], userId: string): ShellAccount[] {
+  const list = all.map((o) => ({
+    id: o.organizationId,
+    slug: o.organizationSlug,
+    name: o.organizationName,
+    kind: (o.organizationKind === "personal" ? "personal" : "organization") as ShellAccount["kind"],
+    mine: o.organizationKind === "personal" && o.ownerUserId === userId,
   }));
   return [...list.filter((a) => a.mine), ...list.filter((a) => !a.mine)];
 }
 
-export async function ownersOf(orgIds: string[]) {
-  if (orgIds.length === 0) return new Map<string, string | null>();
-  const rows = await db.select({ id: organization.id, owner: organization.ownerUserId }).from(organization).where(inArray(organization.id, orgIds));
-  return new Map(rows.map((r) => [r.id, r.owner]));
-}
 
 function dayStart(d = new Date()) {
   const x = new Date(d);

@@ -79,6 +79,56 @@ export const listUserWorkspaces = cache(async function listUserWorkspaces(userId
   });
 });
 
+// An account (personal or organization) the user belongs to. Accounts come
+// from membership alone: an account with no workspace yet (a new person
+// before Setup, an organization just made) is still theirs to open.
+export type UserAccount = {
+  organizationId: string;
+  organizationSlug: string;
+  organizationName: string;
+  organizationKind: string;
+  orgRole: OrgRole;
+  ownerUserId: string | null;
+};
+
+export const listUserAccounts = cache(async function listUserAccounts(userId: string): Promise<UserAccount[]> {
+  const rows = await db
+    .select({
+      organizationId: organization.id,
+      organizationSlug: organization.slug,
+      organizationName: organization.displayName,
+      organizationKind: organization.kind,
+      orgRole: membership.role,
+      ownerUserId: organization.ownerUserId,
+    })
+    .from(membership)
+    .innerJoin(organization, eq(organization.id, membership.organizationId))
+    .where(eq(membership.userId, userId))
+    .orderBy(asc(membership.createdAt));
+  return rows.map((r) => ({ ...r, orgRole: r.orgRole as OrgRole }));
+});
+
+// The account this request acts on: the one the URL names (null when the
+// person isn't in it: the page is a 404), else the last one picked, else
+// their own.
+export async function getUserAccount(userId: string): Promise<UserAccount | null> {
+  const all = await listUserAccounts(userId);
+  const place = await placeFromRequest();
+  if (place.org) return all.find((a) => a.organizationSlug === place.org) ?? null;
+  let wanted: string | undefined;
+  try {
+    wanted = (await cookies()).get(CURRENT_ORG_COOKIE)?.value;
+  } catch {
+    wanted = undefined;
+  }
+  return (
+    all.find((a) => a.organizationId === wanted) ??
+    all.find((a) => a.organizationKind === "personal" && a.ownerUserId === userId) ??
+    all[0] ??
+    null
+  );
+}
+
 // What the URL says this request is about (proxy.ts), if anything.
 export async function placeFromRequest(): Promise<{ org: string | null; ws: string | null }> {
   try {

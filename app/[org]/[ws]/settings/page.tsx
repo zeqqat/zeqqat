@@ -10,7 +10,7 @@ import { deleteWorkspaceAction, renameWorkspaceAction, transferWorkspaceAction }
 import { publicUrl } from "../../../../lib/env";
 import { requireWorkspace } from "../../../../lib/guard";
 import { policyCards } from "../../../../lib/policy-pages";
-import { listUserWorkspaces, orgsOf } from "../../../../lib/workspace";
+import { listUserAccounts, listUserWorkspaces } from "../../../../lib/workspace";
 
 // A workspace's Settings: the card (name, @account/workspace, counts), then
 // tabs. General holds the workspace name and address; Transfer only shows in
@@ -44,7 +44,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const card = cards.find((c) => c.id === ws.workspaceId);
   const canDelete = isOwner && siblings.length > 1;
   const canTransfer = personal && isOwner;
-  const teamOrgs = canTransfer ? orgsOf(mine).filter((o) => o.kind === "organization" && o.orgRole === "owner") : [];
+  const teamOrgs = canTransfer
+    ? (await listUserAccounts(user.id))
+        .filter((a) => a.organizationKind === "organization" && a.orgRole === "owner")
+        .map((a) => ({ id: a.organizationId, slug: a.organizationSlug, name: a.organizationName, kind: a.organizationKind, orgRole: a.orgRole }))
+    : [];
 
   const tabs: [string, string][] = [["general", "General"]];
   if (canTransfer) tabs.push(["transfer", "Transfer"]);
