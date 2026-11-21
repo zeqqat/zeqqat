@@ -231,6 +231,24 @@ account has members too (people in its workspaces), but nobody else can
 ever be its owner.
 `pnpm exec tsx tests/e2e/accounts-seed.ts` runs it locally with three accounts.
 
+**Members pages** (`components/Members.tsx`, `components/members.css`,
+`lib/members.ts`, `lib/actions/members.ts`). A workspace member is always
+someone in the account given access to that workspace. Lists are for
+recognizing and opening a person; roles, Owner and removal live on the
+person's page. `/<username>/members`: everyone in the account (you, then
+owners, then the rest) with their workspaces (owners show "Owner": they're
+admins everywhere), then open invites. `/<username>/members/<them>`:
+Workspaces (role per workspace, a select that saves on change, "Remove" as
+its last option; "+ Add to a workspace") and Manage (who added them, from
+the invite they accepted; Owner toggle, organizations only, the creator
+stays one; Remove from the account). `<ws>/members`: role, calls this week
+and connected agents per person; ⓘ explains roles; "+ Add member" adds
+someone from the account or creates an invite link. `<ws>/members/<them>`:
+Calls (the Activity `RequestCard`s, used as they are), MCP URLs (connected
+through, calls this week), Manage (role, "In @account ›", remove from the
+workspace). Every action names its workspace or person and re-checks the
+caller: workspace admins for a workspace's members, owners for the account.
+
 **Dashboard URLs** (`lib/paths.ts`), like Twitter and GitHub. Below, `<ws>`
 means `/<username>/<workspace>`.
 

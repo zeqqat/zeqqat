@@ -1,6 +1,6 @@
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
-import { callLog, connection, instance, membership, organization, user, workspace, workspaceMember } from "../db/schema";
+import { callLog, connection, instance, membership, organization, workspaceMember } from "../db/schema";
 import { appCallsOnly } from "./overview";
 import { orgsOf, type UserWorkspace } from "./workspace";
 
@@ -94,49 +94,4 @@ export async function workspaceCards(orgId: string, mine: UserWorkspace[]): Prom
         week,
       };
     });
-}
-
-export type AccountMember = {
-  userId: string;
-  name: string;
-  image: string | null;
-  username: string | null;
-  owner: boolean;
-  workspaces: string[];
-};
-
-// Everyone in this account: its owners, then members in the order they
-// joined, each with the workspaces they work in. Usernames, never emails.
-export async function accountMembers(orgId: string): Promise<AccountMember[]> {
-  const [people, wsRows, allWs] = await Promise.all([
-    db
-      .select({ userId: user.id, name: user.name, image: user.image, role: membership.role })
-      .from(membership)
-      .innerJoin(user, eq(user.id, membership.userId))
-      .where(eq(membership.organizationId, orgId))
-      .orderBy(membership.createdAt),
-    db
-      .select({ userId: workspaceMember.userId, name: workspace.name })
-      .from(workspaceMember)
-      .innerJoin(workspace, eq(workspace.id, workspaceMember.workspaceId))
-      .where(eq(workspace.organizationId, orgId))
-      .orderBy(workspace.createdAt),
-    db.select({ name: workspace.name }).from(workspace).where(eq(workspace.organizationId, orgId)).orderBy(workspace.createdAt),
-  ]);
-  const ids = people.map((p) => p.userId);
-  const handles = ids.length
-    ? await db
-        .select({ owner: organization.ownerUserId, slug: organization.slug })
-        .from(organization)
-        .where(and(eq(organization.kind, "personal"), inArray(organization.ownerUserId, ids)))
-    : [];
-  const list = people.map((p) => ({
-    userId: p.userId,
-    name: p.name,
-    image: p.image,
-    username: handles.find((h) => h.owner === p.userId)?.slug ?? null,
-    owner: p.role === "owner",
-    workspaces: p.role === "owner" ? allWs.map((w) => w.name) : wsRows.filter((r) => r.userId === p.userId).map((r) => r.name),
-  }));
-  return [...list.filter((m) => m.owner), ...list.filter((m) => !m.owner)];
 }

@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { AccountMember, WorkspaceCard } from "../lib/accounts";
+import type { WorkspaceCard } from "../lib/accounts";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
 import { CreateWorkspaceForm } from "./ConnectionForms";
 import { InviteForm } from "./InviteForm";
 import { DokployMark } from "./Marks";
 import { Icon, Spark } from "./McpUrls";
-import { AccountAvatar, WorkspaceAvatar } from "./PathSwitch";
+import { WorkspaceAvatar } from "./PathSwitch";
 
-// The account level (/<username>): Workspaces and Members. Each list page has
+// The account level (/<username>): Workspaces, and the count head and invite
+// button the Members page shares (components/Members.tsx has the rest). Each list page has
 // a big count on the left and its add button on the right, their bottoms
 // on one line (Gaita, 2026-11-19).
 
@@ -117,32 +118,6 @@ export function WorkspaceGrid({ cards }: { cards: WorkspaceCard[] }) {
           </form>
         );
       })}
-    </div>
-  );
-}
-
-export function MemberList({ members }: { members: AccountMember[] }) {
-  return (
-    <div className="zq-acc-people">
-      {members.map((m) => (
-        <div className="zq-acc-person" key={m.userId}>
-          <AccountAvatar account={{ slug: m.username ?? m.userId, name: m.name || m.username || "?", kind: "personal" }} image={m.image} size="lg" />
-          <span className="who">
-            <b>
-              {m.name || (m.username ? `@${m.username}` : "")}
-            </b>
-            <small>
-              {m.username ? `@${m.username}` : ""}
-              {m.owner ? `${m.username ? " · " : ""}owner` : ""}
-            </small>
-          </span>
-          <span className="ws">
-            {m.workspaces.map((w) => (
-              <span key={w}>{w}</span>
-            ))}
-          </span>
-        </div>
-      ))}
     </div>
   );
 }

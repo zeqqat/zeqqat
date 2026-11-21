@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.5.10",
+    "date": "2026-11-21",
+    "at": "2026-11-21T04:54:53Z",
+    "changes": [
+      "New Members pages: the account's people with their workspaces and each person's own page (workspaces and roles, owner, remove)",
+      "Workspace Members shows each person's role, calls this week and agents, and opens their calls, MCP URLs and role"
+    ]
+  },
+  {
     "version": "0.5.9",
     "date": "2026-11-21",
     "at": "2026-11-21T04:44:35Z",
