@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { CallCard, LookupLine } from "../../../../../components/activity/CallCard";
-import { BackLink } from "../../../../../components/activity/Parts";
 import { RequestCard } from "../../../../../components/activity/RequestCard";
 import { DateBar } from "../../../../../components/activity/Time";
 import { getRequest } from "../../../../../lib/activity";
+import { CrumbTrail } from "../../../../../components/AppShell";
 import { here, requireWorkspace } from "../../../../../lib/guard";
 
 // One request: its card, when it ran, then every call in order. Calls to
@@ -19,7 +19,14 @@ export default async function RequestPage({ params }: { params: Promise<{ reques
 
   return (
     <div className="zq-act-page">
-      <BackLink href={`${base}/activity`}>Activity</BackLink>
+      <CrumbTrail
+        items={[
+          ...(card.person?.username
+            ? [{ text: `@${card.person.username}`, href: `${base}/activity?person=${encodeURIComponent(card.person.username)}` }]
+            : []),
+          { text: card.reason },
+        ]}
+      />
       <div className="zq-act-sheet">
         <RequestCard card={card} linked={false} heading base={base} />
         <DateBar start={card.startedAt} end={calls[calls.length - 1].at} running={running} />

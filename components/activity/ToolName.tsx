@@ -7,9 +7,8 @@ import { splitCanonical } from "../../lib/activity-format";
 // The full tool name on one line, cut with … when it doesn't fit. Press and
 // hold (touch) or click (mouse) scrolls the hidden part into view, holds,
 // then slides back. A plain tap on touch, or a click on a name that isn't
-// cut, does what the rest of the card does: `onPlain` when given (a call
-// card that opens its drawer), else opens `href`.
-export function ToolName({ name, href, onPlain }: { name: string; href?: string; onPlain?: () => void }) {
+// cut, opens `href` like the rest of the card.
+export function ToolName({ name, href }: { name: string; href?: string }) {
   const [org, rest] = splitCanonical(name);
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,8 +63,7 @@ export function ToolName({ name, href, onPlain }: { name: string; href?: string;
           reveal();
           return;
         }
-        if (onPlain) onPlain();
-        else if (href) router.push(href);
+        if (href) router.push(href);
       }}
     >
       <span className="zq-tn-in">

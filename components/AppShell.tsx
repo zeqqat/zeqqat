@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, Fragment, useContext, useEffect, useRef, useState } from "react";
 import { authClient } from "../lib/auth-client";
 import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tools";
 import type { ShellAccount } from "../lib/accounts";
@@ -57,15 +57,22 @@ function under(rel: string, base: string) {
 }
 
 // A page deeper than the menu (one MCP URL, say) names itself at the end
-// of the top bar's path with <CrumbLast text="..." />.
-const CrumbContext = createContext<(text: string | null) => void>(() => {});
-export function CrumbLast({ text }: { text: string }) {
+// of the top bar's path with <CrumbLast text="..." />. A page several levels
+// deep (one call of one request) gives the whole trail with <CrumbTrail />:
+// every piece but the last is a link.
+export type Crumb = { text: string; href?: string };
+const CrumbContext = createContext<(crumbs: Crumb[] | null) => void>(() => {});
+export function CrumbTrail({ items }: { items: Crumb[] }) {
   const set = useContext(CrumbContext);
+  const key = JSON.stringify(items);
   useEffect(() => {
-    set(text);
+    set(JSON.parse(key) as Crumb[]);
     return () => set(null);
-  }, [set, text]);
+  }, [set, key]);
   return null;
+}
+export function CrumbLast({ text }: { text: string }) {
+  return <CrumbTrail items={[{ text }]} />;
 }
 
 export type ShellWorkspace = { id: string; slug: string; name: string; role: "admin" | "member" | "viewer" };
@@ -134,7 +141,7 @@ export function AppShell({
   // page isn't one of the workspace's.
   const rel = level === "workspace" && (pathname === wsBase || pathname.startsWith(`${wsBase}/`)) ? pathname.slice(wsBase.length) : null;
   const accRel = atAccount ? (pathname === accountBase ? "" : pathname.slice(accountBase.length)) : null;
-  const [crumbLast, setCrumbLast] = useState<string | null>(null);
+  const [crumbs, setCrumbs] = useState<Crumb[] | null>(null);
   // Narrow screens: the menu is a drawer over the page. Never remembered,
   // so a phone always opens on the page itself.
   const [drawer, setDrawer] = useState(false);
@@ -211,25 +218,83 @@ export function AppShell({
     setDrawer(false);
   }, [pathname]);
 
-  // Narrow screens: the path scrolls sideways and starts at its right end,
-  // so the page you're on shows first. The left edge fades while there's
-  // more to the left.
+  // The path never cuts a name short: it scrolls sideways at every width
+  // and starts at its right end, so the page you're on shows first. Each
+  // edge fades while there's more that way. Touch scrolls it natively; a
+  // mouse can drag it (a press that moves more than a few pixels is a drag
+  // and doesn't click) or turn the wheel over it.
   useEffect(() => {
     const el = bcRef.current;
     if (!el) return;
-    const fade = () => el.classList.toggle("has-more", el.scrollLeft > 2);
+    const fade = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      el.classList.toggle("can-scroll", max > 2);
+      el.classList.toggle("has-more", el.scrollLeft > 2);
+      el.classList.toggle("has-more-r", el.scrollLeft < max - 2);
+    };
     const toEnd = () => {
       el.scrollLeft = el.scrollWidth;
       fade();
     };
     toEnd();
+
+    let down = false;
+    let moved = false;
+    let startX = 0;
+    let startLeft = 0;
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      down = true;
+      moved = false;
+      startX = e.clientX;
+      startLeft = el.scrollLeft;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!down) return;
+      const dx = e.clientX - startX;
+      if (!moved && Math.abs(dx) > 4) {
+        moved = true;
+        el.classList.add("is-dragging");
+      }
+      if (moved) el.scrollLeft = startLeft - dx;
+    };
+    const swallow = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const onUp = () => {
+      if (!down) return;
+      down = false;
+      el.classList.remove("is-dragging");
+      if (moved) {
+        el.addEventListener("click", swallow, { capture: true, once: true });
+        setTimeout(() => el.removeEventListener("click", swallow, { capture: true }), 0);
+      }
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (el.scrollWidth - el.clientWidth <= 2 || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    };
+    const noDrag = (e: DragEvent) => e.preventDefault();
+
     el.addEventListener("scroll", fade, { passive: true });
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("dragstart", noDrag);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
     window.addEventListener("resize", toEnd);
     return () => {
       el.removeEventListener("scroll", fade);
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("dragstart", noDrag);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
       window.removeEventListener("resize", toEnd);
     };
-  }, [pathname, crumbLast]);
+  }, [pathname, crumbs]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -268,7 +333,7 @@ export function AppShell({
 
   return (
     <BaseContext.Provider value={{ ws: wsBase, account: accountBase }}>
-    <CrumbContext.Provider value={setCrumbLast}>
+    <CrumbContext.Provider value={setCrumbs}>
     <div className={`zq-shell${menuClass}`}>
       <header className="zq-appbar">
         <div className="zq-appbar-l">
@@ -304,17 +369,24 @@ export function AppShell({
             {page && (
               <>
                 <span className="zq-bc-sep">/</span>
-                <a href={page.href} className={crumbLast ? undefined : "is-cur"}>
+                <a href={page.href} className={crumbs ? undefined : "is-cur"}>
                   {page.label}
                 </a>
               </>
             )}
-            {page && crumbLast && (
-              <>
-                <span className="zq-bc-sep">/</span>
-                <span className="zq-bc-last is-cur">{crumbLast}</span>
-              </>
-            )}
+            {page &&
+              crumbs?.map((c, i) => (
+                <Fragment key={i}>
+                  <span className="zq-bc-sep">/</span>
+                  {i < crumbs.length - 1 && c.href ? (
+                    <a href={c.href} className="zq-bc-mid">
+                      {c.text}
+                    </a>
+                  ) : (
+                    <span className={i === crumbs.length - 1 ? "zq-bc-last is-cur" : "zq-bc-mid"}>{c.text}</span>
+                  )}
+                </Fragment>
+              ))}
           </nav>
         </div>
         <div className="zq-appbar-r">

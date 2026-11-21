@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.5.11",
+    "date": "2026-11-21",
+    "at": "2026-11-21T05:45:40Z",
+    "changes": [
+      "Activity: a call on a request's page is a link again. Its page shows the request on top, joined to the call by a thread line, with Call N of M beside the call, then tabs: From the agent, To Dokploy, Response and Details.",
+      "Top bar: the path never cuts a name short. It scrolls sideways at every width, and with a mouse you can drag it or use the wheel."
+    ]
+  },
+  {
     "version": "0.5.10",
     "date": "2026-11-21",
     "at": "2026-11-21T04:54:53Z",

@@ -305,7 +305,7 @@ export function DemoReplay({ replay }: { replay: Replay }) {
                       <DateBar start={opened.calls[0].at} end={opened.last} running={false} />
                     )}
                     {opened.calls.map((c) =>
-                      c.lookup ? <LookupLine key={c.id} call={c} /> : <CallCard key={c.id} call={c} />,
+                      c.lookup ? <LookupLine key={c.id} call={c} /> : <CallCard key={c.id} call={c} json />,
                     )}
                   </div>
                 </>
