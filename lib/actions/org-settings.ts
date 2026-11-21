@@ -84,10 +84,8 @@ export async function deleteOrgAction(formData: FormData) {
   // Workspaces first (their instances' keys, MCP URLs and grants go with
   // them), then the organization, which takes its policies and the rest.
   const wss = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, orgId));
-  for (const w of wss) {
-    const ids = (await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, w.id))).map((r) => r.id);
-    await deleteInstances(w.id, ids);
-  }
+  const ids = (await db.select({ id: instance.id }).from(instance).where(eq(instance.organizationId, orgId))).map((r) => r.id);
+  await deleteInstances(orgId, ids);
   if (wss.length) await db.delete(workspace).where(inArray(workspace.id, wss.map((w) => w.id)));
   await db.delete(organization).where(eq(organization.id, orgId));
   revalidatePath("/", "layout");

@@ -143,7 +143,7 @@ async function main() {
     const instanceId = newId();
     await tx.insert(schema.instance).values({
       id: instanceId,
-      workspaceId,
+      organizationId,
       integrationId,
       alias: "prod",
       baseUrl: "https://dokploy.example.com",
@@ -151,6 +151,7 @@ async function main() {
       protected: true,
       credential: { ciphertext: "seed", iv: "seed", tag: "seed" },
     });
+    await tx.insert(schema.workspaceInstance).values({ workspaceId, instanceId });
 
     await tx.insert(schema.instanceGrant).values({
       id: newId(),
@@ -172,7 +173,7 @@ async function main() {
       durationMs: 120,
     });
 
-    console.log("Seed proof: all 17 rows inserted, every FK resolved. Rolling back.");
+    console.log("Seed proof: all 18 rows inserted, every FK resolved. Rolling back.");
     tx.rollback();
   });
 }

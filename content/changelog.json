@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.6.0",
+    "date": "2026-11-21",
+    "at": "2026-11-21T13:19:36Z",
+    "changes": [
+      "Setup: new accounts connect a Dokploy, name a workspace and connect an agent before anything else opens",
+      "Dokploy instances belong to the account; its owners choose which workspaces use each one",
+      "Invites name the MCP URL the person's agent uses, and only people on an MCP URL can use it",
+      "An invite waiting for your email shows as a blue dot by your account, with Join and Decline",
+      "Self-hosted: signing up through an invite link joins straight away",
+      "Dokploy integrations is gone from the menus"
+    ]
+  },
+  {
     "version": "0.5.13",
     "date": "2026-11-21",
     "at": "2026-11-21T07:20:45Z",

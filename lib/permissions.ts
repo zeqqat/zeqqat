@@ -2,6 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { instance, instanceGrant, oauthClient, oauthGrant, user } from "../db/schema";
 
+import { inWorkspace } from "./instance-scope";
 export type Perm = { read: boolean; create: boolean; edit: boolean; delete: boolean };
 export type PermCell = { perm: Perm; own: boolean };
 
@@ -74,7 +75,7 @@ export async function getPermissionMatrix(workspaceId: string) {
     db
       .select({ id: instance.id, alias: instance.alias })
       .from(instance)
-      .where(eq(instance.workspaceId, workspaceId))
+      .where(inWorkspace(workspaceId))
       .orderBy(instance.createdAt),
     db.select().from(instanceGrant).where(eq(instanceGrant.workspaceId, workspaceId)),
   ]);

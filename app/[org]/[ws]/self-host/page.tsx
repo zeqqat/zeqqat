@@ -6,6 +6,7 @@ import { siteHost } from "../../../../lib/edition";
 import { here, requireOwner } from "../../../../lib/guard";
 import { listConnectedAgents } from "../../../../lib/permissions";
 
+import { inWorkspace } from "../../../../lib/instance-scope";
 export default async function SelfHostPage() {
   const base = await here();
   const { ws } = await requireOwner();
@@ -14,7 +15,7 @@ export default async function SelfHostPage() {
       .select({ id: instance.id, alias: instance.alias })
       .from(instance)
       .innerJoin(integration, eq(integration.id, instance.integrationId))
-      .where(and(eq(instance.workspaceId, ws.workspaceId), eq(integration.slug, "dokploy"))),
+      .where(and(inWorkspace(ws.workspaceId), eq(integration.slug, "dokploy"))),
     listConnectedAgents(ws.workspaceId),
   ]);
 

@@ -71,7 +71,7 @@ async function grantsIn(workspaceIds: string[]) {
       shortId: connection.shortId,
       instanceId: instance.id,
       instanceAlias: instance.alias,
-      instanceWsSlug: workspace.slug,
+      instanceWsSlug: connWs.slug,
       connectionWsSlug: connWs.slug,
       integrationId: instance.integrationId,
       policyId: connectionGrant.policyId,
@@ -79,7 +79,6 @@ async function grantsIn(workspaceIds: string[]) {
     .from(connectionGrant)
     .innerJoin(connection, eq(connection.id, connectionGrant.connectionId))
     .innerJoin(instance, eq(instance.id, connectionGrant.instanceId))
-    .innerJoin(workspace, eq(workspace.id, instance.workspaceId))
     .innerJoin(connWs, eq(connWs.id, connection.workspaceId))
     .where(and(inArray(connection.workspaceId, workspaceIds), isNull(connection.deletedAt)))
     .orderBy(asc(connection.name), asc(instance.alias));

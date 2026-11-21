@@ -107,13 +107,14 @@ async function main() {
     const instanceId = newId();
     await db.insert(schema.instance).values({
       id: instanceId,
-      workspaceId: wsId,
+      organizationId: orgId,
       integrationId: dokploy.id,
       alias,
       baseUrl: "http://localhost:1/api",
       credential: encryptCredential("k"),
       lastStatus: "ok",
     });
+    await db.insert(schema.workspaceInstance).values({ workspaceId: wsId, instanceId: instanceId });
     const connId = newId();
     await db.insert(schema.connection).values({ id: connId, organizationId: orgId, workspaceId: wsId, name: "deployment", shortId: randomBytes(3).toString("hex") });
     for (let i = 0; i < calls; i++) {

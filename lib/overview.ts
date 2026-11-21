@@ -2,6 +2,7 @@ import { and, desc, eq, gte, notLike, sql } from "drizzle-orm";
 import { db } from "../db";
 import { apiEndpoint, callLog, instance, membership, oauthClient, organization, oauthGrant, user, workspaceMember } from "../db/schema";
 
+import { inWorkspace } from "./instance-scope";
 export const REDACTED_MARK = "[redacted by zeqqat]";
 
 // "Today" on the overview is the UTC day, the same window the Activity
@@ -34,7 +35,7 @@ export async function getOverviewStats(workspaceId: string) {
       .select({ n: sql<number>`count(distinct ${oauthGrant.oauthClientId})` })
       .from(oauthGrant)
       .where(and(eq(oauthGrant.workspaceId, workspaceId), sql`${oauthGrant.revokedAt} is null`)),
-    db.select({ n: sql<number>`count(*)` }).from(instance).where(eq(instance.workspaceId, workspaceId)),
+    db.select({ n: sql<number>`count(*)` }).from(instance).where(inWorkspace(workspaceId)),
     db
       .select({
         calls: sql<number>`count(*)`,

@@ -14,6 +14,7 @@ import { integrationCards, integrationInstances } from "../../../../../lib/integ
 import { addedBy, instanceCalls, instancePeople, instanceUrls } from "../../../../../lib/instance-page";
 import { changedPart } from "../../../../../lib/version-diff";
 
+import { inWorkspace } from "../../../../../lib/instance-scope";
 // One Dokploy instance's page, designed 2026-11-18 (canvas "Dokploy instance
 // page"): the same card as on the list, then MCP URLs, Calls, Connected and
 // Manage. The page's client part is components/InstancePage.tsx; Manage is
@@ -89,7 +90,7 @@ export default async function InstanceDetailPage({
     })
     .from(instance)
     .innerJoin(integration, eq(integration.id, instance.integrationId))
-    .where(and(eq(instance.id, id), eq(instance.workspaceId, ws.workspaceId)))
+    .where(and(eq(instance.id, id), inWorkspace(ws.workspaceId)))
     .limit(1);
   if (!inst) redirect(`${base}/dokploy-instances`);
 

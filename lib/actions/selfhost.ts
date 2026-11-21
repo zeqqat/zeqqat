@@ -17,6 +17,7 @@ import {
   type Target,
 } from "../selfhost-install";
 
+import { inWorkspace } from "../instance-scope";
 // The one-button install: Zeqqat installs itself into the user's Dokploy
 // with the key it already holds. No agent: the steps are always the same,
 // so they run as plain code (lib/selfhost-install.ts). The page calls these
@@ -38,7 +39,7 @@ async function target(instanceId: string): Promise<Target> {
     .where(
       and(
         eq(instance.id, instanceId),
-        eq(instance.workspaceId, ws.workspaceId),
+        inWorkspace(ws.workspaceId),
       ),
     );
   if (!row || row.slug !== "dokploy")

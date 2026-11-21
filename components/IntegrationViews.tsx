@@ -87,10 +87,9 @@ export async function IntegrationList({
   return (
     <div>
       {account && (
+        // No "Add integration": everyone uses @zeqqat/dokploy for now.
         <CountHead n={cards.length} one="integration" many="integrations">
-          <a className="zq-action" href={`${wsHome}/dokploy-instances?add=app`}>
-            + Add integration
-          </a>
+          {null}
         </CountHead>
       )}
       {cards.length > 0 && <IntegrationsWhat open={what} />}

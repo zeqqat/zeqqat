@@ -5,7 +5,7 @@ import { openFirstWorkspace } from "./workspace";
 // pages don't open: a click says to connect first (lib/setup-gate.ts). The
 // overview (the connect screen) and Releases stay open.
 
-const HELD = ["MCP URLs", "Dokploy Instances", "Dokploy integrations", "Policies", "Activity", "Members", "Settings"];
+const HELD = ["MCP URLs", "Dokploy Instances", "Policies", "Activity", "Members", "Settings"];
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -26,7 +26,7 @@ test("every held-back menu page opens the connect-first modal and stays on the o
 });
 
 test("the modal's button shakes the heading and puts the cursor in the form", async ({ page }) => {
-  await page.getByRole("navigation", { name: "Dashboard" }).getByRole("link", { name: "Dokploy integrations", exact: true }).click();
+  await page.getByRole("navigation", { name: "Dashboard" }).getByRole("link", { name: "Policies", exact: true }).click();
   await page.getByRole("button", { name: "Connect Dokploy" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.locator("#zq-connect-dokploy")).toHaveClass(/is-shaking/);

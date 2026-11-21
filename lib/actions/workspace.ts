@@ -10,12 +10,15 @@ import { publicUrl } from "../env";
 import { hrefIn, requireOrgOwner, requireOwner, requireUser } from "../guard";
 import { accountBase, isReservedWorkspaceSlug, wsBase } from "../paths";
 import { newId } from "../id";
-import { deleteInstances } from "../instance-ops";
+import { deleteInstances, giveInstance } from "../instance-ops";
+import { personalAccountOf } from "../setup";
+import { connection } from "../../db/schema";
 import { transferWorkspace } from "../transfer";
 import { isReserved, isValidOrgSlug, normalizeSlug } from "../username";
 import { heldByOldUsername } from "../username-alias";
 import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserWorkspaces } from "../workspace";
 
+import { inWorkspace } from "../instance-scope";
 async function setCurrent(organizationId: string, workspaceId: string) {
   const jar = await cookies();
   const opts = {
@@ -83,27 +86,70 @@ export type FormState = { error?: string };
 // being org owners, so no member row is needed.
 export async function createWorkspaceAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { ws } = await requireOrgOwner();
-  const name = (formData.get("name")?.toString() ?? "").trim();
-  const slug = toSlug(name);
-  if (!name || !slug) return { error: "Give the workspace a name, for example Marketing." };
-  if (isReservedWorkspaceSlug(slug)) return { error: `"${slug}" is the name of an account page. Pick another name.` };
-  const id = newId();
-  try {
-    await db.insert(workspace).values({
-      id,
-      organizationId: ws.organizationId,
-      slug,
-      name: name.slice(0, 60),
-      // Setup questions are answered at org level already.
-      setupCompletedAt: new Date(),
-    });
-  } catch (err) {
-    if (pgCode(err) === "23505") return { error: `This org already has a workspace called "${slug}".` };
-    throw err;
-  }
-  await setCurrent(ws.organizationId, id);
-  redirect(wsBase(ws.organizationSlug, slug));
+  const made = await makeWorkspace(ws.organizationId, formData);
+  if ("error" in made) return made;
+  await setCurrent(ws.organizationId, made.id);
+  redirect(wsBase(ws.organizationSlug, made.slug));
 }
+
+// "production" is not available when it's an account page's name. A name
+// already used in the account is fine: it's a second workspace with that
+// name, at the next free address (production-2).
+async function freeSlug(organizationId: string, base: string, except?: string) {
+  const taken = new Set(
+    (await db.select({ id: workspace.id, slug: workspace.slug }).from(workspace).where(eq(workspace.organizationId, organizationId)))
+      .filter((w) => w.id !== except)
+      .map((w) => w.slug),
+  );
+  if (!taken.has(base)) return base;
+  let k = 2;
+  while (taken.has(`${base}-${k}`)) k++;
+  return `${base}-${k}`;
+}
+
+// A new workspace plus the account's instances ticked for it. When the
+// account still has only the empty workspace made at sign-up (no instance,
+// no MCP URL), that one is named instead, so nobody ends up with a stray
+// "Default".
+async function makeWorkspace(organizationId: string, formData: FormData, reuseEmpty = false): Promise<{ error: string } | { id: string; slug: string }> {
+  const name = (formData.get("name")?.toString() ?? "").trim();
+  const base = toSlug(name);
+  if (!name || !base) return { error: "Give the workspace a name, for example production." };
+  if (isReservedWorkspaceSlug(base)) return { error: `"${base}" is not available. Pick another name.` };
+  const ids = formData.getAll("instance_id").map(String);
+  const mine = ids.length
+    ? await db.select({ id: instance.id }).from(instance).where(and(eq(instance.organizationId, organizationId), inArray(instance.id, ids)))
+    : [];
+  let target: string | null = null;
+  if (reuseEmpty) {
+    const wss = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, organizationId));
+    if (wss.length === 1) {
+      const [hasUrl] = await db.select({ id: connection.id }).from(connection).where(eq(connection.workspaceId, wss[0].id)).limit(1);
+      if (!hasUrl) target = wss[0].id;
+    }
+  }
+  const slug = await freeSlug(organizationId, base, target ?? undefined);
+  const id = target ?? newId();
+  await db.transaction(async (tx) => {
+    if (target) await tx.update(workspace).set({ slug, name: name.slice(0, 60) }).where(eq(workspace.id, target));
+    else await tx.insert(workspace).values({ id, organizationId, slug, name: name.slice(0, 60), setupCompletedAt: new Date() });
+    for (const m of mine) await giveInstance(tx, id, m.id);
+  });
+  return { id, slug };
+}
+
+// Setup, step 2: name the workspace and choose the instances it uses.
+export async function setupWorkspaceAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const u = await requireUser();
+  const own = await personalAccountOf(u.id);
+  if (!own) redirect("/signin");
+  const made = await makeWorkspace(own.id, formData, true);
+  if ("error" in made) return made;
+  await setCurrent(own.id, made.id);
+  revalidatePath("/", "layout");
+  redirect(`/${own.slug}/setup`);
+}
+
 
 // A new organization, owned by whoever creates it, with one workspace.
 export async function createOrgAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -147,8 +193,7 @@ export async function deleteWorkspaceAction(formData: FormData) {
   if (formData.get("confirm")?.toString() !== ws.workspaceSlug) redirect(hrefIn(ws, "/settings?error=confirm"));
   const siblings = await db.select({ id: workspace.id, slug: workspace.slug }).from(workspace).where(eq(workspace.organizationId, ws.organizationId));
   if (siblings.length <= 1) redirect(hrefIn(ws, "/settings?error=last"));
-  const ids = (await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, ws.workspaceId))).map((r) => r.id);
-  await deleteInstances(ws.workspaceId, ids);
+  // The account's instances stay: only this workspace's use of them goes.
   await db.delete(workspace).where(eq(workspace.id, ws.workspaceId));
   const next = siblings.find((s) => s.id !== ws.workspaceId)!;
   await setCurrent(ws.organizationId, next.id);
@@ -173,10 +218,10 @@ export async function removeHostedDataAction(formData: FormData) {
   const { ws } = await requireOwner();
   if (formData.get("confirm")?.toString() !== "yes") redirect(hrefIn(ws, "/self-host/clean-up?error=confirm"));
 
-  const ids = (await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, ws.workspaceId))).map(
+  const ids = (await db.select({ id: instance.id }).from(instance).where(inWorkspace(ws.workspaceId))).map(
     (r) => r.id,
   );
-  await deleteInstances(ws.workspaceId, ids);
+  await deleteInstances(ws.organizationId, ids);
 
   const grants = await db
     .select({ id: oauthGrant.id })

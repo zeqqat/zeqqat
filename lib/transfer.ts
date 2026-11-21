@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { db } from "../db";
 import {
   connection,
@@ -10,12 +10,14 @@ import {
   oauthGrant,
   organization,
   workspace,
+  workspaceInstance,
   workspaceMember,
 } from "../db/schema";
 import { newShortId } from "./connections";
 import { newId } from "./id";
 import { copyPolicy } from "./policies";
 
+import { inWorkspace } from "./instance-scope";
 // Moves a workspace, with its instances and connections, from a personal
 // namespace into an organization (project doc mcp-context-and-policy-v1,
 // section 4), like GitHub's repository transfer. Connection URLs carry the
@@ -66,6 +68,15 @@ export async function transferWorkspace(params: { workspaceId: string; toOrganiz
       await tx.update(connection).set({ organizationId: to.id, shortId }).where(eq(connection.id, c.id));
     }
 
+    // The instances this workspace uses move with it, and leave the other
+    // workspaces of the old account.
+    const used = await tx.select({ id: workspaceInstance.instanceId }).from(workspaceInstance).where(eq(workspaceInstance.workspaceId, ws.id));
+    if (used.length) {
+      const ids = used.map((u) => u.id);
+      await tx.update(instance).set({ organizationId: to.id }).where(inArray(instance.id, ids));
+      await tx.delete(workspaceInstance).where(and(inArray(workspaceInstance.instanceId, ids), ne(workspaceInstance.workspaceId, ws.id)));
+    }
+
     // Agent sign-ins keep working; their context now names the organization.
     await tx.update(oauthGrant).set({ organizationId: to.id }).where(eq(oauthGrant.workspaceId, ws.id));
 
@@ -95,11 +106,11 @@ export async function transferWorkspace(params: { workspaceId: string; toOrganiz
     .selectDistinct({ policyId: connectionGrant.policyId })
     .from(connectionGrant)
     .innerJoin(instance, eq(instance.id, connectionGrant.instanceId))
-    .where(and(eq(instance.workspaceId, ws.id), isNotNull(connectionGrant.policyId)));
+    .where(and(inWorkspace(ws.id), isNotNull(connectionGrant.policyId)));
   for (const u of used) {
     if (!u.policyId) continue;
     const copyId = await copyPolicy({ sourceId: u.policyId, organizationId: to.id, userId: params.userId, workspaceId: ws.id });
-    const instanceIds = (await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, ws.id))).map((r) => r.id);
+    const instanceIds = (await db.select({ id: instance.id }).from(instance).where(inWorkspace(ws.id))).map((r) => r.id);
     if (instanceIds.length) {
       await db
         .update(connectionGrant)

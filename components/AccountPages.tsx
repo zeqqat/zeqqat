@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { WorkspaceCard } from "../lib/accounts";
 import { switchWorkspaceAction } from "../lib/actions/workspace";
-import { CreateWorkspaceForm } from "./ConnectionForms";
+import { WorkspaceForm, type InstanceChoice } from "./WorkspaceForm";
 import { InviteForm } from "./InviteForm";
 import { DokployMark } from "./Marks";
 import { Icon, Spark } from "./McpUrls";
@@ -49,7 +49,7 @@ export function CountHead({ n, one, many, children }: { n: number; one: string; 
   );
 }
 
-export function NewWorkspaceButton({ account }: { account: string }) {
+export function NewWorkspaceButton({ account, instances, existing }: { account: string; instances: InstanceChoice[]; existing: string[] }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -58,7 +58,7 @@ export function NewWorkspaceButton({ account }: { account: string }) {
       </button>
       {open && (
         <Modal title={`New workspace in @${account}`} onClose={() => setOpen(false)}>
-          <CreateWorkspaceForm />
+          <WorkspaceForm mode="new" account={account} instances={instances} existing={existing} checked={instances.length === 1 ? [instances[0].id] : []} />
         </Modal>
       )}
     </>

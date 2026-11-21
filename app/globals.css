@@ -7197,3 +7197,29 @@ button.zq-demo-open {
 .zq-st-form .zq-select { width: 100%; }
 .zq-st-av .zq-acc-av.is-lg { width: 42px; height: 42px; border-radius: 10px; font-size: 16px; }
 .zq-st-av .zq-acc-av.is-lg.is-person { border-radius: 50%; }
+
+/* Instance check list: the account's instances to give a workspace, in the
+   new workspace form, Setup's workspace step and "Add an instance". */
+.zq .zq-ipick-list { display: flex; flex-direction: column; border: 1px solid var(--line2); border-radius: 8px; overflow: hidden; background: var(--bg); }
+.zq .zq-ipick { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; font-size: 13px; }
+.zq .zq-ipick + .zq-ipick { border-top: 1px solid var(--line); }
+.zq .zq-ipick input { width: 15px; height: 15px; margin: 0; accent-color: var(--cobalt); flex: none; }
+.zq .zq-ipick .t { display: flex; flex-direction: column; min-width: 0; }
+.zq .zq-ipick .t b { font-weight: 600; color: var(--fg); }
+.zq .zq-ipick .t small { color: var(--faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zq .zq-give-link { display: block; margin-top: 12px; font-size: 12.5px; }
+.zq .zq-give-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+.zq .zq-info-box { display: flex; gap: 10px; border-radius: 8px; padding: 11px 13px; font-size: 12px; line-height: 1.6; border: 1px solid color-mix(in srgb, var(--cobalt) 35%, var(--line2)); background: color-mix(in srgb, var(--cobalt) 8%, var(--bg)); color: var(--fg); }
+.zq .zq-info-box .ic { color: var(--cobalt); font-weight: 600; }
+.zq .zq-invite-via { margin-top: 18px; border: 1px solid var(--line2); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+.zq .zq-invite-url { font-size: 12.5px; color: var(--dim); word-break: break-all; }
+.zq .zq-invite-url b { color: var(--fg); font-weight: 600; }
+.zq .zq-invite-decline { width: 100%; margin-top: 10px; justify-content: center; }
+/* An invite waiting: a steady blue dot on the account's ⌄ in the path, and
+   its row at the top of the account list. */
+.zq .zq-path-part .zq-path-dot { margin-left: -4px; align-self: flex-start; margin-top: 1px; vertical-align: 0; }
+.zq .zq-acc-inv { display: flex; align-items: flex-start; gap: 10px; padding: 8px; border-radius: 8px; color: var(--fg); text-decoration: none; }
+.zq .zq-acc-inv:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+.zq .zq-acc-inv .t { flex: auto; min-width: 0; display: flex; flex-direction: column; }
+.zq .zq-acc-inv .t small { color: var(--faint); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.zq .zq-acc-inv .go { color: var(--cobalt); font-size: 11.5px; margin-top: 2px; }

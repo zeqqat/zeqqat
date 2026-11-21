@@ -71,7 +71,11 @@ export function PathSwitch({
   canCreateWorkspace,
   onNewWorkspace,
   onNewOrg,
+  invites = [],
 }: {
+  // Invites waiting for this person's email: a blue dot on @account's ⌄,
+  // and a row at the top of its list.
+  invites?: { id: string; orgSlug: string; orgName: string; inviter: string }[];
   accounts: ShellAccount[];
   current: ShellAccount;
   myImage: string | null;
@@ -159,6 +163,7 @@ export function PathSwitch({
         <AccountAvatar account={current} image={imageOf(current)} size="sm" />
         <span className="zq-path-n">@{current.slug}</span>
         <Down />
+        {invites.length > 0 && <span className="zq-pl-dot zq-path-dot" aria-label="You have an invite" />}
       </button>
       {currentWorkspace && (
         <>
@@ -187,6 +192,24 @@ export function PathSwitch({
         >
           {open === "account" ? (
             <>
+              {invites.length > 0 && (
+                <>
+                  <div className="zq-acc-h">Invites</div>
+                  {invites.map((v) => (
+                    <a key={v.id} className="zq-acc-inv" href={`/invites/${v.id}`} role="menuitem" onClick={() => setOpen(null)}>
+                      <span className="zq-acc-av is-md" aria-hidden="true" style={{ background: "var(--cobalt)" }}>
+                        {(v.orgName.charAt(0) || v.orgSlug.charAt(0)).toUpperCase()}
+                      </span>
+                      <span className="t">
+                        <span className="zq-acc-n">@{v.orgSlug}</span>
+                        <small>{v.inviter} invited you</small>
+                        <span className="go">See invite ›</span>
+                      </span>
+                    </a>
+                  ))}
+                  <div className="zq-acc-div" />
+                </>
+              )}
               <a className="zq-acc-open" href={base.account} role="menuitem" onClick={() => setOpen(null)}>
                 <AccountAvatar account={current} image={imageOf(current)} />
                 <span className="zq-acc-n">@{current.slug}</span>

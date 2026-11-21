@@ -1,16 +1,16 @@
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "../../db";
-import { invitation, membership, oauthGrant, organization, user as userTable, workspace, workspaceMember } from "../../db/schema";
+import { connection, connectionGrant, invitation, policy as policyTable, membership, oauthGrant, organization, user as userTable, workspace, workspaceMember } from "../../db/schema";
 import { publicUrl } from "../env";
 import { wsBase } from "../paths";
 import { here, hereAccount, requireOrgOwner, requireOwner, requireUser } from "../guard";
 import { newId } from "../id";
-import { INVITE_TTL_MS, findOpenInvite } from "../invites";
+import { INVITE_TTL_MS, findOpenInvite, findOpenInviteById, joinInvite } from "../invites";
 import { randomToken, sha256Hex } from "../oauth-crypto";
 import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserWorkspaces, type WsRole } from "../workspace";
 
@@ -53,7 +53,7 @@ export async function createInviteAction(_prev: InviteState, formData: FormData)
   const role = wsRole(formData.get("ws_role"));
   const orgOwner = !personal && formData.get("org_owner")?.toString() === "on" && ws.orgRole === "owner";
 
-  if (!EMAIL.test(email)) return { error: "Enter the Google account email of the person you're inviting." };
+  if (!EMAIL.test(email)) return { error: "Enter the email of the person you're inviting." };
   if (email === user.email.toLowerCase()) return { error: "That's you. You're already here." };
 
   const [existing] = await db
@@ -76,11 +76,22 @@ export async function createInviteAction(_prev: InviteState, formData: FormData)
       ),
     );
 
+  // The MCP URL their agent will use: one of this workspace's members-only
+  // URLs, the first one when none was picked.
+  const pickedUrl = formData.get("connection_id")?.toString() ?? "";
+  const urls = await db
+    .select({ id: connection.id })
+    .from(connection)
+    .where(and(eq(connection.workspaceId, ws.workspaceId), eq(connection.authMode, "members"), isNull(connection.deletedAt)))
+    .orderBy(asc(connection.createdAt));
+  const connectionId = urls.find((u) => u.id === pickedUrl)?.id ?? urls[0]?.id ?? null;
+
   const token = randomToken();
   await db.insert(invitation).values({
     id: newId(),
     organizationId: ws.organizationId,
     workspaceId: ws.workspaceId,
+    connectionId,
     workspaceRole: role,
     email,
     role: orgOwner ? "owner" : "member",
@@ -220,28 +231,37 @@ export async function acceptInviteAction(formData: FormData) {
   const invite = await findOpenInvite(token);
   if (!invite) redirect(`/invite/${encodeURIComponent(token)}`);
   if (invite.email !== user.email.toLowerCase()) redirect(`/invite/${encodeURIComponent(token)}?error=wrong_account`);
+  redirect(await join(user, invite));
+}
 
-  let workspaceId = invite.workspaceId;
-  if (!workspaceId) {
-    const [first] = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, invite.organizationId)).limit(1);
-    workspaceId = first?.id ?? null;
+// The invite page Zeqqat opens itself (an invite waiting for this email).
+export async function acceptInviteByIdAction(formData: FormData) {
+  const user = await requireUser();
+  const invite = await findOpenInviteById(formData.get("invite_id")?.toString() ?? "");
+  if (!invite || invite.email !== user.email.toLowerCase()) redirect(await homePathFor(user.id));
+  redirect(await join(user, invite));
+}
+
+// Declining closes the invite: it leaves the account list and the blue dot
+// goes. Someone who wasn't set up goes on to Setup.
+export async function declineInviteAction(formData: FormData) {
+  const user = await requireUser();
+  const id = formData.get("invite_id")?.toString() ?? "";
+  const token = formData.get("token")?.toString() ?? "";
+  const invite = id ? await findOpenInviteById(id) : await findOpenInvite(token);
+  if (invite && invite.email === user.email.toLowerCase()) {
+    await db.update(invitation).set({ declinedAt: new Date() }).where(eq(invitation.id, invite.id));
   }
+  revalidatePath("/", "layout");
+  redirect(await homePathFor(user.id));
+}
 
-  await db.transaction(async (tx) => {
-    const existing = await tx.query.membership.findFirst({
-      where: and(eq(membership.organizationId, invite.organizationId), eq(membership.userId, user.id)),
-    });
-    if (!existing) {
-      await tx.insert(membership).values({ id: newId(), userId: user.id, organizationId: invite.organizationId, role: invite.role });
-    }
-    if (workspaceId && invite.role !== "owner") {
-      await tx
-        .insert(workspaceMember)
-        .values({ id: newId(), workspaceId, userId: user.id, role: invite.workspaceRole })
-        .onConflictDoNothing();
-    }
-    await tx.update(invitation).set({ acceptedAt: new Date() }).where(eq(invitation.id, invite.id));
-  });
+type OpenInvite = NonNullable<Awaited<ReturnType<typeof findOpenInvite>>>;
+
+// Joins the invite's organization and workspace, puts the person on the
+// MCP URL it names, and returns where to go: straight into the workspace.
+async function join(user: { id: string }, invite: OpenInvite): Promise<string> {
+  const workspaceId = await joinInvite(user.id, invite);
 
   const jar = await cookies();
   const opts = { path: "/", httpOnly: true, sameSite: "lax" as const, secure: publicUrl().startsWith("https://"), maxAge: 60 * 60 * 24 * 365 };
@@ -250,5 +270,32 @@ export async function acceptInviteAction(formData: FormData) {
   // Straight into the workspace just joined.
   const joined = (await listUserWorkspaces(user.id)).find((w) => w.workspaceId === workspaceId) ??
     (await listUserWorkspaces(user.id)).find((w) => w.organizationId === invite.organizationId);
-  redirect(joined ? `${wsBase(joined.organizationSlug, joined.workspaceSlug)}?joined=1` : `${await homePathFor(user.id)}?joined=1`);
+  return joined ? `${wsBase(joined.organizationSlug, joined.workspaceSlug)}?joined=1` : `${await homePathFor(user.id)}?joined=1`;
+}
+
+// The MCP URLs an invite can hand out, for the invite form: the members-only
+// URLs of the chosen workspace (the current one when none is given), each
+// with its policy, so the inviter sees what they're giving.
+export async function inviteUrlChoicesAction(workspaceId: string | null) {
+  const { ws } = await requireOwner();
+  const target = workspaceId || ws.workspaceId;
+  const [w] = await db.select({ id: workspace.id }).from(workspace).where(and(eq(workspace.id, target), eq(workspace.organizationId, ws.organizationId)));
+  if (!w) return [];
+  const urls = await db
+    .select({ id: connection.id, name: connection.name, shortId: connection.shortId })
+    .from(connection)
+    .where(and(eq(connection.workspaceId, w.id), eq(connection.authMode, "members"), isNull(connection.deletedAt)))
+    .orderBy(asc(connection.createdAt));
+  const out = [];
+  for (const u of urls) {
+    const [g] = await db
+      .select({ policyName: policyTable.name, ns: organization.slug })
+      .from(connectionGrant)
+      .leftJoin(policyTable, eq(policyTable.id, connectionGrant.policyId))
+      .leftJoin(organization, eq(organization.id, policyTable.organizationId))
+      .where(eq(connectionGrant.connectionId, u.id))
+      .limit(1);
+    out.push({ ...u, policy: g?.policyName ? `@${g.ns}/${g.policyName}` : "Default policy" });
+  }
+  return out;
 }

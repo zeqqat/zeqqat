@@ -1,6 +1,6 @@
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
-import { callLog, connection, instance, membership, organization, workspaceMember } from "../db/schema";
+import { callLog, connection, membership, organization, workspaceInstance, workspaceMember } from "../db/schema";
 import { appCallsOnly } from "./overview";
 import { orgsOf, type UserWorkspace } from "./workspace";
 
@@ -51,7 +51,7 @@ export async function workspaceCards(orgId: string, mine: UserWorkspace[]): Prom
   if (ids.length === 0) return [];
   const from = new Date(dayStart().getTime() - 6 * 86_400_000);
   const [inst, urls, members, owners, calls] = await Promise.all([
-    db.select({ ws: instance.workspaceId, n: sql<number>`count(*)::int` }).from(instance).where(inArray(instance.workspaceId, ids)).groupBy(instance.workspaceId),
+    db.select({ ws: workspaceInstance.workspaceId, n: sql<number>`count(*)::int` }).from(workspaceInstance).where(inArray(workspaceInstance.workspaceId, ids)).groupBy(workspaceInstance.workspaceId),
     db
       .select({ ws: connection.workspaceId, n: sql<number>`count(*)::int` })
       .from(connection)

@@ -1,6 +1,7 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { instance, integration } from "../db/schema";
+import { inWorkspaces } from "./instance-scope";
 import { decryptCredential } from "./crypto";
 import { normalizeBaseUrl } from "./dokploy-check";
 import type { Target } from "./selfhost-install";
@@ -17,7 +18,7 @@ export async function adminTargets(userId: string): Promise<Target[]> {
     .select({ baseUrl: instance.baseUrl, credential: instance.credential })
     .from(instance)
     .innerJoin(integration, eq(integration.id, instance.integrationId))
-    .where(and(inArray(instance.workspaceId, admin), eq(integration.slug, "dokploy")));
+    .where(and(inWorkspaces(admin), eq(integration.slug, "dokploy")));
   const out: Target[] = [];
   for (const r of rows) {
     const baseUrl = normalizeBaseUrl(r.baseUrl);

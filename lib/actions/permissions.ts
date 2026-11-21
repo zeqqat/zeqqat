@@ -8,6 +8,7 @@ import { instance, instanceGrant, oauthClient } from "../../db/schema";
 import { here, requireOwner } from "../guard";
 import { newId } from "../id";
 
+import { inWorkspace } from "../instance-scope";
 const FIELDS = ["allowRead", "allowCreate", "allowEdit", "allowDelete"] as const;
 export type GrantField = (typeof FIELDS)[number];
 
@@ -32,7 +33,7 @@ export async function setPermission(instanceId: string, oauthClientId: string | 
   if (!FIELDS.includes(field)) return;
 
   const inst = await db.query.instance.findFirst({
-    where: and(eq(instance.id, instanceId), eq(instance.workspaceId, ws.workspaceId)),
+    where: and(eq(instance.id, instanceId), inWorkspace(ws.workspaceId)),
   });
   if (!inst) redirect(`${base}/permissions`);
   if (oauthClientId) {

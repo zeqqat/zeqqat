@@ -6,17 +6,15 @@ import { db } from "../../../db";
 import { instance } from "../../../db/schema";
 import { listRequests } from "../../../lib/activity";
 import { edition, siteHost } from "../../../lib/edition";
-import { getConnectionPolicy, intersect, primaryConnection, ROLE_CAP } from "../../../lib/connections";
+import { getConnection, primaryConnection } from "../../../lib/connections";
+import { connectionMember, connection } from "../../../db/schema";
+import { and, asc, isNull } from "drizzle-orm";
 import { here, requireWorkspace } from "../../../lib/guard";
 import { getOverviewStats, listWorkspacePeople } from "../../../lib/overview";
-import { listConnectedAgents, type Perm } from "../../../lib/permissions";
-import { hasOwnAgent, workspaceLabel } from "../../../lib/workspace";
+import { listConnectedAgents } from "../../../lib/permissions";
+import { hasOwnAgent } from "../../../lib/workspace";
 
-function summary(p: Perm) {
-  const on = (["read", "create", "edit"] as const).filter((k) => p[k]);
-  const left = on.length ? on.join(", ") : "nothing";
-  return `${left.charAt(0).toUpperCase()}${left.slice(1)}${p.delete ? ", delete" : " · delete off"}`;
-}
+import { inWorkspace } from "../../../lib/instance-scope";
 
 // The overview (/<username>/<workspace>) walks a new user through setup, one screen per missing piece, then
 // becomes the overview: owner without Dokploy → connect Dokploy; anyone
@@ -32,29 +30,37 @@ export default async function OverviewPage() {
     db
       .select({ id: instance.id, alias: instance.alias, lastStatus: instance.lastStatus, lastVersion: instance.lastVersion })
       .from(instance)
-      .where(eq(instance.workspaceId, ws.workspaceId))
+      .where(inWorkspace(ws.workspaceId))
       .orderBy(instance.createdAt),
     listConnectedAgents(ws.workspaceId),
   ]);
 
-  if (isOwner && instances.length === 0) return <OnboardConnectDokploy />;
+  // A new organization's owner connects its first Dokploy here; it belongs
+  // to the account and this workspace uses it.
+  if (ws.orgRole === "owner" && instances.length === 0) {
+    const [any] = await db.select({ id: instance.id }).from(instance).where(eq(instance.organizationId, ws.organizationId)).limit(1);
+    if (!any) return <OnboardConnectDokploy />;
+  }
 
   // Owners finish setup once the workspace has any agent; a member's own
   // first run is about connecting their own agent.
   const needsAgent = isOwner ? agents.length === 0 : !(await hasOwnAgent(ws.workspaceId, user.id));
   if (needsAgent) {
-    // The URL to hand out is the workspace's primary connection.
-    const conn = await primaryConnection(ws, user.id);
-    if (isOwner) return <OnboardConnectAgent mcpUrl={conn.url} alias={instances[0]?.alias ?? null} base={base} />;
-    const policy = (await getConnectionPolicy(conn.id, ws.workspaceId)).filter((p) => p.enabled);
-    return (
-      <MemberStart
-        mcpUrl={conn.url}
-        name={(user.name || user.email).split(" ")[0]}
-        workspace={workspaceLabel(ws)}
-        instances={policy.map((p) => ({ alias: p.alias, summary: summary(intersect(p.perm, ROLE_CAP[ws.wsRole])) }))}
-      />
-    );
+    if (isOwner) {
+      // The URL to hand out is the workspace's primary connection.
+      const conn = await primaryConnection(ws, user.id);
+      return <OnboardConnectAgent mcpUrl={conn.url} alias={instances[0]?.alias ?? null} base={base} />;
+    }
+    // A member gets the MCP URL their invite named (connection_member).
+    const [given] = await db
+      .select({ id: connection.id })
+      .from(connectionMember)
+      .innerJoin(connection, eq(connection.id, connectionMember.connectionId))
+      .where(and(eq(connectionMember.userId, user.id), eq(connection.workspaceId, ws.workspaceId), isNull(connection.deletedAt)))
+      .orderBy(asc(connection.createdAt))
+      .limit(1);
+    const conn = (given && (await getConnection(ws.workspaceId, given.id))) || (await primaryConnection(ws, user.id));
+    return <MemberStart mcpUrl={conn.url} organization={ws.organizationName} base={base} />;
   }
 
   if (isOwner && !ws.setupCompletedAt && edition() === "cloud") {

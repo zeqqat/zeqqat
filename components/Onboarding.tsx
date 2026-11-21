@@ -56,67 +56,24 @@ export function OnboardConnectAgent({ mcpUrl, alias, base }: { mcpUrl: string; a
   );
 }
 
-export function MemberStart({
-  mcpUrl,
-  name,
-  workspace,
-  instances,
-}: {
-  mcpUrl: string;
-  name: string;
-  workspace: string;
-  instances: { alias: string; summary: string }[];
-}) {
+// An invited member's first stop: connect their own agent. Everything else
+// in the workspace opens once it is connected (components/AppShell.tsx).
+export function MemberStart({ mcpUrl, organization, base }: { mcpUrl: string; organization: string; base: string }) {
   return (
-    <div>
-      <Stepper
-        steps={[
-          { label: `Joined ${workspace}`, state: "done" },
-          {
-            label: "Dokploy connected by your team",
-            state: instances.length ? "done" : "todo",
-          },
-          { label: "Connect your agent", state: "now" },
-        ]}
-      />
+    <div className="zq-ob">
       <h1 className="zq-h">
-        Welcome to {workspace}, {name}
+        Welcome to {organization}
         <span className="dot">.</span>
       </h1>
-      <p className="zq-sub">
-        Your team connects Dokploy, so there&rsquo;s no key for you to add. Connect your agent and it can use the
-        instances below, within the permissions your owners set.
-      </p>
-      <div className="zq-split">
-        <section className="a">
-          <AgentPicker mcpUrl={mcpUrl} />
-          <p className="zq-note">
-            On the approval screen, pick the <b>{workspace}</b> workspace.
-          </p>
-        </section>
-        <aside className="b">
-          <p className="zq-kicker" style={{ marginBottom: 10 }}>
-            {workspace}&rsquo;s Dokploy
-          </p>
-          {instances.length === 0 ? (
-            <p className="zq-empty">No Dokploy connected yet. An owner of {workspace} adds it.</p>
-          ) : (
-            <div className="zq-list">
-              {instances.map((i) => (
-                <div className="zq-item" key={i.alias}>
-                  <span className="zq-item-ic">
-                    <DokployMark />
-                  </span>
-                  <div className="zq-item-main">
-                    <div className="zq-item-t">{i.alias}</div>
-                    <div className="zq-item-s">{i.summary}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="zq-note">This is what your agent can do here. An owner can change it.</p>
-        </aside>
+      <p className="zq-sub">Connect your agent to get started.</p>
+      <div className="zq-ob-col">
+        <AgentPicker mcpUrl={mcpUrl} />
+        <p className="zq-note zq-ob-refresh">
+          Already approved it?{" "}
+          <a className="zq-textlink" href={base}>
+            Refresh this page
+          </a>
+        </p>
       </div>
     </div>
   );

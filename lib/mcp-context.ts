@@ -9,6 +9,7 @@ import type { McpContext } from "./mcp-auth";
 import { wsBase } from "./paths";
 import { accessFor, accessSummary, type InstanceAccess } from "./policies";
 
+import { inWorkspace } from "./instance-scope";
 // The context every tool result carries (project doc
 // mcp-context-and-policy-v1, section 2). Clients differ on what reaches
 // the model: some pass server instructions on, some drop them; some show
@@ -120,7 +121,7 @@ export async function reachableInstances(
     .innerJoin(instance, eq(instance.id, connectionGrant.instanceId))
     .innerJoin(integration, eq(integration.id, instance.integrationId))
     .innerJoin(organization, eq(organization.id, integration.organizationId))
-    .where(and(eq(connectionGrant.connectionId, ctx.connectionId), eq(instance.workspaceId, ctx.workspaceId)))
+    .where(and(eq(connectionGrant.connectionId, ctx.connectionId), inWorkspace(ctx.workspaceId)))
     .orderBy(asc(integration.slug), asc(instance.alias));
   return Promise.all(
     rows.map(async (r) => ({ ...r, access: await accessFor(ctx.connectionId, r.id, ctx.callerRole) })),

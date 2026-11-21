@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createConnectionAction, type ConnFormState } from "../lib/actions/connections";
-import { createOrgAction, createWorkspaceAction, type FormState } from "../lib/actions/workspace";
+import { createOrgAction, type FormState } from "../lib/actions/workspace";
 
 function ErrorBox({ error }: { error?: string }) {
   if (!error) return null;
@@ -76,26 +76,6 @@ export function CreateConnectionForm({ orgSlug }: { orgSlug: string }) {
       <button type="submit" className="zq-action zq-action-primary" disabled={pending} style={{ marginTop: 16 }}>
         {pending ? "Creating..." : "Create MCP URL"}
       </button>
-    </form>
-  );
-}
-
-export function CreateWorkspaceForm() {
-  const [state, action, pending] = useActionState<FormState, FormData>(createWorkspaceAction, {});
-  return (
-    <form action={action} style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-end" }}>
-      <div style={{ flex: "999 1 240px" }}>
-        <label className="zq-label" htmlFor="ws_name">
-          Workspace name
-        </label>
-        <input className="zq-input" id="ws_name" name="name" required placeholder="Marketing" maxLength={60} />
-      </div>
-      <button type="submit" className="zq-action zq-action-primary" disabled={pending} style={{ flex: "1 1 160px" }}>
-        {pending ? "Creating..." : "Create workspace"}
-      </button>
-      <div style={{ flex: "1 1 100%" }}>
-        <ErrorBox error={state.error} />
-      </div>
     </form>
   );
 }

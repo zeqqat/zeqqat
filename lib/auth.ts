@@ -11,6 +11,7 @@ import { edition } from "./edition";
 import { newId } from "./id";
 import { mailerConfigured, passwordResetMail, sendMail, signInCodeMail } from "./mailer";
 import { passwordSignUpAllowed } from "./password-auth";
+import { findOpenInvite, joinInvite } from "./invites";
 import { runSignupTransaction } from "./signup";
 
 export { signInProviders } from "./auth-providers";
@@ -147,9 +148,15 @@ const authFor = (baseURL: string | undefined) => betterAuth({
             throw new APIError("FORBIDDEN", { code: "email_not_verified", message: "Email not verified" });
           }
         },
-        after: async (user) => {
+        after: async (user, ctx) => {
           try {
             await runSignupTransaction(user.id, user.name, user.email);
+            // Self-hosted: signing up through an invite link is the yes.
+            const token = ctx?.path === "/sign-up/email" ? (ctx.headers?.get("x-zeqqat-invite") ?? null) : null;
+            if (token && edition() !== "cloud") {
+              const invite = await findOpenInvite(token);
+              if (invite && invite.email === user.email.toLowerCase()) await joinInvite(user.id, invite);
+            }
           } catch (err) {
             // Compensate for Better Auth's already-committed user insert —
             // a user with no namespace is the worst first-run state there

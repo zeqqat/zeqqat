@@ -2,6 +2,7 @@ import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
 import {
   apiEndpoint,
+  connection,
   connectionGrant,
   instance,
   integration,
@@ -326,9 +327,9 @@ async function setPolicyWorkspaces(tx: Tx, policyId: string, organizationId: str
   const own = (await tx.select({ id: workspace.id }).from(workspace).where(eq(workspace.organizationId, organizationId))).map((w) => w.id);
   const inUse = (
     await tx
-      .selectDistinct({ id: instance.workspaceId })
+      .selectDistinct({ id: connection.workspaceId })
       .from(connectionGrant)
-      .innerJoin(instance, eq(instance.id, connectionGrant.instanceId))
+      .innerJoin(connection, eq(connection.id, connectionGrant.connectionId))
       .where(eq(connectionGrant.policyId, policyId))
   ).map((r) => r.id);
   const wanted = new Set([...workspaceIds.filter((w) => own.includes(w)), ...inUse]);
@@ -409,8 +410,7 @@ export async function policyIntegrations(organizationId: string) {
     .selectDistinct({ id: integration.id })
     .from(integration)
     .innerJoin(instance, eq(instance.integrationId, integration.id))
-    .innerJoin(workspace, eq(workspace.id, instance.workspaceId))
-    .where(eq(workspace.organizationId, organizationId));
+    .where(eq(instance.organizationId, organizationId));
   const ids = new Set([
     ...(await viaInstances).map((r) => r.id),
     ...(await db.select({ id: integration.id }).from(integration).where(eq(integration.organizationId, organizationId))).map((r) => r.id),

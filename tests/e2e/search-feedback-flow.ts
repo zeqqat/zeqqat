@@ -74,13 +74,14 @@ async function main() {
     const instanceId = newId();
     await db.insert(schema.instance).values({
       id: instanceId,
-      workspaceId: ws.workspaceId,
+      organizationId: ws.organizationId,
       integrationId: dokploy.id,
       alias: "production",
       baseUrl: `http://localhost:${DOKPLOY_PORT}/api`,
       credential: encryptCredential("dokploy-test-key"),
       lastStatus: "ok",
     });
+    await db.insert(schema.workspaceInstance).values({ workspaceId: ws.workspaceId, instanceId: instanceId });
     await addInstanceToPrimaryConnection(ws.workspaceId, instanceId);
 
     const ctx = {

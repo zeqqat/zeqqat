@@ -9,18 +9,20 @@
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import EmbeddedPostgres from "embedded-postgres";
-import { E2E_BASE_URL, E2E_PORT, STORAGE_STATE } from "./constants";
+import { E2E_BASE_URL, E2E_PORT, FRESH_STATE, STORAGE_STATE } from "./constants";
 
 const PG_PORT = 54329;
 
 async function main() {
+  // Postgres refuses to run as root, and its own user must reach the folder.
   const dataDir = mkdtempSync(join(tmpdir(), "zeqqat-e2e-pg-"));
+  chmodSync(dataDir, 0o777);
   const pg = new EmbeddedPostgres({
-    databaseDir: dataDir,
+    databaseDir: join(dataDir, "data"),
     port: PG_PORT,
     user: "postgres",
     password: "postgres",
@@ -85,20 +87,27 @@ function standaloneServer(): [string, string[]] {
 }
 
 async function signInTestUser() {
+  const { db } = await import("../../db");
+  const { organization } = await import("../../db/schema");
+  const { eq } = await import("drizzle-orm");
+  // The main test user has done Setup; the fresh one hasn't.
+  const main = await writeSession("E2E User", "e2e@example.com", STORAGE_STATE);
+  await db.update(organization).set({ setupCompletedAt: new Date() }).where(eq(organization.ownerUserId, main));
+  await writeSession("Fresh User", "fresh@example.com", FRESH_STATE);
+}
+
+async function writeSession(name: string, email: string, file: string) {
   const { auth } = await import("../../lib/auth");
   const { makeSignature } = await import("better-auth/crypto");
   const ctx = await auth.$context;
 
-  const user = await ctx.internalAdapter.createUser(
-    { name: "E2E User", email: "e2e@example.com", emailVerified: true },
-    { method: "admin" },
-  );
+  const user = await ctx.internalAdapter.createUser({ name, email, emailVerified: true }, { method: "admin" });
   const session = await ctx.internalAdapter.createSession(user.id);
   const signature = await makeSignature(session.token, ctx.secret);
 
-  mkdirSync(dirname(STORAGE_STATE), { recursive: true });
+  mkdirSync(dirname(file), { recursive: true });
   writeFileSync(
-    STORAGE_STATE,
+    file,
     JSON.stringify({
       cookies: [
         {
@@ -115,6 +124,7 @@ async function signInTestUser() {
       origins: [],
     }),
   );
+  return user.id;
 }
 
 main().catch((err) => {

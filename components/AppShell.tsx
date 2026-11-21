@@ -7,7 +7,8 @@ import { startOverAction, switchToPastUserAction } from "../lib/actions/dev-tool
 import type { ShellAccount } from "../lib/accounts";
 import { PROFILE_PATH } from "../lib/paths";
 import { openWithoutDokploy } from "../lib/setup-gate";
-import { CreateOrgForm, CreateWorkspaceForm } from "./ConnectionForms";
+import { CreateOrgForm } from "./ConnectionForms";
+import { WorkspaceForm, type InstanceChoice } from "./WorkspaceForm";
 import { BaseContext } from "./DashboardBase";
 import { DokployMark } from "./Marks";
 import { PathSwitch } from "./PathSwitch";
@@ -24,7 +25,6 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: 
   { pane: "overview", label: "Overview", href: "" },
   { pane: "mcp-urls", label: "MCP URLs", href: "/mcp-urls" },
   { pane: "dokploy-instances", label: "Dokploy Instances", href: "/dokploy-instances", icon: <DokployMark size={15} /> },
-  { pane: "dokploy-integrations", label: "Dokploy integrations", href: "/dokploy-integrations", icon: <DokployMark size={15} /> },
   { pane: "policies", label: "Policies", href: "/policies" },
   { pane: "activity", label: "Activity", href: "/activity" },
   { pane: "members", label: "Members", href: "/members" },
@@ -36,7 +36,7 @@ const ITEMS: { pane: Pane; label: string; href: string; also?: string[]; icon?: 
 // to the account.
 const ACCOUNT_ITEMS: { label: string; href: string; icon?: React.ReactNode }[] = [
   { label: "Workspaces", href: "" },
-  { label: "Dokploy integrations", href: "/dokploy-integrations", icon: <DokployMark size={15} /> },
+  { label: "Dokploy Instances", href: "/dokploy-instances", icon: <DokployMark size={15} /> },
   { label: "Policies", href: "/policies" },
   { label: "Members", href: "/members" },
   { label: "Settings", href: "/settings" },
@@ -104,6 +104,10 @@ export function AppShell({
   devTools = null,
   needsDokploy = false,
   askAdmin = null,
+  setup = null,
+  needsAgent = false,
+  accountInstances = [],
+  invites = [],
   level = "workspace",
   wsBase,
   accountBase,
@@ -125,6 +129,17 @@ export function AppShell({
   needsDokploy?: boolean;
   // Set when this person can't connect Dokploy themselves: the admin to ask.
   askAdmin?: { name: string; username: string | null } | null;
+  // Setup (app/[org]/(account)/setup) isn't finished on this person's own
+  // account. `locked`: they haven't joined anyone else's organization
+  // either, so Setup is the only page that opens.
+  setup?: { href: string; locked: boolean } | null;
+  // A member who hasn't connected an agent in this workspace yet: only the
+  // overview (where they connect it) opens.
+  needsAgent?: boolean;
+  // The current account's instances, for the new workspace form.
+  accountInstances?: InstanceChoice[];
+  // Invites waiting for this person's email (components/PathSwitch.tsx).
+  invites?: { id: string; orgSlug: string; orgName: string; inviter: string }[];
   // Which menu shows (components/AppFrame.tsx).
   level?: "workspace" | "account" | "profile";
   wsBase: string; // /<username>/<workspace>
@@ -147,19 +162,28 @@ export function AppShell({
   const [drawer, setDrawer] = useState(false);
   const bcRef = useRef<HTMLElement>(null);
   const [gateOpen, setGateOpen] = useState(false);
+  // What holds pages back, most important first: Setup (nothing but Setup
+  // opens), then a member's own agent (only the overview), then a
+  // workspace's missing Dokploy (overview and Releases).
+  const gate: "setup" | "agent" | "dokploy" | null = setup?.locked ? "setup" : needsAgent ? "agent" : needsDokploy ? "dokploy" : null;
+  const isOpenPage = (wsRel: string) => (gate === "agent" ? wsRel === "" || under(wsRel, "/releases") : openWithoutDokploy(wsRel));
   // A held-back page opened by its address (a bookmark, a typed URL): show
-  // nothing of it, go to the connect screen and say why.
-  const held = needsDokploy && rel !== null && !openWithoutDokploy(rel);
+  // nothing of it, go to where things start and say why.
+  const held =
+    gate === "setup"
+      ? pathname !== setup!.href && !pathname.startsWith("/account")
+      : gate !== null && rel !== null && !isOpenPage(rel);
   useEffect(() => {
     if (!held) return;
     setGateOpen(true);
-    router.replace(wsBase);
-  }, [held, router, wsBase]);
+    router.replace(gate === "setup" ? setup!.href : wsBase);
+  }, [held, router, wsBase, gate, setup]);
 
   // Menu links to held-back pages don't navigate; they open the modal.
   // `href` is relative to the workspace.
   function holdBack(e: React.MouseEvent, href: string) {
-    if (!needsDokploy || openWithoutDokploy(href.split(/[?#]/)[0])) return;
+    if (!gate) return;
+    if (gate !== "setup" && isOpenPage(href.split(/[?#]/)[0])) return;
     e.preventDefault();
     setGateOpen(true);
   }
@@ -168,6 +192,10 @@ export function AppShell({
   // first empty field takes focus.
   function goConnect() {
     setGateOpen(false);
+    if (gate === "setup") {
+      if (pathname !== setup!.href) router.push(setup!.href);
+      return;
+    }
     if (pathname !== wsBase) {
       router.push(wsBase);
       return;
@@ -365,6 +393,7 @@ export function AppShell({
               canCreateWorkspace={canCreateWorkspace}
               onNewWorkspace={() => setNewModal("workspace")}
               onNewOrg={() => setNewModal("org")}
+              invites={invites}
             />
             {page && (
               <>
@@ -464,15 +493,33 @@ export function AppShell({
             <div className="zq-side-top" aria-hidden="true" />
             {atAccount ? (
               <nav className="zq-menu" aria-label={`@${currentAccount.slug}`}>
+                {setup && setup.href.startsWith(`${accountBase}/`) && (
+                  <a
+                    href={setup.href}
+                    className={`zq-menu-i${pathname === setup.href ? " is-active" : ""}`}
+                    aria-current={pathname === setup.href ? "page" : undefined}
+                    onClick={() => setDrawer(false)}
+                  >
+                    Setup
+                  </a>
+                )}
                 {ACCOUNT_ITEMS.map((item) => {
-                  const isActive = accountPage?.href === item.href;
+                  const isActive = pathname !== setup?.href && accountPage?.href === item.href;
+                  const locked = gate === "setup";
                   return (
                     <a
                       key={item.href}
                       href={accountBase + item.href}
-                      className={`zq-menu-i${isActive ? " is-active" : ""}`}
+                      className={`zq-menu-i${isActive ? " is-active" : ""}${locked ? " is-locked" : ""}`}
                       aria-current={isActive ? "page" : undefined}
-                      onClick={() => setDrawer(false)}
+                      aria-haspopup={locked ? "dialog" : undefined}
+                      onClick={(e) => {
+                        if (locked) {
+                          e.preventDefault();
+                          setGateOpen(true);
+                        }
+                        setDrawer(false);
+                      }}
                     >
                       {item.icon}
                       {item.label}
@@ -484,7 +531,7 @@ export function AppShell({
             <nav className="zq-menu" aria-label="Dashboard">
               {ITEMS.map((item) => {
                 const isActive = menuPage?.pane === item.pane;
-                const locked = needsDokploy && !openWithoutDokploy(item.href);
+                const locked = gate === "setup" || (gate !== null && !isOpenPage(item.href));
                 return (
                   <a
                     key={item.pane}
@@ -530,7 +577,17 @@ export function AppShell({
                 </svg>
               </button>
             </div>
-            <div className="zq-new-body">{newModal === "workspace" ? <CreateWorkspaceForm /> : <CreateOrgForm />}</div>
+            <div className="zq-new-body">{newModal === "workspace" ? (
+                <WorkspaceForm
+                  mode="new"
+                  account={currentAccount.slug}
+                  instances={accountInstances}
+                  existing={workspaces.map((w) => w.slug)}
+                  checked={accountInstances.length === 1 ? [accountInstances[0].id] : []}
+                />
+              ) : (
+                <CreateOrgForm />
+              )}</div>
           </div>
         </div>
       )}
@@ -546,7 +603,11 @@ export function AppShell({
           >
             <div className="zq-modal-head">
               <h2 id="zq-gate-t">
-                {askAdmin ? (
+                {gate === "setup" ? (
+                  "Finish setup first"
+                ) : gate === "agent" ? (
+                  "Connect your agent first"
+                ) : askAdmin ? (
                   <>
                     <DokployMark size={16} /> Dokploy isn&rsquo;t connected yet
                   </>
@@ -563,6 +624,12 @@ export function AppShell({
               </button>
             </div>
             <p className="zq-modal-note zq-gate-note">
+              {gate === "setup" ? (
+                "The rest of Zeqqat opens once setup is done."
+              ) : gate === "agent" ? (
+                "The rest of Zeqqat opens once your agent is connected."
+              ) : (
+              <>
               {askAdmin && (
                 <>
                   Ask{" "}
@@ -578,9 +645,15 @@ export function AppShell({
                 </>
               )}
               The rest of Zeqqat opens once it&rsquo;s connected.
+              </>
+              )}
             </p>
             <div className="zq-gate-foot">
-              {askAdmin ? (
+              {gate === "setup" || gate === "agent" ? (
+                <button type="button" className="zq-modal-btn" autoFocus onClick={goConnect}>
+                  {gate === "setup" ? "Continue setup" : "Connect your agent"}
+                </button>
+              ) : askAdmin ? (
                 <button type="button" className="zq-modal-btn" autoFocus onClick={() => setGateOpen(false)}>
                   OK
                 </button>

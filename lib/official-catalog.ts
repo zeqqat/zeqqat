@@ -55,7 +55,7 @@ async function releaseSystemOrg(tx: Tx, orgId: string, ownerUserId: string | nul
   if (!ownerUserId && !hasMembers && !hasWsMembers) return;
 
   if (wsIds.length) {
-    const [inst] = await tx.select({ id: instance.id }).from(instance).where(inArray(instance.workspaceId, wsIds)).limit(1);
+    const [inst] = await tx.select({ id: instance.id }).from(instance).where(eq(instance.organizationId, orgId)).limit(1);
     const [conn] = await tx.select({ id: connection.id }).from(connection).where(inArray(connection.workspaceId, wsIds)).limit(1);
     if (inst || conn) {
       console.warn(

@@ -2,8 +2,9 @@ import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { db } from "../db";
-import { instance, membership, oauthGrant, organization, workspace, workspaceMember } from "../db/schema";
+import { instance, membership, oauthGrant, organization, workspace, workspaceMember, connectionMember } from "../db/schema";
 
+import { inWorkspace } from "./instance-scope";
 // The org and workspace the user is currently looking at. They only select
 // among workspaces the user can already open; they never grant access.
 export const CURRENT_ORG_COOKIE = "zq_org";
@@ -165,7 +166,7 @@ export async function hasOwnAgent(workspaceId: string, userId: string) {
 }
 
 export async function hasInstance(workspaceId: string) {
-  const [row] = await db.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, workspaceId)).limit(1);
+  const [row] = await db.select({ id: instance.id }).from(instance).where(inWorkspace(workspaceId)).limit(1);
   return !!row;
 }
 
@@ -179,12 +180,37 @@ export function workspaceLabel(w: { organizationName: string; workspaceName: str
 // which lists every workspace they're in (their own or ones they were
 // invited to). lib/paths.ts has the URL scheme.
 export async function homePathFor(userId: string): Promise<string> {
-  const [own] = await db
-    .select({ slug: organization.slug })
-    .from(organization)
-    .where(and(eq(organization.ownerUserId, userId), eq(organization.kind, "personal")))
-    .limit(1);
+  const { joinedElsewhere, pendingInvitesFor, personalAccountOf } = await import("./setup");
+  const own = await personalAccountOf(userId);
+  // Not set up and not in anyone else's organization: an invite waiting
+  // for this email comes first, then Setup.
+  if (own && !own.setupCompletedAt) {
+    if (!(await joinedElsewhere(userId, own.id))) {
+      const [invite] = await pendingInvitesFor(userId);
+      if (invite) return `/invites/${invite.id}`;
+      return `/${own.slug}/setup`;
+    }
+    // Joined someone else's organization before setting up their own:
+    // start in the workspace they joined.
+    const other = (await listUserWorkspaces(userId)).find((w) => w.organizationId !== own.id);
+    if (other) return `/${other.organizationSlug}/${other.workspaceSlug}`;
+  }
   if (own) return `/${own.slug}`;
   const [first] = await listUserWorkspaces(userId);
   return first ? `/${first.organizationSlug}` : "/signin";
+}
+
+// A members-only MCP URL: workspace admins (account owners included) may
+// always use it; anyone else only if they're on its people list
+// (connection_member, filled by invites).
+export async function mayUseConnection(userId: string, connectionId: string, workspaceId: string): Promise<boolean> {
+  const role = await workspaceRoleFor(userId, workspaceId);
+  if (!role) return false;
+  if (role === "admin") return true;
+  const [row] = await db
+    .select({ id: connectionMember.userId })
+    .from(connectionMember)
+    .where(and(eq(connectionMember.connectionId, connectionId), eq(connectionMember.userId, userId)))
+    .limit(1);
+  return !!row;
 }

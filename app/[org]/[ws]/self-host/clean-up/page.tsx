@@ -6,6 +6,7 @@ import { siteHost } from "../../../../../lib/edition";
 import { here, requireOwner } from "../../../../../lib/guard";
 import { listConnectedAgents } from "../../../../../lib/permissions";
 
+import { inWorkspace } from "../../../../../lib/instance-scope";
 // Optional, after self-hosting: removes this workspace's Dokploy keys from
 // this site and disconnects its agents. Says exactly what goes and what
 // stays before anything happens.
@@ -46,7 +47,7 @@ export default async function CleanUpPage({
   }
 
   const [instances, agents, members] = await Promise.all([
-    db.select({ alias: instance.alias }).from(instance).where(eq(instance.workspaceId, ws.workspaceId)),
+    db.select({ alias: instance.alias }).from(instance).where(inWorkspace(ws.workspaceId)),
     listConnectedAgents(ws.workspaceId),
     db.select({ userId: membership.userId }).from(membership).where(eq(membership.organizationId, ws.organizationId)),
   ]);

@@ -2,13 +2,16 @@ import { and, desc, eq, or } from "drizzle-orm";
 import { ConnectAppForm } from "../../../../components/ConnectAppForm";
 import { ConnectDokployForm } from "../../../../components/ConnectDokployForm";
 import { ImportAppForm } from "../../../../components/ImportAppForm";
+import { GiveInstance } from "../../../../components/GiveInstance";
 import { InstanceCards, type InstanceCard } from "../../../../components/InstanceCards";
 import { IntegrationMark } from "../../../../components/Marks";
 import { db } from "../../../../db";
 import { instance, integration } from "../../../../db/schema";
 import { here, requireWorkspace } from "../../../../lib/guard";
+import { firstAdminOf } from "../../../../lib/overview";
 import { freshDokploy, instanceCounts, usageByInstance } from "../../../../lib/instance-cards";
 
+import { inWorkspace } from "../../../../lib/instance-scope";
 // Every server someone added with a key is an instance of an app (Dokploy).
 // This page lists this workspace's instances as cards (components/
 // InstanceCards.tsx) under a head with the count and "Add an instance". No
@@ -23,6 +26,8 @@ export default async function DokployInstancesPage({
   const { ws } = await requireWorkspace();
   const params = await searchParams;
   const isOwner = ws.role === "owner";
+  // Instances belong to the account; only its owners give them out.
+  const canGive = ws.orgRole === "owner";
   const adding = params.add === "1";
   const importing = params.add === "app";
   const connectId = typeof params.connect === "string" ? params.connect : null;
@@ -45,7 +50,7 @@ export default async function DokployInstancesPage({
       })
       .from(instance)
       .innerJoin(integration, eq(integration.id, instance.integrationId))
-      .where(eq(instance.workspaceId, ws.workspaceId))
+      .where(inWorkspace(ws.workspaceId))
       .orderBy(desc(instance.createdAt)),
     connectId
       ? db
@@ -99,6 +104,17 @@ export default async function DokployInstancesPage({
     };
   });
   const dokployCount = rows.filter((r) => r.appSlug === "dokploy").length;
+  const others = canGive
+    ? await db
+        .select({ id: instance.id, alias: instance.alias, baseUrl: instance.baseUrl, appSlug: integration.slug, appName: integration.name, appLogo: integration.logoUrl })
+        .from(instance)
+        .innerJoin(integration, eq(integration.id, instance.integrationId))
+        .where(eq(instance.organizationId, ws.organizationId))
+        .orderBy(desc(instance.createdAt))
+        .then((all) => all.filter((a) => !ids.includes(a.id)).map((a) => ({ ...a, host: hostOf(a.baseUrl) })))
+    : [];
+  const admin = canGive ? null : await firstAdminOf(ws.organizationId, ws.workspaceId);
+  const who = admin ? [admin.name, admin.username ? `@${admin.username}` : ""].filter(Boolean).join(" ") : "an owner";
   const formOpen = (adding || importing || !!connecting) && isOwner;
 
   return (
@@ -134,7 +150,7 @@ export default async function DokployInstancesPage({
         </div>
       )}
 
-      {adding && isOwner && (
+      {adding && canGive && (
         <section className="zq-panel-box" style={{ marginBottom: 16 }}>
           <h2 className="zq-block-t" style={{ marginBottom: 14 }}>
             {dokployCount ? "Add another Dokploy" : "Add a Dokploy"}
@@ -171,10 +187,23 @@ export default async function DokployInstancesPage({
 
       <InstanceCards
         cards={cards}
-        addHref={isOwner && !formOpen ? `${base}/dokploy-instances?add=1` : null}
-        emptyText={isOwner ? "No Dokploy connected yet." : "No Dokploy connected yet. An owner of this workspace adds it."}
+        addHref={null}
+        addSlot={canGive && !formOpen ? <GiveInstance choices={others} workspace={ws.workspaceSlug} connectHref={`${base}/dokploy-instances?add=1`} /> : null}
+        emptyText={
+          canGive
+            ? `${ws.workspaceSlug} can’t reach any Dokploy yet. Add one of @${ws.organizationSlug}’s instances to it.`
+            : `${ws.workspaceSlug} can’t reach any Dokploy yet. Ask ${who} to add one.`
+        }
         what={params.what === "1"}
       />
     </div>
   );
+}
+
+function hostOf(u: string) {
+  try {
+    return new URL(u).host;
+  } catch {
+    return u;
+  }
 }

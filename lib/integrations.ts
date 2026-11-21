@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "../db";
-import { apiEndpoint, instance, integration, integrationApiSpecSnapshot, organization, workspace } from "../db/schema";
+import { apiEndpoint, instance, integration, integrationApiSpecSnapshot, organization } from "../db/schema";
+import { inWorkspaces } from "./instance-scope";
 import { compareOps, type SpecOp } from "./instance-spec";
 
 // The Dokploy integrations pages: which integrations a workspace (or a whole
@@ -31,7 +32,7 @@ export async function integrationIdsForWorkspaces(workspaceIds: string[], ownOrg
   const used = await db
     .selectDistinct({ id: instance.integrationId })
     .from(instance)
-    .where(inArray(instance.workspaceId, workspaceIds.length ? workspaceIds : NONE));
+    .where(inWorkspaces(workspaceIds));
   const ids = new Set(used.map((r) => r.id));
   if (ownOrgId) {
     const own = await db.select({ id: integration.id }).from(integration).where(eq(integration.organizationId, ownOrgId));
@@ -137,14 +138,14 @@ export async function integrationInstances(integrationId: string, workspaceIds: 
         id: instance.id,
         alias: instance.alias,
         baseUrl: instance.baseUrl,
-        workspaceName: workspace.name,
+        workspaceName: organization.slug,
         version: instance.lastVersion,
         specOps: instance.specOps,
       })
       .from(instance)
-      .innerJoin(workspace, eq(workspace.id, instance.workspaceId))
-      .where(and(eq(instance.integrationId, integrationId), inArray(instance.workspaceId, workspaceIds)))
-      .orderBy(asc(workspace.name), asc(instance.alias)),
+      .innerJoin(organization, eq(organization.id, instance.organizationId))
+      .where(and(eq(instance.integrationId, integrationId), inWorkspaces(workspaceIds)))
+      .orderBy(asc(organization.slug), asc(instance.alias)),
     liveToolNames(integrationId),
   ]);
   return rows.map((r) => {

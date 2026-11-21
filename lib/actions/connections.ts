@@ -1,15 +1,16 @@
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "../../db";
-import { connection, connectionGrant, instance, integration, oauthGrant, oauthToken } from "../../db/schema";
+import { connection, connectionGrant, connectionMember, instance, integration, oauthGrant, oauthToken, workspaceMember } from "../../db/schema";
 import { CONNECTION_NAME, createConnection, getConnection, replaceConnection, toConnectionName } from "../connections";
 import { here, requireOwner } from "../guard";
 import { newId } from "../id";
 import { pickablePolicies } from "../policies";
 
+import { inWorkspace } from "../instance-scope";
 export type ConnFormState = { error?: string };
 
 async function ownedConnection(workspaceId: string, id: string) {
@@ -55,7 +56,7 @@ export async function savePolicyAction(formData: FormData) {
     .select({ id: instance.id, integrationSlug: integration.slug })
     .from(instance)
     .innerJoin(integration, eq(integration.id, instance.integrationId))
-    .where(eq(instance.workspaceId, ws.workspaceId));
+    .where(inWorkspace(ws.workspaceId));
   const isPublic = conn.authMode === "public";
 
   await db.transaction(async (tx) => {
@@ -212,4 +213,29 @@ export async function deleteConnectionAction(formData: FormData) {
   });
   revalidatePath(`${base}/mcp-urls`);
   redirect(`${base}/mcp-urls?deleted=1`);
+}
+
+// Who may use a members-only MCP URL (besides the workspace's admins, who
+// always may): the people ticked here, from the workspace's members.
+export async function setUrlPeopleAction(formData: FormData) {
+  const base = await here();
+  const { ws } = await requireOwner();
+  const conn = await ownedConnection(ws.workspaceId, formData.get("connection_id")?.toString() ?? "");
+  if (!conn) redirect(`${base}/mcp-urls`);
+  const picked = formData.getAll("user_id").map(String);
+  const allowed = (
+    await db
+      .select({ id: workspaceMember.userId })
+      .from(workspaceMember)
+      .where(and(eq(workspaceMember.workspaceId, ws.workspaceId), ne(workspaceMember.role, "admin")))
+  ).map((m) => m.id);
+  const keep = picked.filter((p) => allowed.includes(p));
+  await db.transaction(async (tx) => {
+    if (allowed.length) {
+      await tx.delete(connectionMember).where(and(eq(connectionMember.connectionId, conn.id), inArray(connectionMember.userId, allowed)));
+    }
+    if (keep.length) await tx.insert(connectionMember).values(keep.map((userId) => ({ connectionId: conn.id, userId }))).onConflictDoNothing();
+  });
+  revalidatePath(`${base}/mcp-urls/${conn.id}`);
+  redirect(`${base}/mcp-urls/${conn.id}?tab=manage`);
 }

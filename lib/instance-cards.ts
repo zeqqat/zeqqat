@@ -20,12 +20,12 @@ function dayStart(d = new Date()) {
 
 // Calls to apps per instance: 30 UTC days (today last) and today's 24 UTC
 // hours, the same shape and rule as the MCP URLs cards.
-export async function usageByInstance(workspaceId: string, instanceIds: string[]): Promise<Map<string, Usage>> {
+export async function usageByInstance(workspaceId: string | null, instanceIds: string[]): Promise<Map<string, Usage>> {
   const out = new Map<string, Usage>(instanceIds.map((id) => [id, { days: Array(30).fill(0), hours: Array(24).fill(0) }]));
   if (instanceIds.length === 0) return out;
   const today = dayStart();
   const from = new Date(today.getTime() - 29 * 86_400_000);
-  const scope = and(eq(callLog.workspaceId, workspaceId), inArray(callLog.instanceId, instanceIds), appCallsOnly);
+  const scope = and(workspaceId ? eq(callLog.workspaceId, workspaceId) : undefined, inArray(callLog.instanceId, instanceIds), appCallsOnly);
   const [dayRows, hourRows] = await Promise.all([
     db
       .select({
@@ -168,4 +168,53 @@ export async function freshDokploy(rows: InstanceRow[]): Promise<Map<string, Fre
   });
   await Promise.race([Promise.allSettled(jobs), new Promise((r) => setTimeout(r, BUDGET_MS))]);
   return out;
+}
+
+// The cards' data for a set of instance rows: usage (in one workspace, or
+// everywhere when workspaceId is null), counts and a fresh look at health.
+export type CardRow = {
+  id: string;
+  alias: string;
+  baseUrl: string;
+  credential: { ciphertext: string; iv: string; tag: string };
+  lastStatus: string | null;
+  lastVersion: string | null;
+  lastValidatedAt: Date | null;
+  specVersion: string | null;
+  specCheckedAt: Date | null;
+  appSlug: string;
+  appName: string;
+  appLogo: string | null;
+};
+export async function cardsFor(rows: CardRow[], workspaceId: string | null, workspacesOf?: Map<string, string[]>) {
+  const ids = rows.map((r) => r.id);
+  const [usage, counts, fresh] = await Promise.all([
+    usageByInstance(workspaceId, ids),
+    instanceCounts(ids),
+    freshDokploy(rows.filter((r) => r.appSlug === "dokploy")),
+  ]);
+  return rows.map((r) => {
+    const f = fresh.get(r.id);
+    let host = r.baseUrl;
+    try {
+      host = new URL(r.baseUrl).host;
+    } catch {
+      // keep the stored address as typed
+    }
+    return {
+      id: r.id,
+      name: r.alias,
+      host,
+      appName: r.appName,
+      appSlug: r.appSlug,
+      appLogo: r.appLogo,
+      status: f?.status ?? r.lastStatus,
+      version: f?.version ?? r.lastVersion,
+      latest: f?.latest ?? null,
+      urls: counts.urls.get(r.id) ?? 0,
+      people: counts.people.get(r.id) ?? 0,
+      usage: usage.get(r.id) ?? { days: Array(30).fill(0), hours: Array(24).fill(0) },
+      ...(workspacesOf ? { workspaces: workspacesOf.get(r.id) ?? [] } : {}),
+    };
+  });
 }

@@ -8,6 +8,7 @@ import { newId } from "./id";
 import { renamedTo } from "./username-alias";
 import type { WsRole } from "./workspace";
 
+import { inWorkspace } from "./instance-scope";
 export type Perm = { read: boolean; create: boolean; edit: boolean; delete: boolean };
 export type Kind = keyof Perm;
 export type CallerRole = WsRole | "public";
@@ -209,7 +210,7 @@ export async function getConnectionPolicy(connectionId: string, workspaceId: str
       .select({ id: instance.id, alias: instance.alias, integrationName: integration.name, integrationSlug: integration.slug })
       .from(instance)
       .innerJoin(integration, eq(integration.id, instance.integrationId))
-      .where(eq(instance.workspaceId, workspaceId))
+      .where(inWorkspace(workspaceId))
       .orderBy(asc(instance.createdAt)),
     db.select().from(connectionGrant).where(eq(connectionGrant.connectionId, connectionId)),
   ]);
@@ -237,7 +238,7 @@ export async function effectivePerm(connectionId: string, instanceId: string, ro
   return intersect(grantToPerm(g), ROLE_CAP[role]);
 }
 
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 // Creates a connection with every current instance enabled at the default
 // policy (read, create, edit on; delete off). Retries the name with a
@@ -278,7 +279,7 @@ export async function createConnection(
     createdByUserId: params.createdByUserId,
   });
   if (params.allInstances !== false) {
-    const instances = await tx.select({ id: instance.id }).from(instance).where(eq(instance.workspaceId, params.workspaceId));
+    const instances = await tx.select({ id: instance.id }).from(instance).where(inWorkspace(params.workspaceId));
     if (instances.length) {
       await tx.insert(connectionGrant).values(
         instances.map((i) => ({

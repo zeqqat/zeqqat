@@ -4,7 +4,7 @@ import { IntegrationMark } from "../../../../../components/Marks";
 import { AgentChips, InstanceRows, ManageRow, type InstanceRowData } from "../../../../../components/McpUrlPage";
 import { McpUrlCard, type UrlItem } from "../../../../../components/McpUrls";
 import { db } from "../../../../../db";
-import { instance, integration } from "../../../../../db/schema";
+import { connectionMember, instance, integration, user, workspaceMember } from "../../../../../db/schema";
 import {
   deleteConnectionAction,
   replaceConnectionAction,
@@ -13,12 +13,13 @@ import {
   setAuthModeAction,
   sunsetConnectionAction,
   updateDescriptionAction,
+  setUrlPeopleAction,
 } from "../../../../../lib/actions/connections";
 import { connectionTokenHolders, formatCutoff, getConnection, getConnectionById, getConnectionPolicy, sunsetState } from "../../../../../lib/connections";
 import { here, requireWorkspace } from "../../../../../lib/guard";
 import { connectedPeople, cutoffLabel, policyCounts, toolTotals, urlCounts, usageByUrl, type ConnectedPerson } from "../../../../../lib/mcp-urls";
 import { pickablePolicies, type PolicySummary } from "../../../../../lib/policies";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 
 type Tab = "instances" | "connected" | "manage";
 
@@ -97,6 +98,19 @@ export default async function McpUrlPage({
     usageByUrl(ws.workspaceId, [conn.id]),
     urlCounts([conn.id]),
   ]);
+  // The workspace's members (admins can always use it) and who's on this URL.
+  const [wsPeople, onUrl] = isAdmin && !isPublic
+    ? await Promise.all([
+        db
+          .select({ id: user.id, name: user.name, email: user.email })
+          .from(workspaceMember)
+          .innerJoin(user, eq(user.id, workspaceMember.userId))
+          .where(and(eq(workspaceMember.workspaceId, ws.workspaceId), ne(workspaceMember.role, "admin"))),
+        db.select({ id: connectionMember.userId }).from(connectionMember).where(eq(connectionMember.connectionId, conn.id)),
+      ])
+    : [[], []];
+  const onIds = new Set(onUrl.map((o) => o.id));
+  const onNames = wsPeople.filter((p) => onIds.has(p.id)).map((p) => p.name || p.email.split("@")[0]);
 
   // Instances, grouped by app, with tool counts per kind: what exists, and
   // what each policy this workspace can pick would allow.
@@ -247,6 +261,34 @@ export default async function McpUrlPage({
 
         {tab === "manage" && isAdmin && (
           <div className="zq-mu-panel">
+            {!isPublic && (
+              <ManageRow
+                key={`people-${now}`}
+                title="People"
+                value={onNames.length ? `Admins, plus ${onNames.join(", ")}` : "Admins only"}
+                button="Change"
+                submit="Save"
+                formId="mu-people"
+              >
+                <form action={setUrlPeopleAction} id="mu-people">
+                  <input type="hidden" name="connection_id" value={conn.id} />
+                  {wsPeople.length ? (
+                    <div className="zq-ipick-list">
+                      {wsPeople.map((p) => (
+                        <label key={p.id} className="zq-ipick">
+                          <input type="checkbox" name="user_id" value={p.id} defaultChecked={onIds.has(p.id)} />
+                          <span className="t">
+                            <b>{p.name || p.email.split("@")[0]}</b>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="zq-help">Nobody else is in this workspace yet. Invite people from Members.</p>
+                  )}
+                </form>
+              </ManageRow>
+            )}
             <ManageRow
               key={`row1-${now}`}
               title="Description"

@@ -4,7 +4,7 @@ import { useBase } from "./DashboardBase";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { IntegrationMark } from "./Marks";
-import { WhatIsThis, WhatLink } from "./WhatIsThis";
+import { WhatIsThis } from "./WhatIsThis";
 import { changedPart } from "../lib/version-diff";
 import { Icon, PeriodPick, Spark, type Period, type UrlUsage } from "./McpUrls";
 
@@ -32,6 +32,8 @@ export type InstanceCard = {
   urls: number;
   people: number;
   usage: UrlUsage;
+  // On the account's list: the workspaces that may use it.
+  workspaces?: string[];
 };
 
 const series = (u: UrlUsage, p: Period) =>
@@ -103,16 +105,29 @@ function VersionPill({ version, latest, appName }: { version: string; latest: st
   );
 }
 
-function Card({ c }: { c: InstanceCard }) {
+function Card({ c, linkBase }: { c: InstanceCard; linkBase?: string }) {
   const [period, setPeriod] = useState<Period>("week");
-  return <InstanceCardView c={c} period={period} onPeriod={setPeriod} />;
+  return <InstanceCardView c={c} period={period} onPeriod={setPeriod} linkBase={linkBase} />;
 }
 
 // One instance's card. The list's cards open the instance's page; the
 // page's own card (linked=false) doesn't, and its period switch drives the
 // whole page.
-export function InstanceCardView({ c, period, onPeriod, linked = true }: { c: InstanceCard; period: Period; onPeriod: (p: Period) => void; linked?: boolean }) {
-  const { ws: base } = useBase();
+export function InstanceCardView({
+  c,
+  period,
+  onPeriod,
+  linked = true,
+  linkBase,
+}: {
+  c: InstanceCard;
+  period: Period;
+  onPeriod: (p: Period) => void;
+  linked?: boolean;
+  linkBase?: string;
+}) {
+  const { ws: wsBase } = useBase();
+  const base = linkBase ?? wsBase;
   const router = useRouter();
   const setPeriod = onPeriod;
   const values = series(c.usage, period);
@@ -154,6 +169,15 @@ export function InstanceCardView({ c, period, onPeriod, linked = true }: { c: In
           {c.host}
         </span>
         <span className="zq-di-counts zq-mu-counts">
+          {c.workspaces && (
+            <span className="zq-mu-ic" title={c.workspaces.length ? `Workspaces that can use it: ${c.workspaces.join(", ")}` : "No workspace can use it yet"}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="4" width="16" height="16" rx="4" />
+                <path d="M9 4v16" />
+              </svg>
+              <b>{c.workspaces.length}</b>
+            </span>
+          )}
           <span className="zq-mu-ic" title={`${c.urls} MCP URL${c.urls === 1 ? "" : "s"} reach it`}>
             <Icon name="link" />
             <b>{c.urls}</b>
@@ -179,15 +203,19 @@ export function InstanceCardView({ c, period, onPeriod, linked = true }: { c: In
 export function InstanceCards({
   cards,
   addHref,
+  addSlot,
   emptyText,
   what = false,
+  linkBase,
 }: {
   cards: InstanceCard[];
   addHref: string | null;
+  // In place of the add link: a button that opens something on the page.
+  addSlot?: React.ReactNode;
   emptyText: string;
   what?: boolean;
+  linkBase?: string;
 }) {
-  const { ws: base } = useBase();
   // Same head as the MCP URLs page: the count on the left, the add button on the right.
   return (
     <div>
@@ -199,24 +227,24 @@ export function InstanceCards({
           </div>
         )}
         <span className="zq-mu-head-r">
-          {addHref && (
-            <a className="zq-action zq-action-primary" href={addHref}>
-              Add an instance
-            </a>
-          )}
+          {addSlot ??
+            (addHref && (
+              <a className="zq-action zq-action-primary" href={addHref}>
+                Add an instance
+              </a>
+            ))}
         </span>
       </div>
       {cards.length === 0 && <p className="zq-empty">{emptyText}</p>}
       {cards.length > 0 && (
         <WhatIsThis open={what}>
-          An instance is one Dokploy install (on Dokploy Cloud, your account). Zeqqat makes API calls to an instance via an{" "}
-          <WhatLink href={`${base}/dokploy-integrations?what=1`}>integration</WhatLink>.
+          Each Dokploy you connect is an instance. Your account owns it, and you choose which workspaces can use it.
         </WhatIsThis>
       )}
       {cards.length > 0 && (
         <div className="zq-di-list">
           {cards.map((c) => (
-            <Card key={c.id} c={c} />
+            <Card key={c.id} c={c} linkBase={linkBase} />
           ))}
         </div>
       )}

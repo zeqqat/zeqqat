@@ -7,7 +7,7 @@ import { connection } from "../../db/schema";
 import { createAuthorizationCode } from "../oauth";
 import { getServerSession } from "../session";
 import { sunsetState } from "../connections";
-import { workspaceRoleFor } from "../workspace";
+import { mayUseConnection } from "../workspace";
 
 export async function authorizeAction(formData: FormData) {
   const oauthClientId = formData.get("oauth_client_id")?.toString();
@@ -37,7 +37,7 @@ export async function authorizeAction(formData: FormData) {
     where: and(eq(connection.id, connectionId), isNull(connection.deletedAt)),
   });
   if (!conn || sunsetState(conn) === "cutoff" || conn.authMode !== "members") throw new Error("Unknown connection");
-  if (!(await workspaceRoleFor(session.user.id, conn.workspaceId))) throw new Error("Not a member of this workspace");
+  if (!(await mayUseConnection(session.user.id, conn.id, conn.workspaceId))) throw new Error("Not on this MCP URL");
   const workspaceId = conn.workspaceId;
 
   const code = await createAuthorizationCode({

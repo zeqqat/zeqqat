@@ -11,6 +11,7 @@ import { newId } from "./id";
 import { REDACTED, scrubSecrets } from "./scrub";
 import { HandleMinter, resolveHandles } from "./secret-handles";
 
+import { inWorkspace } from "./instance-scope";
 // Who edits policies, by the owning account's type: a personal account
 // has exactly one owner; an organization has owners.
 export function policyEditors(ctx: Pick<McpContext, "organizationSlug" | "organizationKind">): string {
@@ -280,7 +281,7 @@ export async function runEndpoint(
   const start = Date.now();
 
   const inst = await db.query.instance.findFirst({
-    where: and(eq(instance.workspaceId, ctx.workspaceId), eq(instance.alias, params.instanceAlias)),
+    where: and(inWorkspace(ctx.workspaceId), eq(instance.alias, params.instanceAlias)),
   });
   if (!inst) {
     await logCall(ctx, {

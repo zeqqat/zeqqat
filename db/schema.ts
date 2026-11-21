@@ -83,6 +83,10 @@ export const organization = pgTable("organization", {
   // holds the bundled catalog and has no owner or members
   // (lib/official-catalog.ts). Every other org has an owner.
   ownerUserId: uuid("owner_user_id").references(() => user.id),
+  // When the account finished Setup (connected a Dokploy, named a
+  // workspace, connected an agent). Until then its owner sees only Setup,
+  // unless they joined someone else's organization through an invite.
+  setupCompletedAt: timestamp("setup_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   check("organization_kind_check", sql`${t.kind} in ('personal','organization')`),
@@ -161,11 +165,15 @@ export const invitation = pgTable("invitation", {
   email: text("email").notNull(), // stored lowercased
   role: text("role").notNull(), // 'owner' | 'member'
   tokenHash: text("token_hash").notNull().unique(),
+  // The MCP URL the invited person's agent will use. Accepting adds them
+  // to that URL's people (connection_member).
+  connectionId: uuid("connection_id").references((): AnyPgColumn => connection.id, { onDelete: "set null" }),
   invitedByUserId: uuid("invited_by_user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  declinedAt: timestamp("declined_at", { withTimezone: true }),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -369,11 +377,14 @@ export const apiEndpoint = pgTable("api_endpoint", {
   check("api_endpoint_kind_source_check", sql`${t.kindSource} in ('spec','accepted')`),
 ]);
 
+// An instance belongs to the account (personal or organization) that
+// connected it. Workspaces only use the instances the account gives them
+// (workspace_instance), so a new workspace never asks for the key again.
 export const instance = pgTable("instance", {
   id: uuid("id").primaryKey(),
-  workspaceId: uuid("workspace_id")
+  organizationId: uuid("organization_id")
     .notNull()
-    .references(() => workspace.id, { onDelete: "cascade" }),
+    .references(() => organization.id, { onDelete: "cascade" }),
   integrationId: uuid("integration_id")
     .notNull()
     .references(() => integration.id),
@@ -408,7 +419,21 @@ export const instance = pgTable("instance", {
   createdByUserId: uuid("created_by_user_id").references(() => user.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  unique("instance_workspace_alias_unique").on(t.workspaceId, t.alias),
+  unique("instance_org_alias_unique").on(t.organizationId, t.alias),
+]);
+
+// Which workspaces may use which of the account's instances. The account
+// owner decides; no row means the workspace can't reach that instance.
+export const workspaceInstance = pgTable("workspace_instance", {
+  workspaceId: uuid("workspace_id")
+    .notNull()
+    .references(() => workspace.id, { onDelete: "cascade" }),
+  instanceId: uuid("instance_id")
+    .notNull()
+    .references(() => instance.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("workspace_instance_unique").on(t.workspaceId, t.instanceId),
 ]);
 
 // ---------- Permissions: who may reach what ----------
@@ -486,6 +511,21 @@ export const connection = pgTable("connection", {
   unique("connection_org_name_short_id_unique").on(t.organizationId, t.name, t.shortId),
   check("connection_auth_mode_check", sql`${t.authMode} in ('members','public')`),
   check("connection_name_check", sql`${t.name} ~ '^[a-z0-9]+(_[a-z0-9]+)*$'`),
+]);
+
+// Who may use a members-only MCP URL. Account owners and workspace admins
+// always may (they manage it); everyone else needs a row here. Invites add
+// one for the MCP URL the invite names.
+export const connectionMember = pgTable("connection_member", {
+  connectionId: uuid("connection_id")
+    .notNull()
+    .references(() => connection.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  unique("connection_member_unique").on(t.connectionId, t.userId),
 ]);
 
 // The connection's ceiling per instance. No row means the instance is not

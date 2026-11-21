@@ -14,7 +14,7 @@ import { connectionFromResource, getClientByClientId, validateRedirectUri } from
 import { clientIp, rateLimit } from "../../../lib/rate-limit";
 import { getServerSession } from "../../../lib/session";
 import { signInErrorText } from "../../../lib/sign-in-errors";
-import { workspaceRoleFor } from "../../../lib/workspace";
+import { mayUseConnection, workspaceRoleFor } from "../../../lib/workspace";
 
 // Capped host — this is the CIMD client_id URL's host, derived by us in
 // lib/oauth.ts, never the document's own self-asserted client_name.
@@ -217,6 +217,9 @@ export default async function AuthorizePage({
     }
 
     const role = await workspaceRoleFor(session.user.id, conn.workspaceId);
+    if (role && !(await mayUseConnection(session.user.id, conn.id, conn.workspaceId))) {
+      return errorPage("You haven't been given this MCP URL", `Ask one of the admins of @${conn.orgSlug} to add you to ${conn.name}.`);
+    }
     if (!role) {
       return errorPage(
         "You're not in this workspace",

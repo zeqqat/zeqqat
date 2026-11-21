@@ -3,7 +3,7 @@ import { db } from "../db";
 import { oauthGrant, oauthToken, organization, workspace } from "../db/schema";
 import type { CallerRole } from "./connections";
 import { sha256Hex } from "./oauth-crypto";
-import { workspaceRoleFor } from "./workspace";
+import { mayUseConnection, workspaceRoleFor } from "./workspace";
 
 export type AccountType = "personal" | "organization";
 
@@ -77,6 +77,8 @@ export async function resolveBearerToken(
   if (!grant.userId) return null;
   const callerRole: CallerRole | null = await workspaceRoleFor(grant.userId, grant.workspaceId);
   if (!callerRole) return null;
+  // Taken off the MCP URL's people list: the token stops working too.
+  if (!(await mayUseConnection(grant.userId, wanted, grant.workspaceId))) return null;
 
   return {
     organizationId: grant.organizationId,
