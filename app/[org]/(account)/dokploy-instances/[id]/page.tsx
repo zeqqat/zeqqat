@@ -27,8 +27,8 @@ export default async function AccountInstancePage({
       baseUrl: instance.baseUrl,
       credential: instance.credential,
       lastStatus: instance.lastStatus,
-      keyDeactivatedAt: instance.keyDeactivatedAt,
-      keyDeactivatedFor: instance.keyDeactivatedFor,
+      keyDeletedAt: instance.keyDeletedAt,
+      keyDeletedFor: instance.keyDeletedFor,
       keyHint: instance.keyHint,
       lastVersion: instance.lastVersion,
       lastValidatedAt: instance.lastValidatedAt,
@@ -65,10 +65,10 @@ export default async function AccountInstancePage({
         keyRow={{
           start: row.keyHint?.start ?? "",
           end: row.keyHint?.end ?? "",
-          deactivatedOn: row.keyDeactivatedAt
-            ? row.keyDeactivatedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+          deletedOn: row.keyDeletedAt
+            ? row.keyDeletedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
             : null,
-          deactivatedFor: row.keyDeactivatedFor,
+          deletedFor: row.keyDeletedFor,
         }}
         workspaces={wss.map((w) => ({ id: w.id, name: w.name, on: on.has(w.id), urls: urls.filter((u) => u.ws === w.id).length }))}
       />

@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.7.1",
+    "date": "2026-11-22",
+    "at": "2026-11-22T12:41:41Z",
+    "changes": [
+      "Delete the key zeqqat.com uses straight from your Dokploy after self-hosting: Zeqqat finds it by its hash, and the instance keeps a dated log",
+      "The claim link stays on the Self-host page until your new Zeqqat says it has been claimed",
+      "Self-host shows in the account menu until 7 days after the claim, then in Settings"
+    ]
+  },
+  {
     "version": "0.7.0",
     "date": "2026-11-22",
     "at": "2026-11-22T09:57:13Z",

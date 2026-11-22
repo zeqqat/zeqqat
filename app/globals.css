@@ -7448,3 +7448,27 @@ button.zq-demo-open {
   margin-top: 24px;
   text-align: left;
 }
+.zq-sh-pick {
+  margin-top: 12px;
+  text-align: left;
+}
+.zq-sh-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.zq-sh-pick-row span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 13px;
+}
+.zq-sh-pick-row small {
+  color: var(--faint);
+  font-size: 11.5px;
+}

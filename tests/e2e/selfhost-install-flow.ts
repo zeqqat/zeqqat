@@ -14,6 +14,7 @@ import {
   statusStep,
 } from "../../lib/selfhost-install";
 import { SELFHOST_COMPOSE } from "../../lib/selfhost-compose";
+import { deleteOwnKey, dokployKeyHash } from "../../lib/dokploy-keys";
 
 type Call = {
   op: string;
@@ -38,7 +39,7 @@ const server = createServer((req, res) => {
       res.writeHead(status, { "content-type": "application/json" });
       res.end(JSON.stringify(data));
     };
-    if (req.headers["x-api-key"] !== KEY)
+    if (req.headers["x-api-key"] !== KEY && !dokployKeys.some((k) => k.plain === req.headers["x-api-key"]))
       return send(401, { message: "Unauthorized" });
     switch (op) {
       // Newer Dokploy: the project and its default environment.
@@ -57,6 +58,14 @@ const server = createServer((req, res) => {
         return send(200, true);
       case "organization.active":
         return send(200, { id: "org1", name: "Default" });
+      case "user.getBackups":
+        if (!keysWithHashes) return send(403, { message: "admins only" });
+        return send(200, { id: "u1", backups: [], apiKeys: dokployKeys.map((k) => ({ ...k, start: k.prefix.slice(0, 6), key: dokployKeyHash(k.plain) })) });
+      case "user.get":
+        return send(200, { id: "m1", user: { id: "u1", apiKeys: dokployKeys.map(({ plain: _p, ...k }) => k) } });
+      case "user.deleteApiKey":
+        dokployKeys = dokployKeys.filter((k) => k.id !== body.apiKeyId);
+        return send(200, true);
       case "user.createApiKey":
         return send(200, { id: "k1", key: `${body.prefix}newkey1234567890`, name: body.name });
       case "domain.generateDomain":
@@ -76,6 +85,9 @@ const server = createServer((req, res) => {
     }
   });
 });
+
+let dokployKeys: { id: string; name: string; prefix: string; createdAt: string; plain: string }[] = [];
+let keysWithHashes = true;
 
 async function main() {
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
@@ -207,6 +219,35 @@ async function main() {
     const domainsBefore = calls.filter((c) => c.op === "domain.create").length;
     await assert.rejects(configureStep(t, "c1", "zeqqat-abc123"), /public IP/);
     assert.equal(calls.filter((c) => c.op === "domain.create").length, domainsBefore);
+
+    // zeqqat.com's own key deletes itself: found by its hash when Dokploy
+    // returns hashes (user.getBackups), else by the longest prefix.
+    const others = [
+      { id: "k-dev", name: "For zeqqat dev", prefix: "zeqqat_dev", createdAt: "2026-10-26T04:05:03Z", plain: "zeqqat_devAAAA" },
+      { id: "k-z", name: "For zeqqat dev 2", prefix: "z_dev", createdAt: "2026-11-09T07:50:58Z", plain: "z_devBBBB" },
+    ];
+    const cloudKey = { id: "k-main", name: "Zeqqat Main MCP", prefix: "zeqqat_main", createdAt: "2026-11-08T17:27:52Z", plain: "zeqqat_mainCCCCDDDD" };
+    dokployKeys = [...others, cloudKey];
+    keysWithHashes = true;
+    assert.deepEqual(await deleteOwnKey({ baseUrl, apiKey: cloudKey.plain }), { deleted: true });
+    assert.deepEqual(dokployKeys.map((k) => k.id), ["k-dev", "k-z"], "deleted by hash, the others untouched");
+
+    dokployKeys = [...others, cloudKey];
+    keysWithHashes = false;
+    assert.deepEqual(await deleteOwnKey({ baseUrl, apiKey: cloudKey.plain }), { deleted: true });
+    assert.deepEqual(dokployKeys.map((k) => k.id), ["k-dev", "k-z"], "deleted by longest prefix");
+
+    const twin = { ...cloudKey, id: "k-twin", plain: "zeqqat_mainEEEE" };
+    dokployKeys = [...others, cloudKey, twin];
+    const asked = await deleteOwnKey({ baseUrl, apiKey: cloudKey.plain });
+    assert.ok("pick" in asked && asked.pick.length === 2, "two keys share the prefix: the owner picks");
+    await assert.rejects(deleteOwnKey({ baseUrl, apiKey: cloudKey.plain }, "not-a-key"), /isn't one of your Dokploy keys/);
+    assert.deepEqual(await deleteOwnKey({ baseUrl, apiKey: cloudKey.plain }, "k-main"), { deleted: true });
+    assert.deepEqual(dokployKeys.map((k) => k.id).sort(), ["k-dev", "k-twin", "k-z"]);
+
+    dokployKeys = [...others];
+    keysWithHashes = true;
+    await assert.rejects(deleteOwnKey({ baseUrl, apiKey: KEY }), /couldn.t find its key/);
 
     console.log("selfhost install flow: ok");
   } finally {

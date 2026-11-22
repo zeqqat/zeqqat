@@ -8,9 +8,9 @@ import { ReplaceKeyForm } from "./ReplaceKeyForm";
 import type { Period } from "./McpUrls";
 
 type Ws = { id: string; name: string; on: boolean; urls: number };
-// The key's summary (prefix and last 4, never more) and, once deactivated,
+// The key's summary (prefix and last 4, never more) and, once deleted,
 // when and for which self-hosted Zeqqat: kept as a log.
-export type KeyRow = { start: string; end: string; deactivatedOn: string | null; deactivatedFor: string | null };
+export type KeyRow = { start: string; end: string; deletedOn: string | null; deletedFor: string | null };
 
 // An instance at the account level (app/[org]/(account)/dokploy-instances/
 // [id]): the list's card, then Workspaces (which of the account's
@@ -96,8 +96,8 @@ export function AccountInstanceView({
                     <code>
                       {keyRow.start}••••{keyRow.end}
                     </code>
-                    {keyRow.deactivatedOn
-                      ? ` · Deactivated on ${keyRow.deactivatedOn}${keyRow.deactivatedFor ? `, when you moved to ${keyRow.deactivatedFor}` : ""}`
+                    {keyRow.deletedOn
+                      ? ` · Deleted from your Dokploy on ${keyRow.deletedOn}${keyRow.deletedFor ? `, when you moved to ${keyRow.deletedFor}` : ""}`
                       : null}
                   </small>
                 </span>

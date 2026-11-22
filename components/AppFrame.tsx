@@ -15,6 +15,7 @@ import { firstAdminOf } from "../lib/overview";
 import { accountsFor } from "../lib/accounts";
 import { hasOwnAgent, listUserAccounts, listUserWorkspaces, type UserAccount, type UserWorkspace } from "../lib/workspace";
 import { pendingInvitesFor } from "../lib/setup";
+import { showSelfHostMenu } from "../lib/selfhost-installs";
 
 import { accountBase, wsBase } from "../lib/paths";
 
@@ -87,6 +88,7 @@ export async function AppFrame({ level, children }: { level: FrameLevel; childre
         ).map(({ baseUrl, ...r }) => ({ ...r, host: baseUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "") }))
       : [];
   const invites = (await pendingInvitesFor(user.id)).map((v) => ({ id: v.id, orgSlug: v.orgSlug, orgName: v.orgName, inviter: v.inviterName }));
+  const selfHost = edition() === "cloud" && acct.orgRole === "owner" && (await showSelfHostMenu(acct.organizationId));
   const devTools = devToolsEnabled() ? { pastUsers: await pastUsersOf(user) } : null;
   // Self-hosted and reached over plain http: sign-in works, but agents like
   // Claude need https, so say so (components/HttpsBanner.tsx).
@@ -114,6 +116,7 @@ export async function AppFrame({ level, children }: { level: FrameLevel; childre
         setup={setup}
         accountInstances={accountInstances}
         invites={invites}
+        selfHost={selfHost}
         needsAgent={needsAgent}
         level={ws ? level : "account"}
         wsBase={ws ? wsBase(ws.organizationSlug, ws.workspaceSlug) : accountBase(acct.organizationSlug)}

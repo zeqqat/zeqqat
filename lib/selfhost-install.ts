@@ -167,7 +167,7 @@ export async function createStep(t: Target, host?: string): Promise<Created> {
 }
 
 // Step 2: a Dokploy API key of its own for the new install, so the key
-// zeqqat.com holds can be deactivated without breaking it. Dokploy ties a
+// zeqqat.com holds can be deleted without breaking it. Dokploy ties a
 // key to one of its organizations; the key's owner is whoever owns the key
 // zeqqat.com uses. Null when this Dokploy can't make keys over its API
 // (older versions): the install then gets a copy of the same key.

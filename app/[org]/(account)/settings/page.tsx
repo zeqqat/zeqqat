@@ -5,6 +5,8 @@ import { SettingsCounts, SettingsTabs } from "../../../../components/SettingsHea
 import { workspaceCards } from "../../../../lib/accounts";
 import { changeOrgUsernameAction, deleteOrgAction, renameOrgAction } from "../../../../lib/actions/org-settings";
 import { publicUrl } from "../../../../lib/env";
+import { edition } from "../../../../lib/edition";
+import { installsOf } from "../../../../lib/selfhost-installs";
 import { requireAccount } from "../../../../lib/guard";
 import { accountScope } from "../../../../lib/integration-scope";
 import { accountPeople } from "../../../../lib/members";
@@ -15,6 +17,8 @@ import { listUserWorkspaces } from "../../../../lib/workspace";
 // tabs. An organization's owners edit its name and username and can delete
 // it. A personal account's name and username are its person's profile,
 // edited on /account (Gaita, 2026-11-21).
+
+const day = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 
 const ERRORS: Record<string, [string, string]> = {
   name: ["general", "Give the organization a name."],
@@ -46,6 +50,11 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
   const sum = (k: "instances" | "urls") => cards.reduce((n, c) => n + c[k], 0);
 
   const tabs: [string, string][] = [["general", "General"]];
+  // Zeqqats installed from zeqqat.com (lib/selfhost-installs.ts): the
+  // claim link for any not claimed yet, the address for the rest.
+  const selfHost = edition() === "cloud" && isOwner;
+  const installs = selfHost ? await installsOf(ws.organizationId) : [];
+  if (selfHost) tabs.push(["self-host", "Self-host"]);
   if (canEdit) tabs.push(["delete", "Delete"]);
   const asked = typeof params.tab === "string" ? params.tab : error?.[0];
   const tab = tabs.some(([t]) => t === asked) ? asked! : "general";
@@ -161,6 +170,49 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
                     <small className="zq-st-url">{page.replace(/^https?:\/\//, "")}</small>
                   </span>
                   <CopyButton text={page} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "self-host" && (
+            <>
+              {installs.map((i) => (
+                <div className="zq-mu-mrow" key={i.id}>
+                  <div className="zq-mu-mrow-h" style={{ flexWrap: "wrap" }}>
+                    <span className="zq-mu-mrow-t" style={{ flex: "1 1 0", minWidth: 0 }}>
+                      <b className="zq-st-url">{i.address.replace(/^https?:\/\//, "")}</b>
+                      <small>
+                        {i.claimedAt
+                          ? `Claimed on ${day(i.claimedAt)}`
+                          : `Installed on ${day(i.createdAt)} · not claimed yet`}
+                        {i.instanceAlias ? ` · from ${i.instanceAlias}` : ""}
+                      </small>
+                    </span>
+                    {i.claimUrl ? (
+                      <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+                        <CopyButton text={i.claimUrl} />
+                        <a className="zq-action zq-action-sm zq-mu-mbtn" href={i.claimUrl} target="_blank" rel="noreferrer noopener">
+                          Claim it
+                        </a>
+                      </span>
+                    ) : (
+                      <a className="zq-action zq-action-sm zq-mu-mbtn" href={i.address} target="_blank" rel="noreferrer noopener">
+                        Open
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div className="zq-mu-mrow">
+                <div className="zq-mu-mrow-h">
+                  <span className="zq-mu-mrow-t">
+                    <b>{installs.length ? "Install another Zeqqat" : "Install Zeqqat on your own Dokploy"}</b>
+                    <small>With your account and Dokploy instance already on it.</small>
+                  </span>
+                  <a className="zq-action zq-action-sm zq-mu-mbtn" href={`/${ws.organizationSlug}/self-host`}>
+                    Install
+                  </a>
                 </div>
               </div>
             </>

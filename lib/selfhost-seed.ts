@@ -32,6 +32,9 @@ export type Seed = {
   // The compose this install runs as, on that instance's Dokploy: after the
   // claim the install removes ZEQQAT_SEED from it.
   composeId: string;
+  // zeqqat.com's address: after the claim the install tells it, with only
+  // the claim token, so it stops showing the claim link.
+  report?: string;
 };
 
 export const SEED_ENV = "ZEQQAT_SEED";

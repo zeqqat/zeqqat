@@ -630,13 +630,30 @@ Dokploy. Once anyone exists the seed is ignored.
 
 **The old key.** The live panel shows the owner (avatar, name, @username,
 Owner), then "The key zeqqat.com uses" with Keep it (the default: people
-staying on zeqqat.com is what we want) and Deactivate the key
-(`deactivateCloudKey`). Deactivating never deletes: `instance.key_deactivated_at`
-/ `key_deactivated_for` keep it as a log on the instance's Manage tab
-("Deactivated on <date>, when you moved to <host>"), the card's ring says
-"Key deactivated", calls are refused, and Replace key clears it. Dokploy
-has no API to switch a key off, so the key keeps working in Dokploy until
-it is deleted there, and the UI says so.
+staying on zeqqat.com is what we want) and Delete the key
+(`deleteCloudKey`). Dokploy can't switch a key off, only delete it, and
+never says which key is calling, so `lib/dokploy-keys.ts` finds it: Dokploy
+stores each key's SHA-256 (base64url, no padding: `@better-auth/api-key`
+1.6.23's `defaultKeyHasher`) and `user.getBackups` returns it, so we hash
+the key we hold and match exactly; without hashes (non-admin keys), the
+longest prefix the key starts with; still ambiguous, the owner picks. The
+key then deletes itself (`user.deleteApiKey`). This is Zeqqat's own code
+with the owner clicking, so no agent policy applies. The instance stays:
+its stored key is wiped, `instance.key_deleted_at` / `key_deleted_for` keep
+the log on its Manage tab ("Deleted from your Dokploy on <date>, when you
+moved to <host>"), the ring says "Key deleted", calls are refused, and
+Replace key brings it back.
+
+**The saved install.** Every install is a `selfhost_install` row
+(`lib/selfhost-installs.ts`): the address, the claim token encrypted (and
+its hash), whether it got its own key, and the key choice. The page shows
+the latest one again after a reload (claim link while unclaimed). On claim,
+the install posts only the token to `<zeqqat.com>/api/selfhost/claimed`
+(`seed.report`), which sets `claimed_at` and always answers 204. The account
+menu shows Self-host while an install is unclaimed and for 7 days after its
+claim; the account's Settings has a Self-host tab with every install (the
+claim link for unclaimed ones, Open for the rest) and Install another.
+`pnpm exec tsx tests/e2e/selfhost-saved-flow.ts` covers it.
 `deploy/dokploy/docker-compose.yml` (the Dokploy template) must equal
 `SELFHOST_COMPOSE` (a unit test checks), and the template follows `latest`,
 so a release needs no template PR. The first template (still on

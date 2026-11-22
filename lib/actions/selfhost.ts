@@ -4,10 +4,13 @@ import { randomBytes } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "../../db";
-import { instance, integration, user, workspace, workspaceInstance } from "../../db/schema";
+import { instance, integration, selfhostInstall, user, workspace, workspaceInstance } from "../../db/schema";
 import { decryptCredential, encryptCredential, type EncryptedCredential } from "../crypto";
 import { normalizeBaseUrl } from "../dokploy-check";
+import { deleteOwnKey, type DokployKey } from "../dokploy-keys";
+import { publicUrl } from "../env";
 import { requireOrgOwner } from "../guard";
+import { newId } from "../id";
 import { keyHint } from "../key-hint";
 import { personalAccountOf } from "../setup";
 import { claimHash, encodeSeed, SEED_ENV } from "../selfhost-seed";
@@ -91,7 +94,7 @@ export async function installKey(instanceId: string): Promise<KeyResult | Fail> 
   });
 }
 
-export type ConfigureResult = { ok: true; address: string; claimUrl: string; ownKey: boolean };
+export type ConfigureResult = { ok: true; address: string; claimUrl: string; ownKey: boolean; installId: string };
 
 export async function installConfigure(
   instanceId: string,
@@ -137,9 +140,24 @@ export async function installConfigure(
       },
       workspaces: wss,
       composeId,
+      report: publicUrl(),
     });
     const r = await configureStep(t, composeId, appName, host, { encryptionKey, env: { [SEED_ENV]: seed } });
-    return { ...r, claimUrl: `${r.address}/claim/${token}`, ownKey: !!newKey };
+    // Saved so the claim link outlives this page (lib/selfhost-installs.ts).
+    const installId = newId();
+    await db.insert(selfhostInstall).values({
+      id: installId,
+      organizationId: acct.organizationId,
+      instanceId: row.id,
+      composeId,
+      address: r.address,
+      claimHash: claimHash(token),
+      claimToken: encryptCredential(token),
+      ownKey: !!newKey,
+      createdByUserId: me.id,
+    });
+    revalidatePath(`/${acct.organizationSlug}`, "layout");
+    return { ...r, claimUrl: `${r.address}/claim/${token}`, ownKey: !!newKey, installId };
   });
 }
 
@@ -151,26 +169,53 @@ export async function installStatus(instanceId: string, composeId: string, addre
   return run(async () => statusStep(await target(instanceId), composeId, address));
 }
 
-// "Deactivate the key": zeqqat.com stops using the key it holds for this
-// instance. The instance, its workspaces, policies and Activity all stay;
-// the key stays too, as a log of what zeqqat.com used and when it stopped,
-// shown on the instance's Manage tab. Dokploy has no way to switch a key
-// off over its API, so the key itself keeps working there until it is
-// deleted in Dokploy.
-export async function deactivateCloudKey(instanceId: string, address: string): Promise<{ ok: true } | Fail> {
+// What happens to the key zeqqat.com holds for the instance, once the new
+// install has its own. Keep it (the default: people staying on zeqqat.com
+// too), or delete it from Dokploy: Dokploy can't switch a key off, only
+// delete it. The key deletes itself (lib/dokploy-keys.ts), from Zeqqat's
+// own code with the owner clicking, so no agent policy applies. The
+// instance, its workspaces, policies and Activity stay on zeqqat.com; its
+// stored key is wiped and the Manage tab keeps the log.
+async function savedInstall(installId: string) {
+  const { acct } = await requireOrgOwner();
+  const [row] = await db
+    .select()
+    .from(selfhostInstall)
+    .where(and(eq(selfhostInstall.id, installId), eq(selfhostInstall.organizationId, acct.organizationId)));
+  if (!row) throw new InstallError("That install isn't in this account.");
+  return row;
+}
+
+export async function keepCloudKey(installId: string): Promise<{ ok: true } | Fail> {
   return run(async () => {
-    const { acct, row } = await owned(instanceId);
-    let host = address;
+    const row = await savedInstall(installId);
+    await db.update(selfhostInstall).set({ keyChoice: "kept" }).where(eq(selfhostInstall.id, row.id));
+    return { ok: true as const };
+  });
+}
+
+export type DeleteKeyResult = { ok: true } | { ok: false; pick: DokployKey[] } | Fail;
+
+export async function deleteCloudKey(installId: string, picked?: string): Promise<DeleteKeyResult> {
+  return run(async () => {
+    const row = await savedInstall(installId);
+    if (!row.instanceId) throw new InstallError("The instance this was installed from is gone from zeqqat.com.");
+    if (!row.ownKey) throw new InstallError("Your Zeqqat uses this same key, so deleting it would stop it too.");
+    const { acct, row: inst, target: t } = await owned(row.instanceId);
+    const r = await deleteOwnKey(t, picked);
+    if ("pick" in r) return { ok: false as const, pick: r.pick };
+    let host = row.address;
     try {
-      host = new URL(address).host;
+      host = new URL(row.address).host;
     } catch {
-      // keep what came
+      // keep what's saved
     }
     await db
       .update(instance)
-      .set({ keyDeactivatedAt: new Date(), keyDeactivatedFor: host.slice(0, 200) })
-      .where(and(eq(instance.id, row.id), eq(instance.organizationId, acct.organizationId)));
-    revalidatePath(`/${acct.organizationSlug}/dokploy-instances/${row.id}`);
+      .set({ keyDeletedAt: new Date(), keyDeletedFor: host.slice(0, 200), credential: encryptCredential(""), lastStatus: "key_deleted" })
+      .where(and(eq(instance.id, inst.id), eq(instance.organizationId, acct.organizationId)));
+    await db.update(selfhostInstall).set({ keyChoice: "deleted" }).where(eq(selfhostInstall.id, row.id));
+    revalidatePath(`/${acct.organizationSlug}/dokploy-instances/${inst.id}`);
     return { ok: true as const };
   });
 }

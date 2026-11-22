@@ -21,7 +21,7 @@ export default async function AccountInstancesPage({ searchParams }: { searchPar
       baseUrl: instance.baseUrl,
       credential: instance.credential,
       lastStatus: instance.lastStatus,
-      keyDeactivatedAt: instance.keyDeactivatedAt,
+      keyDeletedAt: instance.keyDeletedAt,
       lastVersion: instance.lastVersion,
       lastValidatedAt: instance.lastValidatedAt,
       specVersion: instance.specVersion,

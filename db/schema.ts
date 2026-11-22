@@ -11,6 +11,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -400,12 +401,13 @@ export const instance = pgTable("instance", {
   // prefix (as set in Dokploy, up to the first _ or -) and its last 4
   // characters (lib/key-hint.ts). Shown on hover on the self-host page.
   keyHint: jsonb("key_hint").$type<{ start: string; end: string }>(),
-  // Set when the owner deactivated this key after moving to their own
-  // Zeqqat (the self-host page's "Deactivate the key"). The key stays as a
-  // log of what zeqqat.com used and when it stopped; calls are refused until
-  // a new key replaces it. key_deactivated_for is the self-hosted address.
-  keyDeactivatedAt: timestamp("key_deactivated_at", { withTimezone: true }),
-  keyDeactivatedFor: text("key_deactivated_for"),
+  // Set when the owner deleted this key from their Dokploy after moving to
+  // their own Zeqqat (the self-host page's "Delete the key"). The stored
+  // key is wiped then; key_hint and these stay as a log of what zeqqat.com
+  // used and when it stopped. key_deleted_for is the self-hosted address.
+  // Calls are refused until Replace key gives the instance a new key.
+  keyDeletedAt: timestamp("key_deleted_at", { withTimezone: true }),
+  keyDeletedFor: text("key_deleted_for"),
   lastValidatedAt: timestamp("last_validated_at", { withTimezone: true }),
   // What the last connection test found: the upstream version string and
   // whether the key was accepted. Display only, never used for access.
@@ -863,3 +865,32 @@ export const summarySuggestion = pgTable("summary_suggestion", {
   check("summary_suggestion_status_check", sql`${t.status} in ('pending','accepted','rejected')`),
   check("summary_suggestion_length_check", sql`char_length(${t.suggestedSummary}) between 10 and 120`),
 ]);
+
+// One Zeqqat installed from zeqqat.com into someone's Dokploy (the account's
+// Self-host page, lib/actions/selfhost.ts). Kept so the claim link survives
+// a reload and can be found again in Settings until the owner account is
+// made on the new install, which reports back with the claim token
+// (app/api/selfhost/claimed). claim_hash is the token's SHA-256, for that
+// lookup; claim_token is the token itself, encrypted, to show the link.
+export const selfhostInstall = pgTable(
+  "selfhost_install",
+  {
+    id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    instanceId: uuid("instance_id").references(() => instance.id, { onDelete: "set null" }),
+    composeId: text("compose_id").notNull(),
+    address: text("address").notNull(),
+    claimHash: text("claim_hash").notNull(),
+    claimToken: jsonb("claim_token").$type<{ ciphertext: string; iv: string; tag: string }>().notNull(),
+    // The install got a Dokploy key of its own, so zeqqat.com's can go.
+    ownKey: boolean("own_key").notNull().default(false),
+    // "kept" or "deleted": what the owner chose for zeqqat.com's key.
+    keyChoice: text("key_choice"),
+    createdByUserId: uuid("created_by_user_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("selfhost_install_claim_hash_uq").on(t.claimHash), index("selfhost_install_org_idx").on(t.organizationId)],
+);

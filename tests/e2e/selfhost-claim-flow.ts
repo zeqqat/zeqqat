@@ -37,6 +37,7 @@ async function main() {
   // The stand-in Dokploy: holds the compose's env so the strip can be seen.
   const KEY = "zqself_abcdefghijklmnop1234";
   let composeEnv = "";
+  let reported: string | null = null;
   const dokploy = createServer((req, res) => {
     let raw = "";
     req.on("data", (c) => (raw += c));
@@ -46,6 +47,12 @@ async function main() {
         res.writeHead(s, { "content-type": "application/json" });
         res.end(JSON.stringify(d));
       };
+      // Stands in for zeqqat.com too: the claim report.
+      if (req.url === "/api/selfhost/claimed") {
+        reported = JSON.parse(raw).token;
+        res.writeHead(204);
+        return res.end();
+      }
       if (req.headers["x-api-key"] !== KEY) return send(401, { message: "Unauthorized" });
       if (op === "compose.one") return send(200, { composeId: "c1", env: composeEnv });
       if (op === "compose.update") {
@@ -95,6 +102,7 @@ async function main() {
       },
       workspaces: [{ slug: "production", name: "production" }],
       composeId: "c1",
+      report: dokployUrl,
     });
     process.env.ZEQQAT_SEED = seed;
     composeEnv = `ZEQQAT_PUBLIC_URL=https://x.sslip.io\nZEQQAT_SEED=${seed}\nPOSTGRES_PASSWORD=abc`;
@@ -144,6 +152,9 @@ async function main() {
 
     for (let i = 0; i < 50 && composeEnv.includes("ZEQQAT_SEED"); i++) await new Promise((r) => setTimeout(r, 100));
     assert(!composeEnv.includes("ZEQQAT_SEED") && composeEnv.includes("POSTGRES_PASSWORD=abc"), "the seed was taken out of the compose env, nothing else");
+
+    for (let i = 0; i < 50 && !reported; i++) await new Promise((r) => setTimeout(r, 100));
+    assert(reported === token, "zeqqat.com was told it's claimed, with only the claim token");
 
     assert(
       (await refused(auth.api.signUpEmail({ body: { ...body, email: "x@example.com" }, headers: new Headers({ "x-zeqqat-claim": token }) }))) ===

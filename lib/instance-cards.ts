@@ -185,14 +185,14 @@ export type CardRow = {
   appSlug: string;
   appName: string;
   appLogo: string | null;
-  keyDeactivatedAt?: Date | null;
+  keyDeletedAt?: Date | null;
 };
 export async function cardsFor(rows: CardRow[], workspaceId: string | null, workspacesOf?: Map<string, string[]>) {
   const ids = rows.map((r) => r.id);
   const [usage, counts, fresh] = await Promise.all([
     usageByInstance(workspaceId, ids),
     instanceCounts(ids),
-    freshDokploy(rows.filter((r) => r.appSlug === "dokploy" && !r.keyDeactivatedAt)),
+    freshDokploy(rows.filter((r) => r.appSlug === "dokploy" && !r.keyDeletedAt)),
   ]);
   return rows.map((r) => {
     const f = fresh.get(r.id);
@@ -209,7 +209,7 @@ export async function cardsFor(rows: CardRow[], workspaceId: string | null, work
       appName: r.appName,
       appSlug: r.appSlug,
       appLogo: r.appLogo,
-      status: r.keyDeactivatedAt ? "key_deactivated" : (f?.status ?? r.lastStatus),
+      status: r.keyDeletedAt ? "key_deleted" : (f?.status ?? r.lastStatus),
       version: f?.version ?? r.lastVersion,
       latest: f?.latest ?? null,
       urls: counts.urls.get(r.id) ?? 0,

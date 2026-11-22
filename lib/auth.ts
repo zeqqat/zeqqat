@@ -161,7 +161,7 @@ const authFor = (baseURL: string | undefined) => betterAuth({
             if (seed && claimAllowed(seed, user.email, claim)) {
               // A failed import mustn't take the account with it: they
               // can still connect Dokploy by hand in Setup.
-              await applySeed(seed, user.id).catch((err) => console.error("[zeqqat] seed import failed:", err));
+              await applySeed(seed, user.id, claim ?? "").catch((err) => console.error("[zeqqat] seed import failed:", err));
             }
             // Self-hosted: signing up through an invite link is the yes.
             const token = ctx?.path === "/sign-up/email" ? (ctx.headers?.get("x-zeqqat-invite") ?? null) : null;

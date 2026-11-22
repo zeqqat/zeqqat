@@ -42,7 +42,7 @@ export function claimAllowed(seed: Seed, email: string, token: string | null): b
 // Right after the owner account is created (lib/auth.ts): their username,
 // the instance and the workspace(s). Then, in the background, take the
 // seed out of the compose's environment in Dokploy.
-export async function applySeed(seed: Seed, userId: string): Promise<void> {
+export async function applySeed(seed: Seed, userId: string, token: string): Promise<void> {
   // Only for the install's very first account.
   if ((await userCount()) !== 1) return;
   const [own] = await db
@@ -92,6 +92,34 @@ export async function applySeed(seed: Seed, userId: string): Promise<void> {
   });
 
   void stripSeed(seed).catch((err) => console.error("[zeqqat] couldn't remove the seed from Dokploy:", err));
+  void reportClaim(seed, token);
+}
+
+// Tell zeqqat.com the owner account exists (app/api/selfhost/claimed there).
+// Only the claim token goes; a few tries, then it gives up quietly (the link
+// on zeqqat.com can't make a second account anyway).
+async function reportClaim(seed: Seed, token: string) {
+  if (!seed.report) return;
+  let url: URL;
+  try {
+    url = new URL("/api/selfhost/claimed", seed.report);
+  } catch {
+    return;
+  }
+  for (let i = 0; i < 3; i++) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (res.ok) return;
+    } catch {
+      // try again
+    }
+    await new Promise((r) => setTimeout(r, 2000 * (i + 1)));
+  }
 }
 
 // The seed has done its job: remove ZEQQAT_SEED from this install's compose

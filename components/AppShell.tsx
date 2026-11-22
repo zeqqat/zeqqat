@@ -107,6 +107,7 @@ export function AppShell({
   needsAgent = false,
   accountInstances = [],
   invites = [],
+  selfHost = false,
   level = "workspace",
   wsBase,
   accountBase,
@@ -139,6 +140,9 @@ export function AppShell({
   accountInstances?: InstanceChoice[];
   // Invites waiting for this person's email (components/PathSwitch.tsx).
   invites?: { id: string; orgSlug: string; orgName: string; inviter: string }[];
+  // The account menu shows Self-host while a Zeqqat installed from here
+  // waits to be claimed, and for 7 days after (lib/selfhost-installs.ts).
+  selfHost?: boolean;
   // Which menu shows (components/AppFrame.tsx).
   level?: "workspace" | "account" | "profile";
   wsBase: string; // /<username>/<workspace>
@@ -345,7 +349,7 @@ export function AppShell({
       : ITEMS.find((item) => (item.href === "" ? rel === "" : [item.href, ...(item.also ?? [])].some((h) => under(rel, h))));
   const otherHref = rel === null ? undefined : Object.keys(OTHER_PAGES).find((h) => under(rel, h));
   const accountPage =
-    accRel === null ? undefined : ACCOUNT_ITEMS.find((i) => (i.href === "" ? accRel === "" : under(accRel, i.href)));
+    accRel === null ? undefined : [...ACCOUNT_ITEMS, { label: "Self-host", href: "/self-host" }].find((i) => (i.href === "" ? accRel === "" : under(accRel, i.href)));
   const page = atAccount
     ? accountPage
       ? { href: accountBase + accountPage.href, label: accountPage.label }
@@ -502,7 +506,7 @@ export function AppShell({
                     Setup
                   </a>
                 )}
-                {ACCOUNT_ITEMS.map((item) => {
+                {(selfHost ? [...ACCOUNT_ITEMS.slice(0, 2), { label: "Self-host", href: "/self-host" }, ...ACCOUNT_ITEMS.slice(2)] : ACCOUNT_ITEMS).map((item) => {
                   const isActive = pathname !== setup?.href && accountPage?.href === item.href;
                   const locked = gate === "setup";
                   return (

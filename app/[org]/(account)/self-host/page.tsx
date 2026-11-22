@@ -1,11 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { CrumbLast } from "../../../../components/AppShell";
 import { SelfHostFlow } from "../../../../components/SelfHostFlow";
 import { db } from "../../../../db";
 import { instance, integration, user, workspace, workspaceInstance } from "../../../../db/schema";
 import { siteHost } from "../../../../lib/edition";
 import { accountHref, requireOrgOwner } from "../../../../lib/guard";
+import { installsOf, isRecent } from "../../../../lib/selfhost-installs";
 import { personalAccountOf } from "../../../../lib/setup";
 
 const day = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -45,10 +45,27 @@ export default async function SelfHostPage() {
     added: `Added ${day(r.createdAt)}${r.addedBy ? ` by ${r.addedBy}` : ""}`,
     workspaces: used.filter((x) => x.inst === r.id).length,
   }));
+  // The latest install still worth showing: not claimed yet, or claimed in
+  // the last 7 days (Settings has the rest).
+  const last = (await installsOf(acct.organizationId)).find((i) => isRecent(i));
+  const saved = last
+    ? {
+        installId: last.id,
+        address: last.address,
+        claimUrl: last.claimUrl,
+        claimedOn: last.claimedAt ? day(last.claimedAt) : null,
+        ownKey: last.ownKey,
+        keyChoice: last.keyChoice ?? (last.keyDeletedAt ? "deleted" : null),
+        instanceId: last.instanceId,
+        alias: last.instanceAlias ?? "",
+        keyHint: last.keyHint,
+        workspaces: instances.find((i) => i.id === last.instanceId)?.workspaces ?? 0,
+      }
+    : null;
   return (
     <>
-      <CrumbLast text="Self-host" />
       <SelfHostFlow
+        saved={saved}
         instances={instances}
         siteHost={siteHost()}
         owner={{ id: me.id, name: u?.name || own?.slug || "", username: own?.slug ?? acct.organizationSlug, image: u?.image ?? null }}

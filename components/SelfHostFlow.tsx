@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  deactivateCloudKey,
+  deleteCloudKey,
+  keepCloudKey,
   installConfigure,
   installCreate,
   installDeploy,
@@ -14,13 +15,31 @@ import type { KeyHint } from "../lib/key-hint";
 import type { Created } from "../lib/selfhost-install";
 import { projectNameFor } from "../lib/selfhost-names";
 import { CopyButton } from "./CopyButton";
+import type { DokployKey } from "../lib/dokploy-keys";
 import { Avatar } from "./InstancePage";
 import { DokployMark } from "./Marks";
 
 type Inst = { id: string; alias: string; host: string; keyHint: KeyHint | null; added: string; workspaces: number };
 
+// One install from zeqqat.com, as the page shows it once it's live: the
+// claim link until it's claimed, and what to do with zeqqat.com's key.
+export type Handoff = {
+  installId: string;
+  address: string;
+  claimUrl: string | null;
+  claimedOn: string | null;
+  ownKey: boolean;
+  keyChoice: string | null;
+  instanceId: string | null;
+  alias: string;
+  keyHint: KeyHint | null;
+  workspaces: number;
+};
+
 type Props = {
   instances: Inst[];
+  // The latest install still worth showing (lib/selfhost-installs.ts).
+  saved?: Handoff | null;
   siteHost: string;
   // The person installing: the new Zeqqat's owner, shown on the live panel.
   owner: { id: string; name: string; username: string; image: string | null };
@@ -103,7 +122,7 @@ const MARK: Record<StepState, string> = {
 // One button: Zeqqat installs itself into the chosen Dokploy with the key it
 // already holds, and shows each step as it finishes. Plain code, no agent:
 // the steps never change, so there's nothing for a model to decide.
-export function SelfHostFlow({ instances, siteHost, owner }: Props) {
+export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props) {
   const [instanceId, setInstanceId] = useState(instances[0]?.id ?? "");
   const [states, setStates] = useState<Record<StepKey, StepState>>({
     create: "idle",
@@ -120,10 +139,9 @@ export function SelfHostFlow({ instances, siteHost, owner }: Props) {
   // The new install's own key, sealed by the server; never readable here.
   const sealed = useRef<string | null>(null);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
-  const [ownKey, setOwnKey] = useState(false);
-  const [keyChoice, setKeyChoice] = useState<"kept" | "off" | null>(null);
-  const [keyBusy, setKeyBusy] = useState(false);
-  const [keyErr, setKeyErr] = useState<string | null>(null);
+  const pending = useRef<Handoff | null>(null);
+  const [handoff, setHandoff] = useState<Handoff | null>(saved);
+  const [formOpen, setFormOpen] = useState(!saved);
   const [shown, setShown] = useState<{
     address: string | null;
     dashboardUrl: string | null;
@@ -184,7 +202,20 @@ export function SelfHostFlow({ instances, siteHost, owner }: Props) {
         address.current = r.address;
         setShown((p) => ({ ...p, address: r.address }));
         setClaimUrl(r.claimUrl);
-        setOwnKey(r.ownKey);
+        pending.current = inst
+          ? {
+              installId: r.installId,
+              address: r.address,
+              claimUrl: r.claimUrl,
+              claimedOn: null,
+              ownKey: r.ownKey,
+              keyChoice: null,
+              instanceId: inst.id,
+              alias: inst.alias,
+              keyHint: inst.keyHint,
+              workspaces: inst.workspaces,
+            }
+          : null;
         set("configure", "done");
       }
 
@@ -231,6 +262,7 @@ export function SelfHostFlow({ instances, siteHost, owner }: Props) {
       if (s.reach === "live") {
         set("check", "done");
         setOutcome({ kind: "live" });
+        setHandoff(pending.current);
         return;
       }
       if (s.reach === "unreachable") {
@@ -271,6 +303,15 @@ export function SelfHostFlow({ instances, siteHost, owner }: Props) {
       <p className="zq-sub">
         One click, and Zeqqat installs itself on your Dokploy with {inst ? <KeySummary inst={inst} /> : "the key it already has"}.
       </p>
+      {!formOpen && handoff && <HandoffPanels h={handoff} owner={owner} siteHost={siteHost} />}
+      {!formOpen && (
+        <p className="zq-note" style={{ marginTop: 24 }}>
+          <button type="button" className="zq-textlink" onClick={() => setFormOpen(true)}>
+            Install another Zeqqat
+          </button>
+        </p>
+      )}
+      {formOpen && (
       <section className="zq-panel-box zq-sh-card">
         <dl className="zq-sh-facts">
           <dt>Dokploy instance</dt>
@@ -374,6 +415,7 @@ export function SelfHostFlow({ instances, siteHost, owner }: Props) {
           </ol>
         )}
       </section>
+      )}
 
       {outcome?.kind === "error" && (
         <div className="zq-warn-box" role="alert" style={{ marginTop: 16 }}>
@@ -474,96 +516,164 @@ export function SelfHostFlow({ instances, siteHost, owner }: Props) {
         </section>
       )}
 
-      {outcome?.kind === "live" && shown.address && (
-        <section className="zq-panel-box" style={{ marginTop: 24 }}>
-          <h2 className="zq-block-t">Your Zeqqat is live</h2>
-          <p className="zq-note" style={{ marginTop: 8 }}>
-            Set a password there. Your account:
-          </p>
-          <div className="zq-sh-owner">
-            <Avatar p={{ id: owner.id, name: owner.name || owner.username, image: owner.image }} className="zq-mu-av zq-sh-owner-av" />
-            <span className="who">
-              <b>{owner.name || owner.username}</b>
-              <small>@{owner.username}</small>
-              <span className="role">Owner</span>
-            </span>
-          </div>
-          <p className="zq-note" style={{ marginTop: 12 }}>
-            Your account{inst && inst.workspaces > 0 ? `, ${inst.workspaces === 1 ? "workspace" : "workspaces"}` : ""} and {alias} instance are already on it.
-          </p>
-          <div className="zq-row-actions">
-            <a className="zq-action zq-action-solid" href={claimUrl ?? shown.address} target="_blank" rel="noreferrer noopener">
-              Open your Zeqqat
-            </a>
-          </div>
-        </section>
-      )}
+      {formOpen && outcome?.kind === "live" && handoff && <HandoffPanels h={handoff} owner={owner} siteHost={siteHost} />}
+    </div>
+  );
+}
 
-      {outcome?.kind === "live" && ownKey && keyChoice === null && inst && (
+function HandoffPanels({ h, owner, siteHost }: { h: Handoff; owner: Props["owner"]; siteHost: string }) {
+  const [choice, setChoice] = useState<string | null>(h.keyChoice);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [pick, setPick] = useState<DokployKey[] | null>(null);
+  const [picked, setPicked] = useState<string>("");
+  const hint = h.keyHint;
+
+  async function del(id?: string) {
+    setBusy(true);
+    setErr(null);
+    const r = await deleteCloudKey(h.installId, id);
+    setBusy(false);
+    if (r.ok) {
+      setChoice("deleted");
+      setPick(null);
+    } else if ("pick" in r) {
+      setPick(r.pick);
+      setPicked("");
+    } else setErr(r.error);
+  }
+
+  return (
+    <>
+      <section className="zq-panel-box" style={{ marginTop: 24 }}>
+        {h.claimUrl ? (
+          <>
+            <h2 className="zq-block-t">Your Zeqqat is live</h2>
+            <p className="zq-note" style={{ marginTop: 8 }}>
+              Set a password there. Your account:
+            </p>
+            <div className="zq-sh-owner">
+              <Avatar p={{ id: owner.id, name: owner.name || owner.username, image: owner.image }} className="zq-mu-av zq-sh-owner-av" />
+              <span className="who">
+                <b>{owner.name || owner.username}</b>
+                <small>@{owner.username}</small>
+                <span className="role">Owner</span>
+              </span>
+            </div>
+            <p className="zq-note" style={{ marginTop: 12 }}>
+              Your account{h.workspaces > 0 ? `, ${h.workspaces === 1 ? "workspace" : "workspaces"}` : ""} and {h.alias} instance are already on it.
+            </p>
+            <div className="zq-row-actions">
+              <a className="zq-action zq-action-solid" href={h.claimUrl} target="_blank" rel="noreferrer noopener">
+                Open your Zeqqat
+              </a>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="zq-block-t">Your Zeqqat is set up</h2>
+            <p className="zq-note" style={{ marginTop: 8 }}>
+              Claimed {h.claimedOn ? `on ${h.claimedOn}` : ""} at {h.address.replace(/^https?:\/\//, "")}.
+            </p>
+            <div className="zq-row-actions">
+              <a className="zq-action zq-action-solid" href={h.address} target="_blank" rel="noreferrer noopener">
+                Open your Zeqqat
+              </a>
+            </div>
+          </>
+        )}
+      </section>
+
+      {h.ownKey && h.instanceId && choice === null && (
         <section className="zq-panel-box" style={{ marginTop: 24 }}>
           <h2 className="zq-block-t">The key {siteHost} uses</h2>
           <p className="zq-note" style={{ marginTop: 8 }}>
             Your self-hosted Zeqqat now has its own key, separate from{" "}
             <code className="zq-sh-keycode">
-              <span className="pre">{inst.keyHint?.start}</span>••••••••<span className="end">{inst.keyHint?.end}</span>
+              <span className="pre">{hint?.start}</span>••••••••<span className="end">{hint?.end}</span>
             </code>
-            , the one {siteHost} uses for {alias}. You can deactivate it if you don&rsquo;t plan on using {siteHost}.
+            , the one {siteHost} uses for {h.alias}. You can delete it from your Dokploy if you don&rsquo;t plan on using {siteHost}.
           </p>
-          {keyErr && (
+          {err && (
             <div className="zq-warn-box" role="alert" style={{ marginTop: 12, marginBottom: 0 }}>
               <span className="ic" aria-hidden="true">
                 !
               </span>
-              <span>{keyErr}</span>
+              <span>{err}</span>
             </div>
           )}
-          <div className="zq-row-actions">
-            <button type="button" className="zq-action zq-action-solid" disabled={keyBusy} onClick={() => setKeyChoice("kept")}>
-              Keep it
-            </button>
-            <button
-              type="button"
-              className="zq-action"
-              disabled={keyBusy}
-              onClick={async () => {
-                setKeyBusy(true);
-                setKeyErr(null);
-                const r = await deactivateCloudKey(instanceId, shown.address ?? "");
-                setKeyBusy(false);
-                if (r.ok) setKeyChoice("off");
-                else setKeyErr(r.error);
-              }}
-            >
-              Deactivate the key
-            </button>
-          </div>
+          {pick ? (
+            <div className="zq-sh-pick" role="radiogroup" aria-label="Which key is it?">
+              <p className="zq-note">Which of your Dokploy keys is it? Several could be.</p>
+              {pick.map((k) => (
+                <label key={k.id} className="zq-sh-pick-row">
+                  <input type="radio" name="dokploy-key" value={k.id} checked={picked === k.id} onChange={() => setPicked(k.id)} />
+                  <span>
+                    <b>{k.name || "No name"}</b>
+                    <small>
+                      {k.prefix ? `${k.prefix} · ` : ""}
+                      {k.createdAt ? `created ${new Date(k.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                    </small>
+                  </span>
+                </label>
+              ))}
+              <div className="zq-row-actions">
+                <button type="button" className="zq-action" disabled={busy || !picked} onClick={() => del(picked)}>
+                  Delete this key
+                </button>
+                <button type="button" className="zq-action zq-action-solid" disabled={busy} onClick={() => setPick(null)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="zq-row-actions">
+              <button
+                type="button"
+                className="zq-action zq-action-solid"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  const r = await keepCloudKey(h.installId);
+                  setBusy(false);
+                  if (r.ok) setChoice("kept");
+                  else setErr(r.error);
+                }}
+              >
+                Keep it
+              </button>
+              <button type="button" className="zq-action" disabled={busy} onClick={() => del()}>
+                Delete the key
+              </button>
+            </div>
+          )}
         </section>
       )}
 
-      {keyChoice === "kept" && (
+      {choice === "kept" && h.keyChoice === null && (
         <div className="zq-ok-box zq-sh-done" role="status">
           <span className="ic" aria-hidden="true">
             ✓
           </span>
-          <span>You can still reach your {alias} instance through {siteHost}.</span>
+          <span>You can still reach your {h.alias} instance through {siteHost}.</span>
         </div>
       )}
-      {keyChoice === "off" && inst && (
+      {choice === "deleted" && h.keyChoice === null && (
         <div className="zq-ok-box zq-sh-done" role="status">
           <span className="ic" aria-hidden="true">
             ✓
           </span>
           <span>
             <b>
-              {inst.keyHint?.start}••••{inst.keyHint?.end} is deactivated.
+              {hint?.start}••••{hint?.end} is deleted from your Dokploy.
             </b>{" "}
-            {siteHost} no longer reaches {alias} with it. It still works in your Dokploy until you delete it there.{" "}
-            <a className="zq-textlink" href={`dokploy-instances/${instanceId}?tab=manage`}>
-              See it on {alias}
+            {siteHost} no longer reaches {h.alias}.{" "}
+            <a className="zq-textlink" href={`dokploy-instances/${h.instanceId}?tab=manage`}>
+              See it on {h.alias}
             </a>
           </span>
         </div>
       )}
-    </div>
+    </>
   );
 }

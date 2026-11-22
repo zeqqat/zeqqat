@@ -342,10 +342,10 @@ export async function runEndpoint(
     return toolError(`Missing required input(s): ${missing.join(", ")}. Use zeqqat_describe to see the input schema.`);
   }
 
-  if (inst.keyDeactivatedAt) {
-    await logCall(ctx, { ...base, outcome: "blocked", durationMs: Date.now() - start, errorMessage: "key deactivated" });
+  if (inst.keyDeletedAt) {
+    await logCall(ctx, { ...base, outcome: "blocked", durationMs: Date.now() - start, errorMessage: "key deleted" });
     return toolError(
-      `The key for "${inst.alias}" was deactivated on ${inst.keyDeactivatedAt.toISOString().slice(0, 10)}${inst.keyDeactivatedFor ? `, when its owner moved to ${inst.keyDeactivatedFor}` : ""}. An owner can replace it on the instance's Manage tab.`,
+      `The key for "${inst.alias}" was deleted from Dokploy on ${inst.keyDeletedAt.toISOString().slice(0, 10)}${inst.keyDeletedFor ? `, when its owner moved to ${inst.keyDeletedFor}` : ""}. An owner can replace it on the instance's Manage tab.`,
     );
   }
 
