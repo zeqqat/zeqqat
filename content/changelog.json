@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.6.4",
+    "date": "2026-11-22",
+    "at": "2026-11-22T07:21:30Z",
+    "changes": [
+      "Blog: Nginx Proxy Manager vs Dokploy: Domains and SSL for Your Containers"
+    ]
+  },
+  {
     "version": "0.6.3",
     "date": "2026-11-22",
     "at": "2026-11-22T06:53:49Z",
