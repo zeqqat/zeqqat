@@ -122,6 +122,7 @@ async function makeWorkspace(organizationId: string, formData: FormData, fromSet
   const mine = ids.length
     ? await db.select({ id: instance.id }).from(instance).where(and(eq(instance.organizationId, organizationId), inArray(instance.id, ids)))
     : [];
+  if (fromSetup && !mine.length) return { error: "A workspace needs a Dokploy instance. Tick one, or connect another." };
   const slug = await freeSlug(organizationId, base);
   const id = newId();
   await db.transaction(async (tx) => {

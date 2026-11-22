@@ -40,7 +40,10 @@ export default async function SetupPage({
     if (invite) redirect(`/invites/${invite.id}`);
   }
 
-  if (st.step === 1) {
+  // "Connect another Dokploy instance" from step 2 comes back to step 1's
+  // form; saving it returns to step 2 with the new instance ticked.
+  const adding = st.step === 2 && query.add === "1";
+  if (st.step === 1 || adding) {
     return (
       <div className="zq-ob">
         <Stepper steps={[{ label: "Connect Dokploy", state: "now" }, { label: "Name your workspace", state: "todo" }, { label: "Connect an agent", state: "todo" }]} />
@@ -50,7 +53,14 @@ export default async function SetupPage({
           <span className="dot">.</span>
         </h1>
         <div className="zq-ob-col">
-          <ConnectDokployForm next="setup" defaultAlias="my-dokploy" />
+          <ConnectDokployForm next="setup" defaultAlias={adding ? "" : "my-dokploy"} />
+          {adding && (
+            <p className="zq-note zq-ob-refresh">
+              <a className="zq-textlink" href={`/${own.slug}/setup`}>
+                Back to naming your workspace
+              </a>
+            </p>
+          )}
         </div>
       </div>
     );

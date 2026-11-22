@@ -205,7 +205,7 @@ export default async function AuthorizePage({
   }
   if (conn) {
     const ws = await db.query.workspace.findFirst({ where: eq(workspace.id, conn.workspaceId) });
-    const scope = { host, orgSlug: conn.orgSlug, workspaceName: ws?.name ?? "Workspace", connectionName: conn.name };
+    const scope = { host, orgSlug: conn.orgSlug, workspaceName: ws?.name ?? "Workspace", connectionName: `${conn.name}/${conn.shortId}` };
 
     if (!session?.user) {
       return (

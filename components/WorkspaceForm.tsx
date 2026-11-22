@@ -20,7 +20,9 @@ function slugOf(raw: string) {
 // Naming a workspace: in Setup (step 2) and in "New workspace". The name,
 // then the account's instances it can use. A name the account already
 // uses is fine: an info box says it makes a second one, and at which
-// address.
+// address. In Setup the workspace needs at least one instance: untick them
+// all and Create gives way to "Connect another Dokploy instance", which goes
+// back to step 1 (`?add=1`).
 export function WorkspaceForm({
   mode,
   account,
@@ -36,6 +38,10 @@ export function WorkspaceForm({
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(mode === "setup" ? setupWorkspaceAction : createWorkspaceAction, {});
   const [name, setName] = useState("");
+  const [picked, setPicked] = useState<string[]>(checked);
+  const needsOne = mode === "setup";
+  const none = needsOne && picked.length === 0;
+  const connectHref = `/${account}/setup?add=1`;
   const base = slugOf(name);
   let next: string | null = null;
   if (base && !isReservedWorkspaceSlug(base) && existing.includes(base)) {
@@ -74,7 +80,13 @@ export function WorkspaceForm({
           <div className="zq-ipick-list">
             {instances.map((i) => (
               <label key={i.id} className="zq-ipick">
-                <input type="checkbox" name="instance_id" value={i.id} defaultChecked={checked.includes(i.id)} />
+                <input
+                  type="checkbox"
+                  name="instance_id"
+                  value={i.id}
+                  checked={picked.includes(i.id)}
+                  onChange={(e) => setPicked((p) => (e.target.checked ? [...p, i.id] : p.filter((x) => x !== i.id)))}
+                />
                 <IntegrationMark slug={i.appSlug} name={i.appName} logo={i.appLogo} size={16} />
                 <span className="t">
                   <b>{i.alias}</b>
@@ -83,6 +95,19 @@ export function WorkspaceForm({
               </label>
             ))}
           </div>
+          {needsOne && !none && (
+            <a className="zq-textlink zq-give-link" href={connectHref}>
+              + Connect another Dokploy instance
+            </a>
+          )}
+        </div>
+      )}
+      {none && (
+        <div className="zq-warn-box" role="status" style={{ marginBottom: 14 }}>
+          <span className="ic" aria-hidden="true">
+            !
+          </span>
+          <span>A workspace needs a Dokploy instance. Tick one, or connect another.</span>
         </div>
       )}
       {next && (
@@ -104,9 +129,15 @@ export function WorkspaceForm({
         </div>
       )}
       <div className="zq-row-actions" style={{ marginTop: 4 }}>
+        {none ? (
+          <a className="zq-action zq-action-primary" href={connectHref}>
+            Connect another Dokploy instance
+          </a>
+        ) : (
         <button type="submit" className="zq-action zq-action-primary" disabled={pending} style={mode === "new" ? { width: "100%" } : undefined}>
           {pending ? "Creating..." : "Create workspace"}
         </button>
+        )}
       </div>
     </form>
   );
