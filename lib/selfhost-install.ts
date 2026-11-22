@@ -2,6 +2,9 @@ import { randomBytes } from "node:crypto";
 import { siteHost } from "./edition";
 import { checkAddress, type AddressOutcome } from "./reachability";
 import { SELFHOST_COMPOSE } from "./selfhost-compose";
+import { isFreeAddress, projectNameFor } from "./selfhost-names";
+
+export { isFreeAddress, projectNameFor };
 
 // The steps of the one-button self-host install, as plain calls to the
 // user's Dokploy (lib/actions/selfhost.ts wraps them with auth). Kept apart
@@ -79,10 +82,27 @@ export type Created = {
   dashboardUrl: string;
 };
 
-// Step 1: a project called zeqqat and, in it, the compose service.
-export async function createStep(t: Target): Promise<Created> {
+// Dokploy's free address, asked for before anything is created so the page
+// can show it and the project can be named after it. generateDomain only
+// returns a name (appName-random-ip.sslip.io); nothing exists until
+// domain.create uses it in step 2.
+export async function previewAddress(t: Target): Promise<string> {
+  const generated = await dokploy(t, "domain.generateDomain", { appName: "zeqqat" });
+  const host = typeof generated === "string" ? generated : findDeep(generated, "host");
+  if (!host) throw new InstallError("Dokploy didn't generate an address.");
+  // Dokploy builds the name from the server's IP; when it doesn't know it,
+  // the name points at 127.0.0.1 and could never load.
+  if (/(^|-)127-0-0-1\./.test(host)) throw new InstallError(NO_IP);
+  return host;
+}
+
+const NO_IP =
+  "Dokploy doesn't know this server's public IP yet, so its free address would point nowhere. Set the server IP in Dokploy's web server settings, then try again.";
+
+// Step 1: the project, named after its address, and in it the compose.
+export async function createStep(t: Target, host?: string): Promise<Created> {
   const project = await dokploy(t, "project.create", {
-    name: "zeqqat",
+    name: projectNameFor(host),
     description: `Zeqqat, installed from ${siteHost()}`,
   });
   const projectId = findDeep(project, "projectId");
@@ -152,18 +172,16 @@ export async function configureStep(
   t: Target,
   composeId: string,
   appName: string,
+  preview?: string,
 ): Promise<{ ok: true; address: string }> {
-  const generated = await dokploy(t, "domain.generateDomain", { appName });
-  const host =
-    typeof generated === "string" ? generated : findDeep(generated, "host");
-  if (!host) throw new InstallError("Dokploy didn't generate an address.");
-  // Dokploy builds the name from the server's IP; when it doesn't know it,
-  // the name points at 127.0.0.1 and could never load.
-  if (/(^|-)127-0-0-1\./.test(host)) {
-    throw new InstallError(
-      "Dokploy doesn't know this server's public IP yet, so its free address would point nowhere. Set the server IP in Dokploy's web server settings, then try again.",
-    );
+  // The address the page showed, or a fresh one if it had none.
+  let host = isFreeAddress(preview) ? preview : undefined;
+  if (!host) {
+    const generated = await dokploy(t, "domain.generateDomain", { appName });
+    host = typeof generated === "string" ? generated : findDeep(generated, "host");
   }
+  if (!host) throw new InstallError("Dokploy didn't generate an address.");
+  if (/(^|-)127-0-0-1\./.test(host)) throw new InstallError(NO_IP);
   // sslip.io addresses get a Let's Encrypt certificate; older Dokploy's
   // traefik.me addresses can't, so they stay on http.
   const https = !/\.traefik\.me$/i.test(host);

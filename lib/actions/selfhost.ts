@@ -11,6 +11,7 @@ import {
   createStep,
   deployStep,
   InstallError,
+  previewAddress,
   statusStep,
   type Created,
   type InstallStatus,
@@ -62,19 +63,27 @@ async function run<T>(fn: () => Promise<T>): Promise<T | Fail> {
   }
 }
 
+// The free address, before anything is created: the page shows it and the
+// install then uses exactly that one.
+export async function installPreview(instanceId: string): Promise<{ ok: true; host: string } | Fail> {
+  return run(async () => ({ ok: true as const, host: await previewAddress(await target(instanceId)) }));
+}
+
 export async function installCreate(
   instanceId: string,
+  host?: string,
 ): Promise<Created | Fail> {
-  return run(async () => createStep(await target(instanceId)));
+  return run(async () => createStep(await target(instanceId), host));
 }
 
 export async function installConfigure(
   instanceId: string,
   composeId: string,
   appName: string,
+  host?: string,
 ) {
   return run(async () =>
-    configureStep(await target(instanceId), composeId, appName),
+    configureStep(await target(instanceId), composeId, appName, host),
   );
 }
 

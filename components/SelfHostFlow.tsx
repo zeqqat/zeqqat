@@ -1,27 +1,78 @@
 "use client";
 import { useBase } from "./DashboardBase";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   installConfigure,
   installCreate,
   installDeploy,
+  installPreview,
   installStatus,
 } from "../lib/actions/selfhost";
+import type { KeyHint } from "../lib/key-hint";
 import type { Created } from "../lib/selfhost-install";
-import { AgentMark } from "./Marks";
+import { projectNameFor } from "../lib/selfhost-names";
+import { AgentMark, DokployMark } from "./Marks";
+
+type Inst = { id: string; alias: string; host: string; keyHint: KeyHint | null; added: string };
 
 type Props = {
-  instances: { id: string; alias: string }[];
+  instances: Inst[];
   agents: string[];
   siteHost: string;
 };
+
+// "the key it already has" opens a small summary of that key: its prefix
+// and last 4 characters (lib/key-hint.ts), never the rest. Underlines on
+// hover; a click or tap opens it, a click elsewhere or Esc closes it.
+function KeySummary({ inst }: { inst: Inst }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+  return (
+    <span className={`zq-sh-key${open ? " is-open" : ""}`} ref={ref}>
+      <button type="button" className="zq-sh-key-b" aria-expanded={open} aria-controls="zq-sh-key" onClick={() => setOpen((v) => !v)}>
+        the key it already has
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5" />
+          <path d="M12 7.5v.01" strokeWidth="2.4" />
+        </svg>
+      </button>
+      {open && (
+        <span className="zq-sh-key-pop" id="zq-sh-key" role="note">
+          <b>Dokploy key for {inst.alias}</b>
+          {inst.keyHint && (inst.keyHint.start || inst.keyHint.end) ? (
+            <code>
+              <span className="pre">{inst.keyHint.start}</span>
+              ••••••••
+              <span className="end">{inst.keyHint.end}</span>
+            </code>
+          ) : (
+            <code>••••••••</code>
+          )}
+          <span className="meta">{inst.added}</span>
+        </span>
+      )}
+    </span>
+  );
+}
 
 type StepState = "idle" | "running" | "done" | "failed" | "warn";
 type StepKey = "create" | "configure" | "deploy" | "start" | "check";
 
 const STEPS: { key: StepKey; label: string }[] = [
-  { key: "create", label: "Create a zeqqat project and service" },
+  { key: "create", label: "Create the project" },
   { key: "configure", label: "Set up its address and secrets" },
   { key: "deploy", label: "Deploy" },
   { key: "start", label: "Start Zeqqat and its database" },
@@ -67,7 +118,20 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
     composeId: string | null;
   }>({ address: null, dashboardUrl: null, composeId: null });
 
-  const alias = instances.find((i) => i.id === instanceId)?.alias ?? "";
+  const inst = instances.find((i) => i.id === instanceId) ?? instances[0];
+  const alias = inst?.alias ?? "";
+  // The free address, asked from Dokploy before anything is created, so the
+  // page shows it and the project is named after it.
+  const [preview, setPreview] = useState<{ host: string } | { error: string } | null>(null);
+  const [previewTry, setPreviewTry] = useState(0);
+  useEffect(() => {
+    let live = true;
+    installPreview(instanceId).then((r) => live && setPreview(r.ok ? { host: r.host } : { error: r.error }));
+    return () => {
+      live = false;
+    };
+  }, [instanceId, previewTry]);
+  const previewHost = preview && "host" in preview ? preview.host : undefined;
   const started = Object.values(states).some((s) => s !== "idle");
   const set = (key: StepKey, s: StepState) =>
     setStates((prev) => ({ ...prev, [key]: s }));
@@ -80,7 +144,7 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
     try {
       if (from === "create") {
         set("create", "running");
-        const r = await installCreate(instanceId);
+        const r = await installCreate(instanceId, previewHost);
         if (!r.ok) return fail("create", r.error);
         created.current = r;
         setShown((p) => ({
@@ -95,7 +159,7 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
 
       if (from === "create" || from === "configure") {
         set("configure", "running");
-        const r = await installConfigure(instanceId, c.composeId, c.appName);
+        const r = await installConfigure(instanceId, c.composeId, c.appName, previewHost);
         if (!r.ok) return fail("configure", r.error);
         address.current = r.address;
         setShown((p) => ({ ...p, address: r.address }));
@@ -176,49 +240,88 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
     </a>
   );
 
+  const project = projectNameFor(previewHost);
   return (
-    <div>
-      <section
-        className="zq-panel-box"
-        style={{ marginTop: 24 }}
-        aria-labelledby="sh-install"
-      >
-        <h2 className="zq-block-t" id="sh-install">
-          Install on {instances.length === 1 ? alias : "your Dokploy"}
-        </h2>
-        {instances.length > 1 && (
-          <div style={{ marginTop: 14, maxWidth: 320 }}>
-            <label className="zq-label" htmlFor="sh-instance">
-              Dokploy instance
-            </label>
-            <select
-              className="zq-select"
-              id="sh-instance"
-              value={instanceId}
-              disabled={busy || started}
-              onChange={(e) => setInstanceId(e.target.value)}
-            >
-              {instances.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.alias}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        <p className="zq-note" style={{ marginTop: 10 }}>
-          Adds a project called <b>zeqqat</b> on {alias}: Zeqqat and its own
-          Postgres, at a free address Dokploy generates, so there&rsquo;s no DNS
-          to set up. Uses the key {siteHost} already has for {alias}. Takes a
-          few minutes.
-        </p>
+    <div className="zq-sh">
+      <h1 className="zq-h">
+        Install Zeqqat on your own Dokploy<span className="dot">.</span>
+      </h1>
+      <p className="zq-sub">
+        One click, and Zeqqat installs itself on your Dokploy with {inst ? <KeySummary inst={inst} /> : "the key it already has"}.
+      </p>
+      <section className="zq-panel-box zq-sh-card">
+        <dl className="zq-sh-facts">
+          <dt>Dokploy instance</dt>
+          <dd>
+            {instances.length > 1 ? (
+              <select
+                className="zq-select"
+                aria-label="Dokploy instance"
+                value={instanceId}
+                disabled={busy || started}
+                onChange={(e) => {
+                  setPreview(null);
+                  setInstanceId(e.target.value);
+                }}
+              >
+                {instances.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.alias}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="zq-sh-inst">
+                <DokployMark size={16} />
+                {alias}
+              </span>
+            )}
+            <small>{inst?.host}</small>
+          </dd>
+          <dt>Project</dt>
+          <dd>
+            {shown.dashboardUrl ? (
+              <a className="zq-textlink" href={shown.dashboardUrl} target="_blank" rel="noreferrer noopener">
+                {project}
+              </a>
+            ) : preview ? (
+              project
+            ) : (
+              <span className="zq-sh-wait">Asking Dokploy...</span>
+            )}
+          </dd>
+          <dt>Installs</dt>
+          <dd>
+            Zeqqat <i>latest</i> + Postgres <i>17</i>
+          </dd>
+          <dt>Address</dt>
+          <dd>
+            {previewHost ? (
+              previewHost
+            ) : preview && "error" in preview ? (
+              <span className="zq-sh-err">
+                {preview.error}{" "}
+                <button type="button" className="zq-textlink" onClick={() => {
+                    setPreview(null);
+                    setPreviewTry((n) => n + 1);
+                  }}>
+                  Try again
+                </button>
+              </span>
+            ) : (
+              <span className="zq-sh-wait">Asking Dokploy...</span>
+            )}
+          </dd>
+          <dt>Takes</dt>
+          <dd>A few minutes</dd>
+        </dl>
         {!started && (
-          <div className="zq-row-actions">
+          <div className="zq-sh-go">
             <button
               type="button"
               className="zq-action zq-action-primary"
               onClick={() => install()}
-              disabled={busy || !instanceId}
+              disabled={busy || !instanceId || !previewHost}
             >
               Install Zeqqat on {alias}
             </button>
@@ -232,14 +335,7 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
                 <span className="zq-install-mark" aria-hidden="true">
                   {MARK[states[s.key]]}
                 </span>
-                <span>
-                  {s.label}
-                  {s.key === "configure" &&
-                    host &&
-                    states.configure === "done" && (
-                      <span className="zq-install-sub">{host}</span>
-                    )}
-                </span>
+                <span>{s.label}</span>
                 <span className="zq-visually-hidden">
                   {states[s.key] === "idle" ? "waiting" : states[s.key]}
                 </span>

@@ -596,6 +596,15 @@ the instance already holds: no agent, because the steps never change.
 straight to Dokploy, deploy, poll, then `checkAddress`);
 `lib/actions/selfhost.ts` wraps them with `requireOwner`; the page runs
 them in order and shows each one. Secrets never reach the browser.
+The page is centered: the headline, then one card listing what gets
+installed (Dokploy instance and its URL, Project, Installs, Address,
+Takes) and the button. The address is asked from Dokploy when the page
+opens (`installPreview`, `domain.generateDomain` creates nothing), the
+project is named after it (`projectNameFor` in `lib/selfhost-names.ts`:
+"Zeqqat | ....ab12cd-13-53-192-23.sslip.io") and the install uses exactly
+that address. "the key it already has" opens the key's summary: its
+prefix and last 4 characters (`instance.key_hint`, `lib/key-hint.ts`, set
+whenever a key is saved and filled in on start for older keys), never more.
 `deploy/dokploy/docker-compose.yml` (the Dokploy template) must equal
 `SELFHOST_COMPOSE` (a unit test checks), and the template follows `latest`,
 so a release needs no template PR. The first template (still on

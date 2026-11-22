@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { db } from "../../db";
 import { instance, integration, workspace } from "../../db/schema";
 import { decryptCredential, encryptCredential } from "../crypto";
+import { keyHint } from "../key-hint";
 import { CONNECTION_MESSAGES, normalizeBaseUrl, testDokployConnection } from "../dokploy-check";
 import { primaryConnection } from "../connections";
 import { accountHref, here, hrefIn, requireAccount, requireOrgOwner, requireOwner, requireWorkspaceOrgOwner } from "../guard";
@@ -81,6 +82,7 @@ export async function connectDokployAction(_prev: ConnectState, formData: FormDa
         alias,
         baseUrl: result.baseUrl!,
         credential: encryptCredential(apiKey),
+      keyHint: keyHint(apiKey),
         lastValidatedAt: new Date(),
         lastVersion: result.version ?? null,
         lastStatus: "ok",
@@ -134,6 +136,7 @@ export async function connectAppAction(_prev: ConnectState, formData: FormData):
         alias,
         baseUrl: result.baseUrl!,
         credential: encryptCredential(apiKey),
+      keyHint: keyHint(apiKey),
         lastValidatedAt: new Date(),
         lastStatus: "ok",
         createdByUserId: user.id,
@@ -190,6 +193,7 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
     .update(instance)
     .set({
       credential: encryptCredential(apiKey),
+      keyHint: keyHint(apiKey),
       lastValidatedAt: new Date(),
       lastVersion: result.version ?? inst.lastVersion,
       lastStatus: "ok",

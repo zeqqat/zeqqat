@@ -7,6 +7,7 @@ import type { AddressInfo } from "node:net";
 import {
   configureStep,
   createStep,
+  previewAddress,
   deployStep,
   InstallError,
   statusStep,
@@ -131,6 +132,17 @@ async function main() {
     assert.match(env, /^POSTGRES_PASSWORD=[0-9a-f]{48}$/m);
     assert.match(env, /^BETTER_AUTH_SECRET=[A-Za-z0-9+/=]{44}$/m);
     assert.match(env, /^ZEQQAT_ENCRYPTION_KEY=[A-Za-z0-9+/=]{44}$/m);
+
+    // The page asks for the address first; the project is named after it and
+    // step 2 uses exactly that address, without asking Dokploy again.
+    const preview = await previewAddress(t);
+    assert.equal(preview, "zeqqat-abc123-1-2-3-4.sslip.io");
+    calls.length = 0;
+    await createStep(t, preview);
+    assert.equal(calls.find((c) => c.op === "project.create")?.body?.name, "Zeqqat | ....abc123-1-2-3-4.sslip.io");
+    const pinned = await configureStep(t, "c1", "zeqqat-abc123", "zeqqat-zz9999-1-2-3-4.sslip.io");
+    assert.equal(pinned.address, "https://zeqqat-zz9999-1-2-3-4.sslip.io");
+    assert.ok(!calls.some((c) => c.op === "domain.generateDomain"), "used the previewed address");
 
     // Fresh secrets every install.
     const again = await configureStep(t, "c1", "zeqqat-abc123");

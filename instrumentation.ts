@@ -6,6 +6,8 @@ export async function register() {
     await runMigrations();
     const { syncOfficialCatalogOnStartup } = await import("./lib/official-catalog");
     await syncOfficialCatalogOnStartup();
+    const { backfillKeyHints } = await import("./lib/key-hint-backfill");
+    await backfillKeyHints().catch((err) => console.error("[zeqqat] key hint backfill failed:", err));
     const { startTelemetry } = await import("./lib/telemetry");
     await startTelemetry();
   }

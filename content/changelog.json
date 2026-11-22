@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.6.3",
+    "date": "2026-11-22",
+    "at": "2026-11-22T06:53:49Z",
+    "changes": [
+      "Self-host page: centered, one card of what gets installed (instance, project, address) and one button",
+      "The address comes from Dokploy before you click, and the project is named after it",
+      "Click the key it already has to see the key's prefix and last 4 characters"
+    ]
+  },
+  {
     "version": "0.6.2",
     "date": "2026-11-22",
     "at": "2026-11-22T06:13:32Z",

@@ -396,6 +396,10 @@ export const instance = pgTable("instance", {
     iv: string;
     tag: string;
   }>(),
+  // Enough of the key to tell keys apart, never enough to use one: its
+  // prefix (as set in Dokploy, up to the first _ or -) and its last 4
+  // characters (lib/key-hint.ts). Shown on hover on the self-host page.
+  keyHint: jsonb("key_hint").$type<{ start: string; end: string }>(),
   lastValidatedAt: timestamp("last_validated_at", { withTimezone: true }),
   // What the last connection test found: the upstream version string and
   // whether the key was accepted. Display only, never used for access.
