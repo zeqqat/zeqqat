@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.7.0",
+    "date": "2026-11-22",
+    "at": "2026-11-22T09:57:13Z",
+    "changes": [
+      "Self-host from zeqqat.com hands over your setup: your account, workspace and Dokploy instance come along, so you go straight to Connect your agent",
+      "The new Zeqqat gets a Dokploy key of its own and only you can claim it, from the Open your Zeqqat link",
+      "Keep or deactivate the key zeqqat.com uses; a deactivated key stays on the instance's Manage tab as a log",
+      "Self-host now lives on your account"
+    ]
+  },
+  {
     "version": "0.6.4",
     "date": "2026-11-22",
     "at": "2026-11-22T07:21:30Z",

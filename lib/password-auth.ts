@@ -2,6 +2,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { account, user } from "../db/schema";
 import { findOpenInvite } from "./invites";
+import { claimAllowed, currentSeed } from "./seed-claim";
 
 // Password accounts on a self-hosted install. Nobody can sign themselves up
 // except the very first person (who deployed it and owns it); everyone
@@ -12,8 +13,13 @@ export async function hasNoUsers(): Promise<boolean> {
   return (row?.n ?? 0) === 0;
 }
 
-export async function passwordSignUpAllowed(email: string, inviteToken: string | null): Promise<boolean> {
-  if (await hasNoUsers()) return true;
+// A fresh install made from zeqqat.com carries a seed: then the first
+// account is only the one claimed with its link (lib/seed-claim.ts).
+export async function passwordSignUpAllowed(email: string, inviteToken: string | null, claimToken: string | null = null): Promise<boolean> {
+  if (await hasNoUsers()) {
+    const seed = currentSeed();
+    return seed ? claimAllowed(seed, email, claimToken) : true;
+  }
   if (!inviteToken) return false;
   const invite = await findOpenInvite(inviteToken);
   return !!invite && invite.email === email.trim().toLowerCase();

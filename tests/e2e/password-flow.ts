@@ -66,8 +66,8 @@ async function main() {
     assert(owner.user?.id, "first account signs up with a password");
     const [ownerRow] = await db.select().from(schema.user).where(eq(schema.user.id, owner.user.id));
     assert(ownerRow && ownerRow.emailVerified === false, "its email is not marked verified (self-hosted doesn't check)");
-    const ws = await db.select().from(schema.workspace);
-    assert(ws.length >= 1, "signup created its workspace");
+    const own = await db.select().from(schema.organization).where(eq(schema.organization.ownerUserId, owner.user.id));
+    assert(own.length === 1, "signup created its account (its first workspace comes from Setup)");
 
     // 2. Nobody else can sign themselves up.
     const closed = await refused(auth.api.signUpEmail({ body: { name: "Eve", email: "eve@acme.test", password: "correct-horse-2" } }));

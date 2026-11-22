@@ -13,6 +13,8 @@ import { mailerConfigured, passwordResetMail, sendMail, signInCodeMail } from ".
 import { passwordSignUpAllowed } from "./password-auth";
 import { findOpenInvite, joinInvite } from "./invites";
 import { runSignupTransaction } from "./signup";
+import { applySeed, claimAllowed, currentSeed } from "./seed-claim";
+import { CLAIM_HEADER } from "./selfhost-seed";
 
 export { signInProviders } from "./auth-providers";
 
@@ -139,7 +141,8 @@ const authFor = (baseURL: string | undefined) => betterAuth({
           // sends its token in a header).
           if (ctx?.path === "/sign-up/email") {
             const token = ctx.headers?.get("x-zeqqat-invite") ?? null;
-            if (!passwordEnabled || !(await passwordSignUpAllowed(user.email, token))) {
+            const claim = ctx.headers?.get(CLAIM_HEADER) ?? null;
+            if (!passwordEnabled || !(await passwordSignUpAllowed(user.email, token, claim))) {
               throw new APIError("FORBIDDEN", { code: "signups_closed", message: "Sign-ups are closed. Ask an owner for an invite." });
             }
             return;
@@ -151,6 +154,15 @@ const authFor = (baseURL: string | undefined) => betterAuth({
         after: async (user, ctx) => {
           try {
             await runSignupTransaction(user.id, user.name, user.email);
+            // Installed from zeqqat.com: the claimed owner gets their
+            // username, workspace and Dokploy instance (lib/seed-claim.ts).
+            const claim = ctx?.path === "/sign-up/email" ? (ctx.headers?.get(CLAIM_HEADER) ?? null) : null;
+            const seed = claim ? currentSeed() : null;
+            if (seed && claimAllowed(seed, user.email, claim)) {
+              // A failed import mustn't take the account with it: they
+              // can still connect Dokploy by hand in Setup.
+              await applySeed(seed, user.id).catch((err) => console.error("[zeqqat] seed import failed:", err));
+            }
             // Self-hosted: signing up through an invite link is the yes.
             const token = ctx?.path === "/sign-up/email" ? (ctx.headers?.get("x-zeqqat-invite") ?? null) : null;
             if (token && edition() !== "cloud") {

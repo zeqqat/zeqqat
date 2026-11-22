@@ -197,6 +197,8 @@ export async function replaceKeyAction(_prev: ConnectState, formData: FormData):
       lastValidatedAt: new Date(),
       lastVersion: result.version ?? inst.lastVersion,
       lastStatus: "ok",
+      keyDeactivatedAt: null,
+      keyDeactivatedFor: null,
     })
     .where(eq(instance.id, inst.id));
 

@@ -10,7 +10,7 @@ import { authClient } from "../lib/auth-client";
 // "Switch account".
 
 export type SignInProvider = "google" | "github" | "email" | "password";
-export type PasswordMode = "setup" | "signin" | "invite";
+export type PasswordMode = "setup" | "signin" | "invite" | "claim";
 
 type Social = Exclude<SignInProvider, "email" | "password">;
 
@@ -46,6 +46,8 @@ export function SignInButtons({
   passwordMode = "signin",
   inviteEmail,
   inviteToken,
+  claimName,
+  claimToken,
 }: {
   providers: SignInProvider[];
   callbackURL: string;
@@ -54,6 +56,10 @@ export function SignInButtons({
   passwordMode?: PasswordMode;
   inviteEmail?: string;
   inviteToken?: string;
+  // "claim": the owner of an install made from zeqqat.com, name and email
+  // filled in from the seed, the claim token sent along.
+  claimName?: string;
+  claimToken?: string;
 }) {
   const [busy, setBusy] = useState<SignInProvider | null>(null);
   const social = providers.filter((p): p is Social => p !== "email" && p !== "password");
@@ -112,6 +118,8 @@ export function SignInButtons({
             callbackURL={callbackURL}
             inviteEmail={inviteEmail}
             inviteToken={inviteToken}
+            claimName={claimName}
+            claimToken={claimToken}
             locked={busy !== null && busy !== "password"}
             onBusy={(b) => setBusy(b ? "password" : null)}
           />
@@ -279,6 +287,8 @@ function PasswordForm({
   callbackURL,
   inviteEmail,
   inviteToken,
+  claimName,
+  claimToken,
   locked,
   onBusy,
 }: {
@@ -286,16 +296,18 @@ function PasswordForm({
   callbackURL: string;
   inviteEmail?: string;
   inviteToken?: string;
+  claimName?: string;
+  claimToken?: string;
   locked: boolean;
   onBusy: (b: boolean) => void;
 }) {
   const [creating, setCreating] = useState(mode !== "signin");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(claimName ?? "");
   const [email, setEmail] = useState(inviteEmail ?? "");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const emailFixed = mode === "invite" && !!inviteEmail;
+  const emailFixed = (mode === "invite" || mode === "claim") && !!inviteEmail;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -307,7 +319,11 @@ function PasswordForm({
           name: name.trim(),
           email: email.trim(),
           password,
-          fetchOptions: inviteToken ? { headers: { "x-zeqqat-invite": inviteToken } } : undefined,
+          fetchOptions: claimToken
+            ? { headers: { "x-zeqqat-claim": claimToken } }
+            : inviteToken
+              ? { headers: { "x-zeqqat-invite": inviteToken } }
+              : undefined,
         })
       : await authClient.signIn.email({ email: email.trim(), password });
     if (error) {
@@ -379,7 +395,7 @@ function PasswordForm({
         disabled={pending || locked || !email.trim() || !password || (creating && !name.trim())}
         aria-busy={pending}
       >
-        {creating ? (mode === "setup" ? "Create owner account" : "Create account") : "Sign in"}
+        {creating ? (mode === "setup" || mode === "claim" ? "Create owner account" : "Create account") : "Sign in"}
         {pending && <Spinner />}
       </button>
       <div className="zq-email-links">

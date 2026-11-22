@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
   configureStep,
+  createKeyStep,
   createStep,
   previewAddress,
   deployStep,
@@ -54,6 +55,10 @@ const server = createServer((req, res) => {
         });
       case "compose.update":
         return send(200, true);
+      case "organization.active":
+        return send(200, { id: "org1", name: "Default" });
+      case "user.createApiKey":
+        return send(200, { id: "k1", key: `${body.prefix}newkey1234567890`, name: body.name });
       case "domain.generateDomain":
         return send(200, generatedHost);
       case "domain.create":
@@ -143,6 +148,19 @@ async function main() {
     const pinned = await configureStep(t, "c1", "zeqqat-abc123", "zeqqat-zz9999-1-2-3-4.sslip.io");
     assert.equal(pinned.address, "https://zeqqat-zz9999-1-2-3-4.sslip.io");
     assert.ok(!calls.some((c) => c.op === "domain.generateDomain"), "used the previewed address");
+
+    // A key of the install's own, tied to Dokploy's organization.
+    const newKey = await createKeyStep(t);
+    assert.equal(newKey, "zqself_newkey1234567890");
+    const made = calls.find((c) => c.op === "user.createApiKey")?.body;
+    assert.deepEqual(made?.metadata, { organizationId: "org1" });
+    assert.equal(made?.prefix, "zqself_");
+
+    // The caller fixes the encryption key and adds the seed.
+    await configureStep(t, "c1", "zeqqat-abc123", undefined, { encryptionKey: "K".repeat(44), env: { ZEQQAT_SEED: "abc" } });
+    const seeded = String(calls.filter((c) => c.op === "compose.update").at(-1)?.body?.env);
+    assert.match(seeded, /^ZEQQAT_ENCRYPTION_KEY=K{44}$/m);
+    assert.match(seeded, /^ZEQQAT_SEED=abc$/m);
 
     // Fresh secrets every install.
     const again = await configureStep(t, "c1", "zeqqat-abc123");

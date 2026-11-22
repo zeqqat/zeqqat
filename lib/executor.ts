@@ -342,6 +342,13 @@ export async function runEndpoint(
     return toolError(`Missing required input(s): ${missing.join(", ")}. Use zeqqat_describe to see the input schema.`);
   }
 
+  if (inst.keyDeactivatedAt) {
+    await logCall(ctx, { ...base, outcome: "blocked", durationMs: Date.now() - start, errorMessage: "key deactivated" });
+    return toolError(
+      `The key for "${inst.alias}" was deactivated on ${inst.keyDeactivatedAt.toISOString().slice(0, 10)}${inst.keyDeactivatedFor ? `, when its owner moved to ${inst.keyDeactivatedFor}` : ""}. An owner can replace it on the instance's Manage tab.`,
+    );
+  }
+
   let targetHost: string;
   try {
     targetHost = new URL(inst.baseUrl).hostname;

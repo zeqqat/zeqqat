@@ -1,25 +1,29 @@
 "use client";
-import { useBase } from "./DashboardBase";
 
 import { useEffect, useRef, useState } from "react";
 import {
+  deactivateCloudKey,
   installConfigure,
   installCreate,
   installDeploy,
+  installKey,
   installPreview,
   installStatus,
 } from "../lib/actions/selfhost";
 import type { KeyHint } from "../lib/key-hint";
 import type { Created } from "../lib/selfhost-install";
 import { projectNameFor } from "../lib/selfhost-names";
-import { AgentMark, DokployMark } from "./Marks";
+import { CopyButton } from "./CopyButton";
+import { Avatar } from "./InstancePage";
+import { DokployMark } from "./Marks";
 
-type Inst = { id: string; alias: string; host: string; keyHint: KeyHint | null; added: string };
+type Inst = { id: string; alias: string; host: string; keyHint: KeyHint | null; added: string; workspaces: number };
 
 type Props = {
   instances: Inst[];
-  agents: string[];
   siteHost: string;
+  // The person installing: the new Zeqqat's owner, shown on the live panel.
+  owner: { id: string; name: string; username: string; image: string | null };
 };
 
 // "the key it already has" opens a small summary of that key: its prefix
@@ -69,10 +73,11 @@ function KeySummary({ inst }: { inst: Inst }) {
 }
 
 type StepState = "idle" | "running" | "done" | "failed" | "warn";
-type StepKey = "create" | "configure" | "deploy" | "start" | "check";
+type StepKey = "create" | "key" | "configure" | "deploy" | "start" | "check";
 
 const STEPS: { key: StepKey; label: string }[] = [
   { key: "create", label: "Create the project" },
+  { key: "key", label: "Create a Dokploy key for your Zeqqat" },
   { key: "configure", label: "Set up its address and secrets" },
   { key: "deploy", label: "Deploy" },
   { key: "start", label: "Start Zeqqat and its database" },
@@ -98,11 +103,11 @@ const MARK: Record<StepState, string> = {
 // One button: Zeqqat installs itself into the chosen Dokploy with the key it
 // already holds, and shows each step as it finishes. Plain code, no agent:
 // the steps never change, so there's nothing for a model to decide.
-export function SelfHostFlow({ instances, agents, siteHost }: Props) {
-  const { ws: base } = useBase();
+export function SelfHostFlow({ instances, siteHost, owner }: Props) {
   const [instanceId, setInstanceId] = useState(instances[0]?.id ?? "");
   const [states, setStates] = useState<Record<StepKey, StepState>>({
     create: "idle",
+    key: "idle",
     configure: "idle",
     deploy: "idle",
     start: "idle",
@@ -112,6 +117,13 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const created = useRef<Created | null>(null);
   const address = useRef<string | null>(null);
+  // The new install's own key, sealed by the server; never readable here.
+  const sealed = useRef<string | null>(null);
+  const [claimUrl, setClaimUrl] = useState<string | null>(null);
+  const [ownKey, setOwnKey] = useState(false);
+  const [keyChoice, setKeyChoice] = useState<"kept" | "off" | null>(null);
+  const [keyBusy, setKeyBusy] = useState(false);
+  const [keyErr, setKeyErr] = useState<string | null>(null);
   const [shown, setShown] = useState<{
     address: string | null;
     dashboardUrl: string | null;
@@ -157,12 +169,22 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
       const c = created.current;
       if (!c) return fail("create", "Start the install again.");
 
-      if (from === "create" || from === "configure") {
+      if (from === "create" || from === "key") {
+        set("key", "running");
+        const k = await installKey(instanceId);
+        if (!k.ok) return fail("key", k.error);
+        sealed.current = k.sealed;
+        set("key", "done");
+      }
+
+      if (from === "create" || from === "key" || from === "configure") {
         set("configure", "running");
-        const r = await installConfigure(instanceId, c.composeId, c.appName, previewHost);
+        const r = await installConfigure(instanceId, c.composeId, c.appName, previewHost, sealed.current);
         if (!r.ok) return fail("configure", r.error);
         address.current = r.address;
         setShown((p) => ({ ...p, address: r.address }));
+        setClaimUrl(r.claimUrl);
+        setOwnKey(r.ownKey);
         set("configure", "done");
       }
 
@@ -312,6 +334,14 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
               <span className="zq-sh-wait">Asking Dokploy...</span>
             )}
           </dd>
+          <dt>Comes with you</dt>
+          <dd>
+            Your account, @{owner.username}
+            <small>
+              {inst && inst.workspaces > 0 ? `your ${inst.workspaces === 1 ? "workspace" : "workspaces"}, and ` : ""}
+              {alias} with a new key of its own
+            </small>
+          </dd>
           <dt>Takes</dt>
           <dd>A few minutes</dd>
         </dl>
@@ -397,6 +427,11 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
             <b>zeqqat</b>, port <b>3000</b>, and set <b>ZEQQAT_PUBLIC_URL</b> to
             that address in its environment.
           </p>
+          {claimUrl && (
+            <p className="zq-note" style={{ marginTop: 8 }}>
+              Then open it with <code>{new URL(claimUrl).pathname}</code> at the end of its address to set your password. <CopyButton text={new URL(claimUrl).pathname} />
+            </p>
+          )}
           <div className="zq-row-actions">{dokployLink}</div>
         </section>
       )}
@@ -442,59 +477,92 @@ export function SelfHostFlow({ instances, agents, siteHost }: Props) {
       {outcome?.kind === "live" && shown.address && (
         <section className="zq-panel-box" style={{ marginTop: 24 }}>
           <h2 className="zq-block-t">Your Zeqqat is live</h2>
-          <ol className="zq-steps">
-            <li>
-              Open <b>{host}</b> and create the first account. It owns this
-              Zeqqat.
-            </li>
-            <li>
-              Connect your Dokploy there. Its key stays on your own server.
-            </li>
-            <li>
-              Copy the connection URL it gives you into each agent, in place of
-              the {siteHost} one, and sign in again.
-            </li>
-          </ol>
-          {agents.length > 0 && (
-            <>
-              <p className="zq-kicker" style={{ marginTop: 18 }}>
-                Agents still using {siteHost}
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  marginTop: 10,
-                  fontSize: 12.5,
-                }}
-              >
-                {agents.map((h) => (
-                  <div
-                    key={h}
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
-                    <AgentMark host={h} />
-                    {h}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+          <p className="zq-note" style={{ marginTop: 8 }}>
+            Set a password there. Your account:
+          </p>
+          <div className="zq-sh-owner">
+            <Avatar p={{ id: owner.id, name: owner.name || owner.username, image: owner.image }} className="zq-mu-av zq-sh-owner-av" />
+            <span className="who">
+              <b>{owner.name || owner.username}</b>
+              <small>@{owner.username}</small>
+              <span className="role">Owner</span>
+            </span>
+          </div>
+          <p className="zq-note" style={{ marginTop: 12 }}>
+            Your account{inst && inst.workspaces > 0 ? `, ${inst.workspaces === 1 ? "workspace" : "workspaces"}` : ""} and {alias} instance are already on it.
+          </p>
           <div className="zq-row-actions">
-            <a
-              className="zq-action zq-action-solid"
-              href={shown.address}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
+            <a className="zq-action zq-action-solid" href={claimUrl ?? shown.address} target="_blank" rel="noreferrer noopener">
               Open your Zeqqat
-            </a>
-            <a className="zq-action" href={`${base}/self-host/clean-up`}>
-              Clean up {siteHost} (optional)
             </a>
           </div>
         </section>
+      )}
+
+      {outcome?.kind === "live" && ownKey && keyChoice === null && inst && (
+        <section className="zq-panel-box" style={{ marginTop: 24 }}>
+          <h2 className="zq-block-t">The key {siteHost} uses</h2>
+          <p className="zq-note" style={{ marginTop: 8 }}>
+            Your self-hosted Zeqqat now has its own key, separate from{" "}
+            <code className="zq-sh-keycode">
+              <span className="pre">{inst.keyHint?.start}</span>••••••••<span className="end">{inst.keyHint?.end}</span>
+            </code>
+            , the one {siteHost} uses for {alias}. You can deactivate it if you don&rsquo;t plan on using {siteHost}.
+          </p>
+          {keyErr && (
+            <div className="zq-warn-box" role="alert" style={{ marginTop: 12, marginBottom: 0 }}>
+              <span className="ic" aria-hidden="true">
+                !
+              </span>
+              <span>{keyErr}</span>
+            </div>
+          )}
+          <div className="zq-row-actions">
+            <button type="button" className="zq-action zq-action-solid" disabled={keyBusy} onClick={() => setKeyChoice("kept")}>
+              Keep it
+            </button>
+            <button
+              type="button"
+              className="zq-action"
+              disabled={keyBusy}
+              onClick={async () => {
+                setKeyBusy(true);
+                setKeyErr(null);
+                const r = await deactivateCloudKey(instanceId, shown.address ?? "");
+                setKeyBusy(false);
+                if (r.ok) setKeyChoice("off");
+                else setKeyErr(r.error);
+              }}
+            >
+              Deactivate the key
+            </button>
+          </div>
+        </section>
+      )}
+
+      {keyChoice === "kept" && (
+        <div className="zq-ok-box zq-sh-done" role="status">
+          <span className="ic" aria-hidden="true">
+            ✓
+          </span>
+          <span>You can still reach your {alias} instance through {siteHost}.</span>
+        </div>
+      )}
+      {keyChoice === "off" && inst && (
+        <div className="zq-ok-box zq-sh-done" role="status">
+          <span className="ic" aria-hidden="true">
+            ✓
+          </span>
+          <span>
+            <b>
+              {inst.keyHint?.start}••••{inst.keyHint?.end} is deactivated.
+            </b>{" "}
+            {siteHost} no longer reaches {alias} with it. It still works in your Dokploy until you delete it there.{" "}
+            <a className="zq-textlink" href={`dokploy-instances/${instanceId}?tab=manage`}>
+              See it on {alias}
+            </a>
+          </span>
+        </div>
       )}
     </div>
   );

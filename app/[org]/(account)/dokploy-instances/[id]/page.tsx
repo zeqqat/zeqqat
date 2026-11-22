@@ -27,6 +27,9 @@ export default async function AccountInstancePage({
       baseUrl: instance.baseUrl,
       credential: instance.credential,
       lastStatus: instance.lastStatus,
+      keyDeactivatedAt: instance.keyDeactivatedAt,
+      keyDeactivatedFor: instance.keyDeactivatedFor,
+      keyHint: instance.keyHint,
       lastVersion: instance.lastVersion,
       lastValidatedAt: instance.lastValidatedAt,
       specVersion: instance.specVersion,
@@ -59,6 +62,14 @@ export default async function AccountInstancePage({
         tab={tab}
         canEdit={ws.orgRole === "owner"}
         error={typeof query.error === "string" ? query.error : null}
+        keyRow={{
+          start: row.keyHint?.start ?? "",
+          end: row.keyHint?.end ?? "",
+          deactivatedOn: row.keyDeactivatedAt
+            ? row.keyDeactivatedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
+            : null,
+          deactivatedFor: row.keyDeactivatedFor,
+        }}
         workspaces={wss.map((w) => ({ id: w.id, name: w.name, on: on.has(w.id), urls: urls.filter((u) => u.ws === w.id).length }))}
       />
     </>

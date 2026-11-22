@@ -47,7 +47,6 @@ const ACCOUNT_ITEMS: { label: string; href: string; icon?: React.ReactNode }[] =
 const OTHER_PAGES: Record<string, string> = {
   "/releases": "Releases",
   "/agents": "Agents",
-  "/self-host": "Self-host",
   "/feedback": "Feedback",
 };
 

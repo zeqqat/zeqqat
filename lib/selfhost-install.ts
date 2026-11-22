@@ -166,13 +166,51 @@ export async function createStep(t: Target, host?: string): Promise<Created> {
   };
 }
 
-// Step 2: Dokploy's free address (it already points at the server, no DNS),
-// and the environment with freshly generated secrets.
+// Step 2: a Dokploy API key of its own for the new install, so the key
+// zeqqat.com holds can be deactivated without breaking it. Dokploy ties a
+// key to one of its organizations; the key's owner is whoever owns the key
+// zeqqat.com uses. Null when this Dokploy can't make keys over its API
+// (older versions): the install then gets a copy of the same key.
+export const SELFHOST_KEY_PREFIX = "zqself_";
+
+export async function createKeyStep(t: Target): Promise<string | null> {
+  let organizationId: string | undefined;
+  try {
+    organizationId = findDeep(await dokploy(t, "organization.active"), "id");
+  } catch (err) {
+    if (!(err instanceof InstallError)) throw err;
+  }
+  if (!organizationId) {
+    try {
+      organizationId = findDeep(await dokploy(t, "project.all"), "organizationId");
+    } catch (err) {
+      if (!(err instanceof InstallError)) throw err;
+    }
+  }
+  if (!organizationId) return null;
+  try {
+    const made = await dokploy(t, "user.createApiKey", {
+      name: "Zeqqat self-hosted",
+      prefix: SELFHOST_KEY_PREFIX,
+      metadata: { organizationId },
+    });
+    return findDeep(made, "key") ?? null;
+  } catch (err) {
+    if (err instanceof InstallError) return null;
+    throw err;
+  }
+}
+
+// Step 3: Dokploy's free address (it already points at the server, no DNS),
+// and the environment with freshly generated secrets. `extra` lets the
+// caller fix the encryption key (the seed is encrypted with it) and add
+// variables (ZEQQAT_SEED).
 export async function configureStep(
   t: Target,
   composeId: string,
   appName: string,
   preview?: string,
+  extra?: { encryptionKey?: string; env?: Record<string, string> },
 ): Promise<{ ok: true; address: string }> {
   // The address the page showed, or a fresh one if it had none.
   let host = isFreeAddress(preview) ? preview : undefined;
@@ -200,13 +238,14 @@ export async function configureStep(
     `ZEQQAT_PUBLIC_URL=${address}`,
     `POSTGRES_PASSWORD=${randomBytes(24).toString("hex")}`,
     `BETTER_AUTH_SECRET=${randomBytes(32).toString("base64")}`,
-    `ZEQQAT_ENCRYPTION_KEY=${randomBytes(32).toString("base64")}`,
+    `ZEQQAT_ENCRYPTION_KEY=${extra?.encryptionKey ?? randomBytes(32).toString("base64")}`,
+    ...Object.entries(extra?.env ?? {}).map(([k, v]) => `${k}=${v}`),
   ].join("\n");
   await dokploy(t, "compose.update", { composeId, env });
   return { ok: true as const, address };
 }
 
-// Step 3.
+// Step 4.
 export async function deployStep(
   t: Target,
   composeId: string,

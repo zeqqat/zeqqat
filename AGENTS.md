@@ -589,22 +589,54 @@ password into an app's `DATABASE_URL`). `lib/secret-handles.ts` does it:
 
 ## One-button self-host install
 
-`<ws>/self-host` installs Zeqqat into a workspace's Dokploy with the key
-the instance already holds: no agent, because the steps never change.
+`/<username>/self-host` (account owners; Dokploy instances belong to the
+account) installs Zeqqat into the account's Dokploy with the key the
+instance already holds: no agent, because the steps never change.
 `lib/selfhost-install.ts` is the steps (project, compose service from
-`lib/selfhost-compose.ts`, Dokploy's free sslip.io address, fresh secrets
-straight to Dokploy, deploy, poll, then `checkAddress`);
-`lib/actions/selfhost.ts` wraps them with `requireOwner`; the page runs
-them in order and shows each one. Secrets never reach the browser.
+`lib/selfhost-compose.ts`, a Dokploy API key of the install's own
+(`user.createApiKey`, prefix `zqself_`, null on a Dokploy that can't, then
+the install gets a copy of the same key), Dokploy's free sslip.io address,
+fresh secrets straight to Dokploy, deploy, poll, then `checkAddress`);
+`lib/actions/selfhost.ts` wraps them with `requireOrgOwner`; the page runs
+them in order and shows each one. Secrets never reach the browser (the new
+key travels between steps sealed with this site's encryption key).
 The page is centered: the headline, then one card listing what gets
 installed (Dokploy instance and its URL, Project, Installs, Address,
-Takes) and the button. The address is asked from Dokploy when the page
+Comes with you, Takes) and the button. The address is asked from Dokploy when the page
 opens (`installPreview`, `domain.generateDomain` creates nothing), the
 project is named after it (`projectNameFor` in `lib/selfhost-names.ts`:
 "Zeqqat | ....ab12cd-13-53-192-23.sslip.io") and the install uses exactly
 that address. "the key it already has" opens the key's summary: its
 prefix and last 4 characters (`instance.key_hint`, `lib/key-hint.ts`, set
 whenever a key is saved and filled in on start for older keys), never more.
+
+**The handoff (seed and claim).** Self-hosting from zeqqat.com only exists
+to get someone started fast; the self-hosted install is a separate account
+and nothing on zeqqat.com is moved or deleted. `installConfigure` writes
+`ZEQQAT_SEED` (`lib/selfhost-seed.ts`) into the new install's env: the
+owner (email, name, their personal username), the workspace(s) using the
+instance, the instance with its new key encrypted with the install's own
+`ZEQQAT_ENCRYPTION_KEY`, the compose id, and only the SHA-256 of a claim
+token. Never MCP URLs (they are new URLs, made there) or policies. "Open
+your Zeqqat" is `<address>/claim/<token>` (`app/claim/[token]`): while the
+install has no users and a seed, the owner account can only be made with
+that token and the seeded email (`x-zeqqat-claim`, `passwordSignUpAllowed`),
+so nobody who finds the fresh address first takes it, and `/signin` says to
+open it from zeqqat.com. Making it runs `applySeed` (`lib/seed-claim.ts`):
+username, instance, workspace(s) with the instance, so Setup opens at
+"Connect your agent"; then the seed is removed from the compose's env in
+Dokploy. Once anyone exists the seed is ignored.
+`pnpm exec tsx tests/e2e/selfhost-claim-flow.ts` runs it.
+
+**The old key.** The live panel shows the owner (avatar, name, @username,
+Owner), then "The key zeqqat.com uses" with Keep it (the default: people
+staying on zeqqat.com is what we want) and Deactivate the key
+(`deactivateCloudKey`). Deactivating never deletes: `instance.key_deactivated_at`
+/ `key_deactivated_for` keep it as a log on the instance's Manage tab
+("Deactivated on <date>, when you moved to <host>"), the card's ring says
+"Key deactivated", calls are refused, and Replace key clears it. Dokploy
+has no API to switch a key off, so the key keeps working in Dokploy until
+it is deleted there, and the UI says so.
 `deploy/dokploy/docker-compose.yml` (the Dokploy template) must equal
 `SELFHOST_COMPOSE` (a unit test checks), and the template follows `latest`,
 so a release needs no template PR. The first template (still on

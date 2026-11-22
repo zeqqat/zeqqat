@@ -7397,3 +7397,54 @@ button.zq-demo-open {
     justify-content: center;
   }
 }
+
+/* Self-host live panel: the new install's owner (components/SelfHostFlow.tsx). */
+.zq-sh-owner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+}
+.zq-sh-owner .zq-sh-owner-av {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+  flex: none;
+}
+.zq-sh-owner .who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  font-size: 13px;
+}
+.zq-sh-owner .who b,
+.zq-sh-owner .who small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zq-sh-owner .who small {
+  color: var(--faint);
+  font-size: 11.5px;
+}
+.zq-sh-owner .role {
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+.zq-sh-keycode {
+  font-size: 12.5px;
+}
+.zq-sh-done {
+  margin-top: 24px;
+  text-align: left;
+}

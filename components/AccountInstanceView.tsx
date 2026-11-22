@@ -4,9 +4,13 @@ import { useState } from "react";
 import { removeInstanceAction, setInstanceWorkspaceAction } from "../lib/actions/instances";
 import { InstanceCardView, type InstanceCard } from "./InstanceCards";
 import { ManageRow } from "./McpUrlPage";
+import { ReplaceKeyForm } from "./ReplaceKeyForm";
 import type { Period } from "./McpUrls";
 
 type Ws = { id: string; name: string; on: boolean; urls: number };
+// The key's summary (prefix and last 4, never more) and, once deactivated,
+// when and for which self-hosted Zeqqat: kept as a log.
+export type KeyRow = { start: string; end: string; deactivatedOn: string | null; deactivatedFor: string | null };
 
 // An instance at the account level (app/[org]/(account)/dokploy-instances/
 // [id]): the list's card, then Workspaces (which of the account's
@@ -17,12 +21,14 @@ export function AccountInstanceView({
   canEdit,
   error,
   workspaces,
+  keyRow,
 }: {
   card: InstanceCard;
   tab: "workspaces" | "manage";
   canEdit: boolean;
   error: string | null;
   workspaces: Ws[];
+  keyRow: KeyRow;
 }) {
   const [period, setPeriod] = useState<Period>("week");
   const [tab, setTab] = useState(initialTab);
@@ -82,6 +88,22 @@ export function AccountInstanceView({
           </div>
         ) : (
           <div className="zq-mu-panel">
+            <div className="zq-mu-mrow">
+              <div className="zq-mu-mrow-h" style={{ flexWrap: "wrap" }}>
+                <span className="zq-mu-mrow-t" style={{ flex: "1 1 0", minWidth: 0 }}>
+                  <b>{card.appName} API key</b>
+                  <small>
+                    <code>
+                      {keyRow.start}••••{keyRow.end}
+                    </code>
+                    {keyRow.deactivatedOn
+                      ? ` · Deactivated on ${keyRow.deactivatedOn}${keyRow.deactivatedFor ? `, when you moved to ${keyRow.deactivatedFor}` : ""}`
+                      : null}
+                  </small>
+                </span>
+                {canEdit && <ReplaceKeyForm instanceId={card.id} base="account" />}
+              </div>
+            </div>
             <div className="zq-mu-mrow">
               <div className="zq-mu-mrow-h">
                 <span className="zq-mu-mrow-t">

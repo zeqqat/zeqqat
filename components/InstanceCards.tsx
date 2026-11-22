@@ -46,6 +46,7 @@ const STATUS_WORDS: Record<string, string> = {
   bad_key: "Key rejected",
   unreachable: "Unreachable",
   not_dokploy: "Not answering as Dokploy",
+  key_deactivated: "Key deactivated",
 };
 
 function VersionPill({ version, latest, appName }: { version: string; latest: string | null; appName: string }) {

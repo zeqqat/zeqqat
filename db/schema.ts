@@ -400,6 +400,12 @@ export const instance = pgTable("instance", {
   // prefix (as set in Dokploy, up to the first _ or -) and its last 4
   // characters (lib/key-hint.ts). Shown on hover on the self-host page.
   keyHint: jsonb("key_hint").$type<{ start: string; end: string }>(),
+  // Set when the owner deactivated this key after moving to their own
+  // Zeqqat (the self-host page's "Deactivate the key"). The key stays as a
+  // log of what zeqqat.com used and when it stopped; calls are refused until
+  // a new key replaces it. key_deactivated_for is the self-hosted address.
+  keyDeactivatedAt: timestamp("key_deactivated_at", { withTimezone: true }),
+  keyDeactivatedFor: text("key_deactivated_for"),
   lastValidatedAt: timestamp("last_validated_at", { withTimezone: true }),
   // What the last connection test found: the upstream version string and
   // whether the key was accepted. Display only, never used for access.

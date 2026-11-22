@@ -162,6 +162,13 @@
       "when": 1795330190096,
       "tag": "0022_milky_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795340471144,
+      "tag": "0023_pink_quentin_quire",
+      "breakpoints": true
     }
   ]
 }

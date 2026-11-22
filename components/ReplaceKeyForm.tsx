@@ -6,7 +6,7 @@ import { KeyInput } from "./KeyInput";
 
 // Replacing a key runs the same connection test as connecting: the new key
 // is only stored if Dokploy accepts it.
-export function ReplaceKeyForm({ instanceId }: { instanceId: string }) {
+export function ReplaceKeyForm({ instanceId, base }: { instanceId: string; base?: "account" }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<ConnectState, FormData>(replaceKeyAction, {});
 
@@ -21,6 +21,7 @@ export function ReplaceKeyForm({ instanceId }: { instanceId: string }) {
   return (
     <form action={action} style={{ width: "100%", marginTop: 10 }}>
       <input type="hidden" name="instance_id" value={instanceId} />
+      {base && <input type="hidden" name="base" value={base} />}
       <label className="zq-label" htmlFor="new_key">
         New API key
       </label>

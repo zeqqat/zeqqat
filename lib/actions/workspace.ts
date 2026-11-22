@@ -1,23 +1,22 @@
 "use server";
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "../../db";
-import { instance, membership, oauthGrant, oauthToken, organization, workspace } from "../../db/schema";
+import { instance, membership, organization, workspace } from "../../db/schema";
 import { publicUrl } from "../env";
 import { hrefIn, requireOrgOwner, requireOwner, requireUser, requireWorkspaceOrgOwner } from "../guard";
 import { accountBase, isReservedWorkspaceSlug, wsBase } from "../paths";
 import { newId } from "../id";
-import { deleteInstances, giveInstance } from "../instance-ops";
+import { giveInstance } from "../instance-ops";
 import { personalAccountOf } from "../setup";
 import { transferWorkspace } from "../transfer";
 import { isReserved, isValidOrgSlug, normalizeSlug } from "../username";
 import { heldByOldUsername } from "../username-alias";
 import { CURRENT_ORG_COOKIE, CURRENT_WS_COOKIE, homePathFor, listUserAccounts, listUserWorkspaces } from "../workspace";
 
-import { inWorkspace } from "../instance-scope";
 // The current account, and the current workspace when there is one.
 async function setCurrent(organizationId: string, workspaceId: string | null) {
   const jar = await cookies();
@@ -200,34 +199,8 @@ export async function completeSetupAction(formData: FormData) {
   const { ws } = await requireOwner();
   const choice = formData.get("choice")?.toString();
   await db.update(workspace).set({ setupCompletedAt: new Date() }).where(eq(workspace.id, ws.workspaceId));
-  redirect(hrefIn(ws, choice === "self-host" ? "/self-host" : ""));
-}
-
-// After someone moves to their own Zeqqat: deletes every Dokploy key this
-// workspace stored here and disconnects every agent. Their account and its
-// activity history stay. Optional, and only ever run on an explicit
-// confirmation.
-export async function removeHostedDataAction(formData: FormData) {
-  const { ws } = await requireOwner();
-  if (formData.get("confirm")?.toString() !== "yes") redirect(hrefIn(ws, "/self-host/clean-up?error=confirm"));
-
-  const ids = (await db.select({ id: instance.id }).from(instance).where(inWorkspace(ws.workspaceId))).map(
-    (r) => r.id,
-  );
-  await deleteInstances(ws.organizationId, ids);
-
-  const grants = await db
-    .select({ id: oauthGrant.id })
-    .from(oauthGrant)
-    .where(and(eq(oauthGrant.workspaceId, ws.workspaceId), isNull(oauthGrant.revokedAt)));
-  const grantIds = grants.map((g) => g.id);
-  if (grantIds.length > 0) {
-    const now = new Date();
-    await db.update(oauthGrant).set({ revokedAt: now }).where(inArray(oauthGrant.id, grantIds));
-    await db.update(oauthToken).set({ revokedAt: now }).where(inArray(oauthToken.grantId, grantIds));
-  }
-
-  redirect(hrefIn(ws, `/self-host/clean-up?done=${ids.length}-${grantIds.length}`));
+  // Self-host lives on the account: Dokploy instances belong to it.
+  redirect(choice === "self-host" ? `/${ws.organizationSlug}/self-host` : hrefIn(ws, ""));
 }
 
 // Moves this workspace (instances, connections, policies it uses) from
