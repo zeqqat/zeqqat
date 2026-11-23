@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.8.1",
+    "date": "2026-11-23",
+    "at": "2026-11-23T07:27:30Z",
+    "changes": [
+      "Blog: Easypanel vs Dokploy: Which Self-Hosted Panel Should You Use?"
+    ]
+  },
+  {
     "version": "0.8.0",
     "date": "2026-11-23",
     "at": "2026-11-23T06:22:40Z",
