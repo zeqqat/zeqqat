@@ -12,7 +12,7 @@ import { reachableInstances, type ReachableInstance } from "./mcp-context";
 import { newId } from "./id";
 import { runEndpoint, toolError, toolOk, type ToolResult } from "./executor";
 import { accessSummary, toolAllowed } from "./policies";
-import { builtinToolName } from "./tool-names";
+import { builtinToolName, RUN_KINDS, runToolName, type RunKind } from "./tool-names";
 import { mintGenerated, type GenerateKind } from "./secret-handles";
 import { ImportError, importFromUrl } from "./spec-import";
 import { submitSuggestion } from "./feedback";
@@ -50,8 +50,7 @@ type Ctx = McpContext;
 // One run tool per kind, so an agent's own permission settings ("always
 // allow" reads, "ask" for edits) line up with Zeqqat's kinds. Each refuses
 // a tool of another kind and names the right one.
-export const RUN_KINDS = ["read", "create", "edit", "delete"] as const;
-export type RunKind = (typeof RUN_KINDS)[number];
+export { RUN_KINDS, type RunKind };
 export const RUN_TOOL: Record<RunKind, string> = {
   read: TOOL_NAMES.runRead,
   create: TOOL_NAMES.runCreate,
@@ -59,7 +58,7 @@ export const RUN_TOOL: Record<RunKind, string> = {
   delete: TOOL_NAMES.runDelete,
 };
 export function runToolFor(kind: string): string {
-  return RUN_TOOL[(RUN_KINDS as readonly string[]).includes(kind) ? (kind as RunKind) : "delete"];
+  return runToolName(kind);
 }
 // The name before the split; clients that cached it get told what to use.
 export const OLD_RUN_NAME = builtinToolName("run");

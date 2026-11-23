@@ -1,3 +1,4 @@
+import { runToolName } from "./tool-names";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { callLog, instance, integrationApiSpecSnapshot } from "../db/schema";
@@ -317,7 +318,7 @@ export async function runEndpoint(
   // zeqqat_edit, zeqqat_delete) so agents can set permissions per kind. A tool of another kind
   // is never sent through the wrong one.
   if (params.kind && endpoint.kind !== params.kind) {
-    const right = `zeqqat_${endpoint.kind}`;
+    const right = runToolName(endpoint.kind);
     await logCall(ctx, {
       toolName,
       instanceId: inst.id,
@@ -326,7 +327,7 @@ export async function runEndpoint(
       outcome: "error",
       durationMs: Date.now() - start,
       requestArgs: params.inputs,
-      errorMessage: `Not sent: ${endpoint.name} is a ${endpoint.kind} tool, called through zeqqat_${params.kind}.`,
+      errorMessage: `Not sent: ${endpoint.name} is a ${endpoint.kind} tool, called through ${runToolName(params.kind)}.`,
     });
     return toolError(`Not sent: ${endpoint.name} is a ${endpoint.kind} tool. Run it with ${right}.`);
   }

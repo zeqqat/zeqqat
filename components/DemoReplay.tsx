@@ -1,5 +1,6 @@
 "use client";
 
+import { runToolName } from "../lib/tool-names";
 import { useEffect, useMemo, useState } from "react";
 import type { ActivityCall } from "../lib/activity";
 import type { CallState } from "../lib/activity-format";
@@ -191,7 +192,7 @@ export function DemoReplay({ replay }: { replay: Replay }) {
                   }
                   return (
                     <p key={si} className={`zq-demo-tool${s.outcome === "blocked" ? " is-blocked" : ""}`}>
-                      <span className="zq-demo-tool-k">zeqqat_{s.kind}</span> {s.tool}
+                      <span className="zq-demo-tool-k">{runToolName(s.kind)}</span> {s.tool}
                       {s.hidden ? (
                         <span className="zq-demo-tool-h">
                           {s.hidden} {s.hidden === 1 ? "secret" : "secrets"} as {"{{zq_secret_…}}"}

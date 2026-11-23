@@ -202,3 +202,13 @@ export function toPolicyName(raw: string): string {
     .slice(0, 48)
     .replace(/_+$/g, "");
 }
+
+// The run tool for a catalog tool's kind: zeqqat_read, zeqqat_create,
+// zeqqat_edit or zeqqat_delete (one per kind, so agents can set "always
+// allow" or "ask" per kind). An unknown kind gets the delete tool, the
+// strictest one.
+export const RUN_KINDS = ["read", "create", "edit", "delete"] as const;
+export type RunKind = (typeof RUN_KINDS)[number];
+export function runToolName(kind: string | null | undefined): string {
+  return builtinToolName((RUN_KINDS as readonly string[]).includes(kind ?? "") ? (kind as RunKind) : "delete");
+}

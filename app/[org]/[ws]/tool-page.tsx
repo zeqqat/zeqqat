@@ -1,3 +1,4 @@
+import { runToolName } from "../../../lib/tool-names";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -92,7 +93,7 @@ export default async function ToolPage({ params }: Props) {
             </dd>
           </dl>
           <p className="zq-note">
-            Agents find this tool with zeqqat_search and run it with zeqqat_{t.kind}, passing this operationId and one of your
+            Agents find this tool with zeqqat_search and run it with {runToolName(t.kind)}, passing this operationId and one of your
             instances. The canonical name works too.
           </p>
         </section>
