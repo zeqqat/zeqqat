@@ -894,3 +894,21 @@ export const selfhostInstall = pgTable(
   },
   (t) => [uniqueIndex("selfhost_install_claim_hash_uq").on(t.claimHash), index("selfhost_install_org_idx").on(t.organizationId)],
 );
+
+// On a self-hosted install made from zeqqat.com: what the claim brought
+// along to ask its owner about zeqqat.com's key (lib/cloud-handoff.ts).
+// One row, written when the owner account is made. The first thing the
+// owner sees after signing in is "The key zeqqat.com uses": keep it or
+// delete it, sent to zeqqat.com with the claim token (encrypted here with
+// this install's own key). `choice` is set once they've answered.
+export const cloudHandoff = pgTable("cloud_handoff", {
+  id: uuid("id").primaryKey(),
+  ownerUserId: uuid("owner_user_id").references(() => user.id, { onDelete: "cascade" }),
+  report: text("report").notNull(),
+  cloudHost: text("cloud_host").notNull(),
+  claimToken: jsonb("claim_token").$type<{ ciphertext: string; iv: string; tag: string }>().notNull(),
+  cloudKeyHint: jsonb("cloud_key_hint").$type<{ start: string; end: string }>(),
+  instanceAlias: text("instance_alias").notNull(),
+  choice: text("choice"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -30,6 +30,16 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
   // zeqqat.com makes the owner account (app/claim/[token]).
   const claim = await awaitingClaim();
   if (claim) {
+    // The owner may have opened it some other way than the link (a domain
+    // they added in Dokploy): email, the setup token from their Self-host
+    // page on zeqqat.com, and a password. Without the token nobody can
+    // take the install first (lib/password-auth.ts).
+    let from: string | undefined;
+    try {
+      from = claim.report ? new URL(`/${claim.owner.username}/self-host`, claim.report).href : undefined;
+    } catch {
+      from = undefined;
+    }
     return (
       <div className="zq">
         <PublicHeader social />
@@ -41,7 +51,8 @@ export async function AuthCard({ error, next }: { error?: string; next?: string 
               </span>
             </div>
             <h1 className="zq-card-h">Set up your Zeqqat</h1>
-            <p className="zq-card-p">Open it with &ldquo;Open your Zeqqat&rdquo; on zeqqat.com to set your password.</p>
+            <p className="zq-card-p">This Zeqqat was installed from zeqqat.com. Use the email you sign in with there.</p>
+            <SignInButtons providers={["password"]} callbackURL="/signin" passwordMode="claim" claimName={claim.owner.name} claimFrom={from} />
           </main>
         </div>
       </div>

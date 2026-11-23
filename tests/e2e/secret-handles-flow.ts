@@ -98,6 +98,14 @@ async function main() {
     const ctxAuth = await auth.$context;
     const user = await ctxAuth.internalAdapter.createUser({ name: "Test User", email: "test@example.com", emailVerified: true }, { method: "admin" });
     await syncOfficialCatalog();
+    // Sign-up makes the account only; its first workspace comes from Setup.
+    {
+      const { and: _and, eq: _eq } = await import("drizzle-orm");
+      const [own] = await db.select().from(schema.organization).where(_and(_eq(schema.organization.ownerUserId, user.id), _eq(schema.organization.kind, "personal")));
+      const { newId: _newId } = await import("../../lib/id");
+      const wsId = _newId();
+      await db.insert(schema.workspace).values({ id: wsId, organizationId: own.id, slug: "production", name: "production", setupCompletedAt: new Date() });
+    }
     const [ws] = await listUserWorkspaces(user.id);
     const [dokploy] = await db.select().from(schema.integration).where(eq(schema.integration.slug, "dokploy")).limit(1);
     const conn = await primaryConnection(ws, user.id);
@@ -145,6 +153,10 @@ async function main() {
     const run = (name: string, inputs: Record<string, unknown>, instance = "production") =>
       tool(runToolOf(name), { name, instance, inputs });
     const HANDLE = /\{\{zq_secret_[a-z0-9]{16}\}\}/;
+
+    // 0. One run tool per kind: a read tool through zeqqat_edit is never sent.
+    const wrong = await tool("zeqqat_edit", { name: "project.all", instance: "production", inputs: {} });
+    check("a read tool sent through zeqqat_edit is refused, naming zeqqat_read", !!wrong.isError && wrong.all.includes("zeqqat_read"));
 
     // 1. Mint a password.
     const minted = await tool("zeqqat_secret", { kind: "password", length: 32 });

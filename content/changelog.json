@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.8.0",
+    "date": "2026-11-23",
+    "at": "2026-11-23T06:22:40Z",
+    "changes": [
+      "One run tool per kind: zeqqat_read, zeqqat_create, zeqqat_edit and zeqqat_delete replace zeqqat_run, so your agent can run reads without asking and ask before edits or deletes. Only the kinds an MCP URL allows are listed. Reconnect Zeqqat in your agent to see them.",
+      "Setup notices your agent by itself once you approve Zeqqat, and goes straight on. No more refreshing.",
+      "The approve page shows the whole MCP URL.",
+      "Self-host: the install card folds once it's done, every address of your Zeqqat in Dokploy is listed and checked, and Open your Zeqqat uses the first one that loads, even a domain you add in Dokploy afterwards.",
+      "Claiming a self-hosted Zeqqat asks for email, setup token and password (no name), and works on any domain you added for it in Dokploy, which then becomes its address.",
+      "What happens to zeqqat.com's key is asked in your own Zeqqat, right after you sign in there (and in Settings on zeqqat.com), never before."
+    ]
+  },
+  {
     "version": "0.7.1",
     "date": "2026-11-22",
     "at": "2026-11-22T12:41:41Z",

@@ -2,6 +2,9 @@ import { and, asc, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { AgentPicker } from "../../../../components/AgentPicker";
 import { AgentWatch } from "../../../../components/AgentWatch";
+import { CloudKeyCard } from "../../../../components/CloudKeyCard";
+import { pendingHandoff } from "../../../../lib/cloud-handoff";
+import { edition } from "../../../../lib/edition";
 import { ConnectDokployForm } from "../../../../components/ConnectDokployForm";
 import { DokployMark } from "../../../../components/Marks";
 import { Stepper } from "../../../../components/Stepper";
@@ -27,6 +30,10 @@ export default async function SetupPage({
   const { org } = await params;
   const own = await personalAccountOf(user.id);
   if (!own || own.slug !== org) notFound();
+  // Installed from zeqqat.com: first, what happens to zeqqat.com's key
+  // (lib/cloud-handoff.ts). Then Setup goes on where it was.
+  const handoff = edition() === "cloud" ? null : await pendingHandoff(user.id);
+  if (handoff) return <CloudKeyCard h={handoff} />;
   const st = await setupStep(own.id);
   if (st.step === 4 || own.setupCompletedAt) {
     await finishSetup(own.id);

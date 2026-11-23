@@ -631,17 +631,43 @@ token. Never MCP URLs (they are new URLs, made there) or policies. "Open
 your Zeqqat" is `<address>/claim/<token>` (`app/claim/[token]`): while the
 install has no users and a seed, the owner account can only be made with
 that token and the seeded email (`x-zeqqat-claim`, `passwordSignUpAllowed`),
-so nobody who finds the fresh address first takes it, and `/signin` says to
-open it from zeqqat.com. Making it runs `applySeed` (`lib/seed-claim.ts`):
+so nobody who finds the fresh address first takes it. The claim form is
+email, setup token and password (no name: it comes from the seed). From the
+link the email and token are filled in; opened any other way, `/signin`
+shows the same form empty, with a link to the owner's Self-host page on
+zeqqat.com where the token is copied (`components/AuthCard.tsx`).
+**Own domains while unclaimed:** people often add their own domain in
+Dokploy (their server doesn't take ports 80/443), so while the install waits
+to be claimed it accepts sign-up on any domain its compose has in Dokploy
+(`lib/own-domains.ts` asks its own Dokploy with the seed's key, cached 30 s;
+`authForRequestAsync` in `lib/auth.ts` builds a sign-in setup for that
+origin). Claiming on such a domain makes it the install's address: the
+claim sets `ZEQQAT_PUBLIC_URL` to it in the compose's env and redeploys. Making it runs `applySeed` (`lib/seed-claim.ts`):
 username, instance, workspace(s) with the instance, so Setup opens at
 "Connect your agent"; then the seed is removed from the compose's env in
 Dokploy. Once anyone exists the seed is ignored.
 `pnpm exec tsx tests/e2e/selfhost-claim-flow.ts` runs it.
 
-**The old key.** The live panel shows the owner (avatar, name, @username,
-Owner), then "The key zeqqat.com uses" with Keep it (the default: people
-staying on zeqqat.com is what we want) and Delete the key
-(`deleteCloudKey`). Dokploy can't switch a key off, only delete it, and
+**The page after the install.** The install card folds into one line
+("Installed on production", click to open), then one card: the owner (avatar;
+name and @username on one line, the Owner pill under them), every address the
+install has (its compose's domains in Dokploy, each checked from the
+internet, asked again every few seconds while the page is on screen:
+`installAddresses`, `lib/selfhost-addresses.ts`), the setup token with Copy,
+and Open your Zeqqat, which opens the first address that loads (its
+`/claim/<token>`) and waits while none does. Not reachable never stops the
+flow.
+
+**The old key.** Asked only after the claim, because deleting it before the
+owner is in their own Zeqqat would cut them off. The seed carries a hint of
+zeqqat.com's key (`cloudKey`); the claim saves a `cloud_handoff` row on the
+install, and the first thing the owner sees after signing in there (Setup)
+is "The key zeqqat.com uses" (`components/CloudKeyCard.tsx`): Keep it (the
+default: people staying on zeqqat.com is what we want) or Delete the key.
+The install sends the choice with the claim token to zeqqat.com
+(`app/api/selfhost/key`, `lib/cloud-key.ts`), which does the work with its
+own key. The same choice sits in zeqqat.com's Settings, Self-host tab, for
+claimed installs (`CloudKeyPanel`). Dokploy can't switch a key off, only delete it, and
 never says which key is calling, so `lib/dokploy-keys.ts` finds it: Dokploy
 stores each key's SHA-256 (base64url, no padding: `@better-auth/api-key`
 1.6.23's `defaultKeyHasher`) and `user.getBackups` returns it, so we hash

@@ -35,6 +35,11 @@ export type Seed = {
   // zeqqat.com's address: after the claim the install tells it, with only
   // the claim token, so it stops showing the claim link.
   report?: string;
+  // zeqqat.com's own key for the instance, as a hint (prefix and last 4),
+  // when the install got a key of its own: its owner is asked, first thing
+  // after signing in, whether zeqqat.com should keep it (lib/cloud-handoff.ts).
+  cloudKey?: { start: string; end: string };
+  cloudHost?: string;
 };
 
 export const SEED_ENV = "ZEQQAT_SEED";

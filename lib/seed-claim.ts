@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db";
-import { instance, integration, organization, user, workspace } from "../db/schema";
-import { decryptCredential } from "./crypto";
+import { cloudHandoff, instance, integration, organization, user, workspace } from "../db/schema";
+import { decryptCredential, encryptCredential } from "./crypto";
 import { normalizeBaseUrl } from "./dokploy-check";
 import { edition } from "./edition";
 import { newId } from "./id";
@@ -42,7 +42,7 @@ export function claimAllowed(seed: Seed, email: string, token: string | null): b
 // Right after the owner account is created (lib/auth.ts): their username,
 // the instance and the workspace(s). Then, in the background, take the
 // seed out of the compose's environment in Dokploy.
-export async function applySeed(seed: Seed, userId: string, token: string): Promise<void> {
+export async function applySeed(seed: Seed, userId: string, token: string, origin: string | null = null): Promise<void> {
   // Only for the install's very first account.
   if ((await userCount()) !== 1) return;
   const [own] = await db
@@ -91,7 +91,30 @@ export async function applySeed(seed: Seed, userId: string, token: string): Prom
     }
   });
 
-  void stripSeed(seed).catch((err) => console.error("[zeqqat] couldn't remove the seed from Dokploy:", err));
+  // The name comes from zeqqat.com: the claim form doesn't ask for it.
+  if (seed.owner.name) await db.update(user).set({ name: seed.owner.name.slice(0, 100) }).where(eq(user.id, userId));
+
+  // What to ask the owner first: keep or delete zeqqat.com's key
+  // (lib/cloud-handoff.ts). Only when this install has a key of its own.
+  if (seed.cloudKey && seed.report) {
+    let cloudHost = seed.cloudHost ?? "";
+    try {
+      cloudHost ||= new URL(seed.report).host;
+    } catch {
+      cloudHost ||= "zeqqat.com";
+    }
+    await db.insert(cloudHandoff).values({
+      id: newId(),
+      ownerUserId: userId,
+      report: seed.report,
+      cloudHost,
+      claimToken: encryptCredential(token),
+      cloudKeyHint: seed.cloudKey,
+      instanceAlias: seed.instance.alias,
+    });
+  }
+
+  void stripSeed(seed, origin).catch((err) => console.error("[zeqqat] couldn't remove the seed from Dokploy:", err));
   void reportClaim(seed, token);
 }
 
@@ -124,13 +147,42 @@ async function reportClaim(seed: Seed, token: string) {
 
 // The seed has done its job: remove ZEQQAT_SEED from this install's compose
 // in Dokploy (it takes effect on the next deploy; until then it is ignored
-// anyway, since the install has an owner).
-async function stripSeed(seed: Seed) {
+// anyway, since the install has an owner). When the owner claimed it on a
+// domain they added in Dokploy (not ZEQQAT_PUBLIC_URL's sslip.io address,
+// which may never load), that domain becomes the install's address and it
+// redeploys, so MCP URLs and sign-in use it from then on.
+async function stripSeed(seed: Seed, origin: string | null) {
   const baseUrl = normalizeBaseUrl(seed.instance.baseUrl);
   if (!baseUrl || !seed.composeId) return;
   const t = { baseUrl, apiKey: decryptCredential(seed.instance.credential) };
   const one = await dokploy(t, "compose.one", undefined, { composeId: seed.composeId });
   const env = findDeep(one, "env");
-  if (typeof env !== "string" || !env.includes(SEED_ENV)) return;
-  await dokploy(t, "compose.update", { composeId: seed.composeId, env: withoutSeed(env) });
+  if (typeof env !== "string") return;
+  let next = withoutSeed(env);
+  const moved = !!origin && sameHostDifferent(process.env.ZEQQAT_PUBLIC_URL, origin);
+  if (moved && origin) next = withPublicUrl(next, origin);
+  if (next === env) return;
+  await dokploy(t, "compose.update", { composeId: seed.composeId, env: next });
+  if (moved) await dokploy(t, "compose.deploy", { composeId: seed.composeId });
+}
+
+// True when `origin` is a different host from the public URL's.
+function sameHostDifferent(publicUrl: string | undefined, origin: string): boolean {
+  try {
+    return new URL(publicUrl ?? "").host.toLowerCase() !== new URL(origin).host.toLowerCase();
+  } catch {
+    return true;
+  }
+}
+
+export function withPublicUrl(env: string, origin: string): string {
+  const lines = env.split("\n").filter((l) => !/^\s*ZEQQAT_PUBLIC_URL\s*=/.test(l));
+  return [...lines, `ZEQQAT_PUBLIC_URL=${origin}`].join("\n");
+}
+
+// The origin a request came on (behind Dokploy's Traefik).
+export function requestOrigin(h: Headers | undefined | null): string | null {
+  const host = (h?.get("x-forwarded-host") ?? h?.get("host"))?.split(",")[0]?.trim().toLowerCase();
+  const proto = h?.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
+  return host && (proto === "http" || proto === "https") ? `${proto}://${host}` : null;
 }

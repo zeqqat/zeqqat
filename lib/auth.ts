@@ -13,7 +13,8 @@ import { mailerConfigured, passwordResetMail, sendMail, signInCodeMail } from ".
 import { passwordSignUpAllowed } from "./password-auth";
 import { findOpenInvite, joinInvite } from "./invites";
 import { runSignupTransaction } from "./signup";
-import { applySeed, claimAllowed, currentSeed } from "./seed-claim";
+import { applySeed, claimAllowed, currentSeed, requestOrigin } from "./seed-claim";
+import { claimOrigin } from "./own-domains";
 import { CLAIM_HEADER } from "./selfhost-seed";
 
 export { signInProviders } from "./auth-providers";
@@ -161,7 +162,7 @@ const authFor = (baseURL: string | undefined) => betterAuth({
             if (seed && claimAllowed(seed, user.email, claim)) {
               // A failed import mustn't take the account with it: they
               // can still connect Dokploy by hand in Setup.
-              await applySeed(seed, user.id, claim ?? "").catch((err) => console.error("[zeqqat] seed import failed:", err));
+              await applySeed(seed, user.id, claim ?? "", requestOrigin(ctx?.headers)).catch((err) => console.error("[zeqqat] seed import failed:", err));
             }
             // Self-hosted: signing up through an invite link is the yes.
             const token = ctx?.path === "/sign-up/email" ? (ctx.headers?.get("x-zeqqat-invite") ?? null) : null;
@@ -189,6 +190,25 @@ let flippedAuth: typeof auth | null = null;
 // The setup to use for this request: the flipped one only when the request
 // came to this install's own host on the other scheme.
 export function authForRequest(h: Headers): typeof auth {
+  return schemeAuth(h);
+}
+
+// Same, plus an unclaimed install opened on a domain its owner added in
+// Dokploy (lib/own-domains.ts): sign-up works there too, with its own
+// setup for that origin. Used by the auth routes and getServerSession.
+const ownOriginAuth = new Map<string, typeof auth>();
+export async function authForRequestAsync(h: Headers): Promise<typeof auth> {
+  const origin = await claimOrigin(h);
+  if (!origin) return schemeAuth(h);
+  let a = ownOriginAuth.get(origin);
+  if (!a) {
+    a = authFor(origin);
+    ownOriginAuth.set(origin, a);
+  }
+  return a;
+}
+
+function schemeAuth(h: Headers): typeof auth {
   const publicUrl = process.env.ZEQQAT_PUBLIC_URL;
   if (!usesFlippedScheme(publicUrl, h)) return auth;
   const flipped = flippedUrl(publicUrl);

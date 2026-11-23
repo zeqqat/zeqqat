@@ -68,6 +68,14 @@ async function main() {
     const ctxAuth = await auth.$context;
     const user = await ctxAuth.internalAdapter.createUser({ name: "Test User", email: "test@example.com", emailVerified: true }, { method: "admin" });
     await syncOfficialCatalog();
+    // Sign-up makes the account only; its first workspace comes from Setup.
+    {
+      const { and: _and, eq: _eq } = await import("drizzle-orm");
+      const [own] = await db.select().from(schema.organization).where(_and(_eq(schema.organization.ownerUserId, user.id), _eq(schema.organization.kind, "personal")));
+      const { newId: _newId } = await import("../../lib/id");
+      const wsId = _newId();
+      await db.insert(schema.workspace).values({ id: wsId, organizationId: own.id, slug: "production", name: "production", setupCompletedAt: new Date() });
+    }
     const [ws] = await listUserWorkspaces(user.id);
     const [dokploy] = await db.select().from(schema.integration).where(eq(schema.integration.slug, "dokploy")).limit(1);
     const conn = await primaryConnection(ws, user.id);

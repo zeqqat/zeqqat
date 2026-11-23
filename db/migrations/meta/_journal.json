@@ -183,6 +183,13 @@
       "when": 1795350771899,
       "tag": "0025_lazy_mother_askani",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795414576738,
+      "tag": "0026_aromatic_doctor_spectrum",
+      "breakpoints": true
     }
   ]
 }

@@ -28,24 +28,24 @@
     "date": "2026-11-16"
   },
   "/demo/database": {
-    "hash": "f6baba3ba77f3317",
-    "date": "2026-11-21"
+    "hash": "f47ce3cc20592612",
+    "date": "2026-11-23"
   },
   "/demo/deploy-logs": {
-    "hash": "69fd24ca1fa5949b",
-    "date": "2026-11-21"
+    "hash": "9e64f029a0af0d3e",
+    "date": "2026-11-23"
   },
   "/demo/disk": {
-    "hash": "b3128b27d8591244",
-    "date": "2026-11-21"
+    "hash": "ce2b3c18421e45e3",
+    "date": "2026-11-23"
   },
   "/docs/agents/overview": {
-    "hash": "9b9e01a871762a87",
-    "date": "2026-11-20"
+    "hash": "fb84f5529216e516",
+    "date": "2026-11-23"
   },
   "/docs/agents/tools": {
-    "hash": "c61264ff8812e698",
-    "date": "2026-11-10"
+    "hash": "839234c465bc81e3",
+    "date": "2026-11-23"
   },
   "/docs/agents/permissions": {
     "hash": "010b4e7cfb74ba72",
@@ -60,8 +60,8 @@
     "date": "2026-11-16"
   },
   "/docs/agents/secrets": {
-    "hash": "320bd69e55ab1f73",
-    "date": "2026-11-16"
+    "hash": "782c9a2f36999423",
+    "date": "2026-11-23"
   },
   "/docs/agents/errors": {
     "hash": "79fdb24023f18ca1",

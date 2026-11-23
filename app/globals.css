@@ -1051,6 +1051,27 @@ body {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.zq-field-l {
+  display: block;
+  margin: 2px 0 -4px;
+  font-size: 12px;
+  color: var(--faint);
+  text-align: left;
+}
+.zq-field-h {
+  display: block;
+  margin: -4px 0 2px;
+  font-size: 11.5px;
+  color: var(--faint);
+  text-align: left;
+}
+.zq-input.zq-tok {
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+.zq-email-form .zq-input[readonly] {
+  color: var(--dim);
+}
 .zq-consent-scope .zq-consent-url {
   overflow-wrap: normal;
   word-break: normal;

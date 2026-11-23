@@ -48,6 +48,7 @@ export function SignInButtons({
   inviteToken,
   claimName,
   claimToken,
+  claimFrom,
 }: {
   providers: SignInProvider[];
   callbackURL: string;
@@ -60,6 +61,9 @@ export function SignInButtons({
   // filled in from the seed, the claim token sent along.
   claimName?: string;
   claimToken?: string;
+  // Where the setup token can be copied when it isn't in the link (the
+  // owner's Self-host page on zeqqat.com).
+  claimFrom?: string;
 }) {
   const [busy, setBusy] = useState<SignInProvider | null>(null);
   const social = providers.filter((p): p is Social => p !== "email" && p !== "password");
@@ -120,6 +124,7 @@ export function SignInButtons({
             inviteToken={inviteToken}
             claimName={claimName}
             claimToken={claimToken}
+            claimFrom={claimFrom}
             locked={busy !== null && busy !== "password"}
             onBusy={(b) => setBusy(b ? "password" : null)}
           />
@@ -289,6 +294,7 @@ function PasswordForm({
   inviteToken,
   claimName,
   claimToken,
+  claimFrom,
   locked,
   onBusy,
 }: {
@@ -298,6 +304,7 @@ function PasswordForm({
   inviteToken?: string;
   claimName?: string;
   claimToken?: string;
+  claimFrom?: string;
   locked: boolean;
   onBusy: (b: boolean) => void;
 }) {
@@ -308,6 +315,12 @@ function PasswordForm({
   const [pending, setPending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const emailFixed = (mode === "invite" || mode === "claim") && !!inviteEmail;
+  // Claiming an install from zeqqat.com: email, setup token and password,
+  // no name (it comes from zeqqat.com). From the link the token is filled
+  // in and locked; otherwise it is pasted from the owner's Self-host page.
+  const claiming = mode === "claim";
+  const [token, setToken] = useState(claimToken ?? "");
+  const tokenFixed = claiming && !!claimToken;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -316,11 +329,11 @@ function PasswordForm({
     setErr(null);
     const { error } = creating
       ? await authClient.signUp.email({
-          name: name.trim(),
+          name: name.trim() || email.trim().split("@")[0],
           email: email.trim(),
           password,
-          fetchOptions: claimToken
-            ? { headers: { "x-zeqqat-claim": claimToken } }
+          fetchOptions: claiming
+            ? { headers: { "x-zeqqat-claim": token.trim() } }
             : inviteToken
               ? { headers: { "x-zeqqat-invite": inviteToken } }
               : undefined,
@@ -337,7 +350,7 @@ function PasswordForm({
 
   return (
     <form className="zq-email-form" onSubmit={submit}>
-      {creating && (
+      {creating && !claiming && (
         <>
           <label className="zq-visually-hidden" htmlFor="zq-pw-name">
             Your name
@@ -354,7 +367,7 @@ function PasswordForm({
           />
         </>
       )}
-      <label className="zq-visually-hidden" htmlFor="zq-pw-email">
+      <label className={claiming ? "zq-field-l" : "zq-visually-hidden"} htmlFor="zq-pw-email">
         Email
       </label>
       <input
@@ -369,7 +382,34 @@ function PasswordForm({
         onChange={(e) => setEmail(e.target.value)}
         disabled={pending || locked}
       />
-      <label className="zq-visually-hidden" htmlFor="zq-pw-password">
+      {claiming && (
+        <>
+          <label className="zq-field-l" htmlFor="zq-pw-token">
+            Setup token
+          </label>
+          <input
+            id="zq-pw-token"
+            className="zq-input zq-tok"
+            required
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="Paste it here"
+            value={token}
+            readOnly={tokenFixed}
+            onChange={(e) => setToken(e.target.value)}
+            disabled={pending || locked}
+          />
+          {!tokenFixed && claimFrom && (
+            <span className="zq-field-h">
+              Copy it from{" "}
+              <a className="zq-textlink" href={claimFrom} target="_blank" rel="noreferrer noopener">
+                {claimFrom.replace(/^https?:\/\//, "")}
+              </a>
+            </span>
+          )}
+        </>
+      )}
+      <label className={claiming ? "zq-field-l" : "zq-visually-hidden"} htmlFor="zq-pw-password">
         Password
       </label>
       <input
@@ -379,7 +419,7 @@ function PasswordForm({
         required
         minLength={creating ? 10 : undefined}
         autoComplete={creating ? "new-password" : "current-password"}
-        placeholder={creating ? "Password (10+ characters)" : "Password"}
+        placeholder={claiming ? "10+ characters" : creating ? "Password (10+ characters)" : "Password"}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         disabled={pending || locked}
@@ -392,7 +432,7 @@ function PasswordForm({
       <button
         type="submit"
         className="zq-google"
-        disabled={pending || locked || !email.trim() || !password || (creating && !name.trim())}
+        disabled={pending || locked || !email.trim() || !password || (creating && !claiming && !name.trim()) || (claiming && !token.trim())}
         aria-busy={pending}
       >
         {creating ? (mode === "setup" || mode === "claim" ? "Create owner account" : "Create account") : "Sign in"}

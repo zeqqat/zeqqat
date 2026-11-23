@@ -11,6 +11,7 @@ import { type DokployKey } from "../dokploy-keys";
 import { applyCloudKeyChoice } from "../cloud-key";
 import { checkAddresses, composeAddresses, type CheckedAddress } from "../selfhost-addresses";
 import { publicUrl } from "../env";
+import { siteHost } from "../edition";
 import { requireOrgOwner } from "../guard";
 import { newId } from "../id";
 import { keyHint } from "../key-hint";
@@ -143,6 +144,7 @@ export async function installConfigure(
       workspaces: wss,
       composeId,
       report: publicUrl(),
+      ...(newKey ? { cloudKey: keyHint(t.apiKey), cloudHost: siteHost() } : {}),
     });
     const r = await configureStep(t, composeId, appName, host, { encryptionKey, env: { [SEED_ENV]: seed } });
     // Saved so the claim link outlives this page (lib/selfhost-installs.ts).

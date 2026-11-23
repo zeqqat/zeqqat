@@ -38,6 +38,7 @@ async function main() {
   const KEY = "zqself_abcdefghijklmnop1234";
   let composeEnv = "";
   let reported: string | null = null;
+  let deployed = false;
   const dokploy = createServer((req, res) => {
     let raw = "";
     req.on("data", (c) => (raw += c));
@@ -55,6 +56,15 @@ async function main() {
       }
       if (req.headers["x-api-key"] !== KEY) return send(401, { message: "Unauthorized" });
       if (op === "compose.one") return send(200, { composeId: "c1", env: composeEnv });
+      if (op === "domain.byComposeId")
+        return send(200, [
+          { host: "zeqqat-ab12-1-2-3-4.sslip.io", https: true, serviceName: "zeqqat" },
+          { host: "zeqqat.example.com", https: true, serviceName: "zeqqat" },
+        ]);
+      if (op === "compose.deploy") {
+        deployed = true;
+        return send(200, true);
+      }
       if (op === "compose.update") {
         composeEnv = JSON.parse(raw).env;
         return send(200, true);
@@ -103,6 +113,8 @@ async function main() {
       workspaces: [{ slug: "production", name: "production" }],
       composeId: "c1",
       report: dokployUrl,
+      cloudKey: { start: "zeqqat_", end: "k4Qz" },
+      cloudHost: "zeqqat.com",
     });
     process.env.ZEQQAT_SEED = seed;
     composeEnv = `ZEQQAT_PUBLIC_URL=https://x.sslip.io\nZEQQAT_SEED=${seed}\nPOSTGRES_PASSWORD=abc`;
@@ -120,6 +132,13 @@ async function main() {
     const { awaitingClaim } = await import("../../lib/seed-claim");
     assert(await awaitingClaim(), "a fresh install with a seed waits to be claimed");
 
+    // Opened on a domain the owner added in Dokploy: sign-up is allowed
+    // there, on no other host.
+    const { claimOrigin } = await import("../../lib/own-domains");
+    const there = new Headers({ "x-forwarded-proto": "https", host: "zeqqat.example.com" });
+    assert((await claimOrigin(there)) === "https://zeqqat.example.com", "a domain added in Dokploy is this install's own");
+    assert((await claimOrigin(new Headers({ "x-forwarded-proto": "https", host: "evil.example.com" }))) === null, "any other host is not");
+
     const body = { name: "Gaita", email: "gaita@example.com", password: "correct-horse-1" };
     assert((await refused(auth.api.signUpEmail({ body }))) === "signups_closed", "no claim token: refused");
     assert(
@@ -133,7 +152,10 @@ async function main() {
       "the right token with another email: refused",
     );
 
-    const made = await auth.api.signUpEmail({ body, headers: new Headers({ "x-zeqqat-claim": token }) });
+    const made = await auth.api.signUpEmail({
+      body: { ...body, name: "gaita" },
+      headers: new Headers({ "x-zeqqat-claim": token, "x-forwarded-proto": "https", host: "zeqqat.example.com" }),
+    });
     assert(made.user?.id, "the claim link makes the owner account");
     assert(!(await awaitingClaim()), "claimed: no longer waiting");
 
@@ -151,7 +173,16 @@ async function main() {
     assert((await setupStep(own.id)).step === 3, "Setup opens at Connect your agent");
 
     for (let i = 0; i < 50 && composeEnv.includes("ZEQQAT_SEED"); i++) await new Promise((r) => setTimeout(r, 100));
-    assert(!composeEnv.includes("ZEQQAT_SEED") && composeEnv.includes("POSTGRES_PASSWORD=abc"), "the seed was taken out of the compose env, nothing else");
+    assert(!composeEnv.includes("ZEQQAT_SEED") && composeEnv.includes("POSTGRES_PASSWORD=abc"), "the seed was taken out of the compose env");
+    for (let i = 0; i < 50 && !deployed; i++) await new Promise((r) => setTimeout(r, 100));
+    assert(composeEnv.includes("ZEQQAT_PUBLIC_URL=https://zeqqat.example.com") && !composeEnv.includes("x.sslip.io"), "the domain it was claimed on became its address");
+    assert(deployed, "and it redeployed to use it");
+
+    const [named] = await db.select().from(schema.user).where(eq(schema.user.id, made.user.id));
+    assert(named.name === "Gaita", "the name came from zeqqat.com, not the form");
+    const { pendingHandoff } = await import("../../lib/cloud-handoff");
+    const pending = await pendingHandoff(made.user.id);
+    assert(pending?.cloudHost === "zeqqat.com" && pending.hint?.end === "k4Qz", "the owner is asked about zeqqat.com's key first");
 
     for (let i = 0; i < 50 && !reported; i++) await new Promise((r) => setTimeout(r, 100));
     assert(reported === token, "zeqqat.com was told it's claimed, with only the claim token");
