@@ -31,6 +31,10 @@ export const SELFHOST_COMPOSE = `services:
       SMTP_URL: \${SMTP_URL:-}
       # Anonymous install ping (README, "Anonymous install ping"). 0 turns it off.
       ZEQQAT_TELEMETRY: \${ZEQQAT_TELEMETRY:-1}
+      # Set only on an install made from zeqqat.com, until its owner claims it
+      # (lib/selfhost-seed.ts). Dokploy's environment only fills in the
+      # variables named here, so it has to be listed to reach the app.
+      ZEQQAT_SEED: \${ZEQQAT_SEED:-}
     expose:
       - "3000"
     healthcheck:

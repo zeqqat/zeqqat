@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.8.4",
+    "date": "2026-11-23",
+    "at": "2026-11-23T13:26:22Z",
+    "changes": [
+      "Fix: a Zeqqat installed from zeqqat.com now asks for the setup token when you open it. The install's compose file never passed the handoff to the app, so it showed the plain first-account form."
+    ]
+  },
+  {
     "version": "0.8.3",
     "date": "2026-11-23",
     "at": "2026-11-23T10:37:58Z",
