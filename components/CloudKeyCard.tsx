@@ -42,7 +42,7 @@ export function CloudKeyCard({ h }: { h: PendingHandoff }) {
         The key {h.cloudHost} uses<span className="dot">.</span>
       </h1>
       <p className="zq-sub">
-        Your Zeqqat has its own Dokploy key. {h.cloudHost} still has {key} for {h.instanceAlias}.
+        {h.cloudHost} still has a key for {h.instanceAlias} ({key}).
       </p>
       <section className="zq-panel-box zq-sh-card">
         {done ? (
@@ -97,7 +97,7 @@ export function CloudKeyCard({ h }: { h: PendingHandoff }) {
         ) : (
           <>
             <p className="zq-note" style={{ textAlign: "left" }}>
-              Keep it to go on using {h.instanceAlias} from {h.cloudHost} as well, or delete it from your Dokploy if you won&rsquo;t.
+              Keep it, and you can use {h.instanceAlias} here and on {h.cloudHost}. Only delete it if you won&rsquo;t use {h.cloudHost} again.
             </p>
             {err && (
               <div className="zq-warn-box" role="alert" style={{ marginTop: 12, marginBottom: 0 }}>
