@@ -65,8 +65,8 @@ export const AGENT_DOCS: DocSection[] = [
     title: "How Zeqqat works",
     text:
       "Zeqqat is an MCP gateway. One MCP URL gives an agent access to the integrations (tool sets such as Dokploy) a person connected, on the instances (servers) they added. " +
-      "The agent sees eleven built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_run calls a tool on one instance, zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat, zeqqat_feedback suggests a better summary for a tool, zeqqat_check tests from the internet whether an address loads or a Dokploy server's port (22, 80, 443, 3000) is open, zeqqat_activity reads the activity log (what agents did, what was blocked). " +
-      "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
+      "The agent sees up to fourteen built-in tools: zeqqat_import adds an app from a link to its OpenAPI spec, zeqqat_search finds tools, zeqqat_describe shows one tool's inputs and outputs, zeqqat_read, zeqqat_create, zeqqat_edit and zeqqat_delete call a tool of that kind on one instance (only the kinds this MCP URL allows are listed), zeqqat_whoami returns the context, zeqqat_policy shows what is allowed on each instance, zeqqat_secret creates a random secret you never see, zeqqat_docs answers questions about Zeqqat, zeqqat_feedback suggests a better summary for a tool, zeqqat_check tests from the internet whether an address loads or a Dokploy server's port (22, 80, 443, 3000) is open, zeqqat_activity reads the activity log (what agents did, what was blocked). " +
+      "Normal flow: search for a task (for example deploy), describe the tool you picked, then run it with the run tool for its kind (search says which) with the operationId, the instance name from the context, and inputs matching the tool's input schema. " +
       "Search, describe and run each need a reason: one line saying what the user asked you to do. Use exactly the same wording on every call you make for one request; Zeqqat groups those calls together in the activity log people use to audit the MCP URL. A call without a reason is refused.",
   },
   {
@@ -93,7 +93,8 @@ export const AGENT_DOCS: DocSection[] = [
     page: "tools",
     title: "Running a tool",
     text:
-      "Call zeqqat_run with name (the operationId from search, for example application.deploy), instance (an instance name from the context) and inputs. " +
+      "There is one run tool per kind: zeqqat_read, zeqqat_create, zeqqat_edit and zeqqat_delete, so people can let their agent run reads without asking and ask before edits or deletes. Search and describe say each tool's kind and the run tool to use (runWith); a tool sent through the wrong one is refused and the error names the right one. " +
+      "Call it with name (the operationId from search, for example application.deploy), instance (an instance name from the context) and inputs. " +
       "The instance decides which integration's tool runs, so the operationId is enough. The full canonical name @author/integration.http.action also works. " +
       "If a required input is missing, the call fails and lists what is missing. Use zeqqat_describe to see the input schema first.",
   },
@@ -152,7 +153,7 @@ export const AGENT_DOCS: DocSection[] = [
     title: "Secret handles",
     text:
       "You never see secrets through Zeqqat. When a result contains one (a database password, an API token, an env var such as DATABASE_URL), it arrives as a handle like {{zq_secret_ab12cd34ef56gh78}} instead of the value. " +
-      "To use the secret, put the handle in a later zeqqat_run input, alone or inside a string, and Zeqqat fills in the real value just before the request goes out. For example, to copy a database URL into an app: env set to DATABASE_URL=postgresql://app:{{zq_secret_...}}@db:5432/app. " +
+      "To use the secret, put the handle in a later run tool input, alone or inside a string, and Zeqqat fills in the real value just before the request goes out. For example, to copy a database URL into an app: env set to DATABASE_URL=postgresql://app:{{zq_secret_...}}@db:5432/app. " +
       "Never ask the user to paste a secret into the chat; use a handle. Handles expire after 30 minutes; read the value again for a fresh one.",
   },
   {

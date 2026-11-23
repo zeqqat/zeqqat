@@ -25,8 +25,8 @@ vi.mock("../../lib/connections", async (importOriginal) => ({
   sunsetNotice: async () => ({ state: "live", text: "", replacementUrl: null }),
 }));
 
-// No database here: the connection reaches nothing, so zeqqat_run's
-// destructiveHint comes out false.
+// No database here: the connection reaches nothing, so no run tool is
+// listed.
 vi.mock("../../lib/mcp-context", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/mcp-context")>()),
   reachableInstances: async () => [],
@@ -92,9 +92,17 @@ describe("tools/list annotations", async () => {
     expect(typeof a.readOnlyHint === "boolean" || typeof a.destructiveHint === "boolean").toBe(true);
   });
 
-  it("labels zeqqat_run destructive only when the connection can delete", () => {
-    const run = tools.find((t) => t.name === "zeqqat_run");
-    expect(run?.annotations?.readOnlyHint).toBe(false);
-    expect(run?.annotations?.destructiveHint).toBe(false);
+  it("lists no run tool when the MCP URL allows nothing", () => {
+    expect(tools.filter((t) => ["zeqqat_read", "zeqqat_create", "zeqqat_edit", "zeqqat_delete"].includes(t.name))).toEqual([]);
+  });
+
+  it("gives each run tool annotations true to its kind", async () => {
+    const { TOOLS } = await import("../../lib/mcp-server");
+    const byName: Record<string, unknown> = Object.fromEntries(TOOLS.map((t) => [t.name, t.annotations]));
+    expect(byName.zeqqat_read).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    expect(byName.zeqqat_create).toMatchObject({ readOnlyHint: false, destructiveHint: false });
+    expect(byName.zeqqat_edit).toMatchObject({ readOnlyHint: false, destructiveHint: false });
+    expect(byName.zeqqat_delete).toMatchObject({ readOnlyHint: false, destructiveHint: true });
+    expect(byName.zeqqat_run).toBeUndefined();
   });
 });

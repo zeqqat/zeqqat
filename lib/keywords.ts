@@ -50,7 +50,7 @@ export async function endpointsWithKeywords(words: string[]): Promise<string[]> 
 type SearchLog = { query?: unknown };
 type SearchResult = { matches?: { operationId?: string; integration?: string }[] } | null;
 
-// Called after a successful zeqqat_run. Never throws: learning is a side
+// Called after a successful zeqqat_<kind>. Never throws: learning is a side
 // effect and must not fail the call.
 export async function learnFromRun(
   ctx: McpContext,

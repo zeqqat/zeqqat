@@ -199,22 +199,22 @@ async function main() {
 
   // No reason: refused, and nothing logged.
   const before = await count();
-  const refused = await tool("zeqqat_run", { name: "application.one", instance: "dokploy-production", inputs: { applicationId: "x" } });
+  const refused = await tool("zeqqat_read", { name: "application.one", instance: "dokploy-production", inputs: { applicationId: "x" } });
   if (!refused.isError || !refused.content[1].text.startsWith("reason is required")) throw new Error("a call without a reason was not refused");
   if ((await count()) !== before) throw new Error("a refused call was logged");
 
   const R1 = "My App is returning 502s, find out why and fix it";
   await tool("zeqqat_search", { query: "application", reason: R1 });
   await tool("zeqqat_describe", { name: "application.one", reason: R1 });
-  await tool("zeqqat_run", { name: "application.one", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
-  await tool("zeqqat_run", { name: "deployment.all", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
-  const blocked = await tool("zeqqat_run", { name: "application.delete", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
+  await tool("zeqqat_read", { name: "application.one", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
+  await tool("zeqqat_read", { name: "deployment.all", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
+  const blocked = await tool("zeqqat_delete", { name: "application.delete", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
   if (!blocked.isError) throw new Error("delete was not blocked");
   await tool("zeqqat_search", { query: "redeploy", reason: R1 });
-  await tool("zeqqat_run", { name: "application.redeploy", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
+  await tool("zeqqat_edit", { name: "application.redeploy", instance: "dokploy-production", inputs: { applicationId: "kq3Vx9_mT2" }, reason: R1 });
 
   const R2 = "Check which services are running on staging";
-  await tool("zeqqat_run", { name: "project.all", instance: "dokploy-staging", inputs: {}, reason: R2 });
+  await tool("zeqqat_read", { name: "project.all", instance: "dokploy-staging", inputs: {}, reason: R2 });
 
   const rows = await db.select().from(schema.callLog);
   const requests = await db.select().from(schema.agentRequest);

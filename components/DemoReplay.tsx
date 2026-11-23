@@ -191,7 +191,7 @@ export function DemoReplay({ replay }: { replay: Replay }) {
                   }
                   return (
                     <p key={si} className={`zq-demo-tool${s.outcome === "blocked" ? " is-blocked" : ""}`}>
-                      <span className="zq-demo-tool-k">zeqqat_run</span> {s.tool}
+                      <span className="zq-demo-tool-k">zeqqat_{s.kind}</span> {s.tool}
                       {s.hidden ? (
                         <span className="zq-demo-tool-h">
                           {s.hidden} {s.hidden === 1 ? "secret" : "secrets"} as {"{{zq_secret_…}}"}

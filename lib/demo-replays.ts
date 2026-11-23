@@ -11,11 +11,11 @@
 // (components/DemoReplay.tsx), so it looks exactly like a workspace's Activity page.
 
 // One step the agent takes: a catalog lookup (zeqqat_search), or a call to
-// Dokploy through zeqqat_run.
+// Dokploy through the run tools (zeqqat_read, zeqqat_create, zeqqat_edit, zeqqat_delete).
 export type ReplayLookup = { search: string };
 
 export type ReplayCall = {
-  tool: string; // operationId, as the agent passes it to zeqqat_run
+  tool: string; // operationId, as the agent passes it to zeqqat_<kind>
   action: string; // its canonical action, as Activity shows it (@zeqqat/dokploy.http.<action>)
   summary: string; // the catalog's one-line summary (catalog/dokploy/summaries.json)
   kind: "read" | "create" | "edit" | "delete";

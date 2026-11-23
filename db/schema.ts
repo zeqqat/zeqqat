@@ -320,7 +320,7 @@ export const apiEndpoint = pgTable("api_endpoint", {
   }),
   // The raw operationId exactly as the spec has it, e.g. "application.stop"
   // (Dokploy tRPC-style). This is what agents see in zeqqat_search and pass
-  // to zeqqat_run (with an instance, which fixes the integration), and what
+  // to zeqqat_<kind> (with an instance, which fixes the integration), and what
   // policies list.
   name: text("name").notNull(),
   // The action segment of the canonical name @org/target.http.action,
@@ -686,7 +686,7 @@ export const rateLimitBucket = pgTable("rate_limit_bucket", {
 
 // A secret an agent can use without seeing it (lib/secret-handles.ts).
 // When a response carries a secret, the agent gets {{zq_secret_...}} in
-// its place; passing that handle in a later zeqqat_run input has Zeqqat
+// its place; passing that handle in a later zeqqat_<kind> input has Zeqqat
 // fill the value in server-side. zeqqat_secret mints one from a fresh
 // random value. Bound to the connection it was issued on and, once used
 // or when it came from a response, to one instance. Rows expire after

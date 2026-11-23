@@ -52,7 +52,7 @@ export type ConvertOptions = {
   orgSlug: string;
   integrationSlug: string;
   kinds: KindMap;
-  // Where the endpoint's `name` (what agents pass to zeqqat_run) comes
+  // Where the endpoint's `name` (what agents pass to zeqqat_<kind>) comes
   // from. "operationId" is the default. "path" is for tRPC-style APIs like
   // Dokploy's, whose path is the procedure name (`/application.stop`) and
   // whose operationId is a hyphenated copy of it (`application-stop`).

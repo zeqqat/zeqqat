@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../../db", () => ({ db: {} }));
 
-import { mayDelete } from "../../lib/mcp-context";
+import { allowedKinds, mayDelete } from "../../lib/mcp-context";
 
 const NONE = { read: false, create: false, edit: false, delete: false };
 const inst = (access: unknown) =>
@@ -36,5 +36,10 @@ describe("mayDelete", () => {
 
   it("is false with no instances", async () => {
     expect(await mayDelete([])).toBe(false);
+  });
+
+  it("lists only the kinds allowed by kind", async () => {
+    const k = await allowedKinds([inst({ mode: "kinds", perm: { ...NONE, read: true, edit: true } })]);
+    expect([...k].sort()).toEqual(["edit", "read"]);
   });
 });

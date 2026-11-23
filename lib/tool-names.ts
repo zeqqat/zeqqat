@@ -5,7 +5,7 @@
 // Two kinds of names exist, and only one of them ever reaches an MCP
 // client's name check (project doc mcp-context-and-policy-v1, section 3):
 //
-// 1. Built-in tools (zeqqat_search, zeqqat_run, ...). These are the only
+// 1. Built-in tools (zeqqat_search, zeqqat_<kind>, ...). These are the only
 //    tools in tools/list. Claude's clients call them as
 //    mcp__<connector name>__<our name> and validate that against
 //    ^[a-zA-Z0-9_-]{1,64}$. A name outside it is silently dropped: the
@@ -14,7 +14,7 @@
 //    ("deployment"), so it can't be relied on to say "Zeqqat".
 //
 // 2. Catalog tools (imported API endpoints). Agents find them through
-//    zeqqat_search and pass their operationId to zeqqat_run as an argument
+//    zeqqat_search and pass their operationId to zeqqat_<kind> as an argument
 //    value. They never appear in tools/list, so no client name rule, length
 //    budget or hash suffix applies to them. Their human-facing name is the
 //    canonical @org/target.type.action, used in the DB, UI, page URLs and,
@@ -151,7 +151,7 @@ export function sanitizeOperationId(raw: string | undefined, method?: string, pa
 // One imported API endpoint's names, from its owning org, its integration
 // (the target) and its raw operationId. An importer stores `action` and
 // `major` on the api_endpoint row, alongside the raw operationId in
-// `name`, which is what agents pass to zeqqat_run. Collisions between two
+// `name`, which is what agents pass to zeqqat_<kind>. Collisions between two
 // operationIds that sanitize to the same action are resolved at import
 // (_2, _3), never by truncating.
 export function compileEndpointName(params: {

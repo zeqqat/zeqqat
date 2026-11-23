@@ -122,7 +122,7 @@ async function main() {
     check("before learning, the vague query misses queueList", !(await search(QUERY)).includes("deployment.queueList"));
     for (const reason of ["Is the deploy done (first ask)", "Is the deploy done (second ask)"]) {
       await search(QUERY, reason);
-      const ran = await tool(reason, "zeqqat_run", { name: "deployment.queueList", instance: "production", inputs: {} });
+      const ran = await tool(reason, "zeqqat_read", { name: "deployment.queueList", instance: "production", inputs: {} });
       check(`queueList runs (${reason})`, !ran.isError, ran.content?.[1]?.text);
     }
     const hits = await db.select().from(schema.endpointKeywordHit);

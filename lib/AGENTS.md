@@ -2,7 +2,7 @@
 
 ## Tool names
 
-Built-in tools (`zeqqat_search`, `zeqqat_run`, ...) are the only names an MCP client ever validates; build them with `builtinToolName`. Catalog tools are called by operationId plus instance through `zeqqat_run`; their human-facing name is the canonical `@org/target.type.action`, and a tool page URL is `/<org>/<target.type.action>`.
+Built-in tools (`zeqqat_search`, `zeqqat_<kind>`, ...) are the only names an MCP client ever validates; build them with `builtinToolName`. Catalog tools are called by operationId plus instance through `zeqqat_<kind>`; their human-facing name is the canonical `@org/target.type.action`, and a tool page URL is `/<org>/<target.type.action>`.
 
 - Segments are lowercase snake_case: no uppercase, no leading, trailing or doubled underscores. Org slugs follow the same rule (`lib/username.ts`).
 - `type` is `http` or `workflow`. Never reintroduce `core`.

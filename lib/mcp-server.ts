@@ -1,9 +1,13 @@
 import type { McpContext } from "./mcp-auth";
-import { buildContext, mayDelete, reachableInstances, type ZeqqatContext } from "./mcp-context";
+import { allowedKinds, buildContext, reachableInstances, type ZeqqatContext } from "./mcp-context";
 import { rateLimit } from "./rate-limit";
 import { normalizeReason, REASON_DESCRIPTION, REASON_MISSING, REASON_REQUIRED, resolveRequest } from "./requests";
 import { builtinAction } from "./tool-names";
 import {
+  OLD_RUN_NAME,
+  RUN_KINDS,
+  RUN_TOOL,
+  type RunKind,
   TOOL_NAMES,
   toolCheck,
   toolActivity,
@@ -17,7 +21,7 @@ import {
   toolSecret,
   toolWhoami,
 } from "./mcp-tools";
-import type { ToolResult } from "./executor";
+import { toolError, type ToolResult } from "./executor";
 import { publicUrl } from "./env";
 import { APP_VERSION } from "./version";
 
@@ -133,7 +137,7 @@ const CONTEXT_SCHEMA = {
             items: {
               type: "object",
               properties: {
-                name: { type: "string", description: "Pass this as the instance to zeqqat_run." },
+                name: { type: "string", description: "Pass this as the instance to the run tools." },
                 policy: { type: ["string", "null"], description: "The policy attached here, if any." },
                 policySummary: { type: "string", description: "What you may do on this instance." },
               },
@@ -156,10 +160,46 @@ function outputSchema(result: Record<string, unknown>) {
   return { type: "object", properties: { context: CONTEXT_SCHEMA, result }, required: ["context"] };
 }
 
-// zeqqat_run's annotations are the only ones that change per connection:
-// destructiveHint is set in tools/list from what the connection may do
-// (see runTool below). This is the safe default, before that is known.
-const RUN_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true };
+// One run tool per kind (lib/mcp-tools.ts RUN_KINDS), so agents can set
+// "always allow" or "ask" per kind and every tool's annotations are true:
+// read is read only, delete is destructive. tools/list only offers the
+// kinds this caller may use somewhere on this MCP URL.
+const RUN_TEXT: Record<RunKind, { title: string; what: string }> = {
+  read: { title: "Run a read tool", what: "a read tool (changes nothing)" },
+  create: { title: "Run a create tool", what: "a create tool (adds something new)" },
+  edit: { title: "Run an edit tool", what: "an edit tool (changes something that exists, deploys, or sends a message)" },
+  delete: { title: "Run a delete tool", what: "a delete tool (removes something or destroys data)" },
+};
+const RUN_TOOLS = RUN_KINDS.map((kind) => ({
+  name: RUN_TOOL[kind],
+  title: RUN_TEXT[kind].title,
+  annotations: {
+    title: RUN_TEXT[kind].title,
+    readOnlyHint: kind === "read",
+    destructiveHint: kind === "delete",
+    idempotentHint: kind === "read",
+    openWorldHint: true,
+  },
+  description:
+    `Run ${RUN_TEXT[kind].what} on one instance. zeqqat_search says each tool's kind and which run tool to use. name is the operationId, instance is an instance name from the context, inputs match the tool's input schema (see zeqqat_describe).` +
+    CONTEXT_HINT,
+  inputSchema: {
+    type: "object",
+    properties: {
+      name: { type: "string", description: `operationId of a ${kind} tool from zeqqat_search` },
+      instance: { type: "string", description: "Instance name from the context, e.g. prod" },
+      inputs: {
+        type: "object",
+        description:
+          "The tool's inputs, matching its input schema. Secret values go in as handles ({{zq_secret_...}} from a result or zeqqat_secret), never typed out",
+      },
+      reason: REASON,
+    },
+    required: ["name", "instance", "reason"],
+  },
+  // Whatever the upstream endpoint returns.
+  outputSchema: outputSchema({}),
+}));
 
 // Every tool has a title and readOnlyHint or destructiveHint, which
 // Claude's Connectors Directory requires.
@@ -173,7 +213,7 @@ export const TOOLS = [
     title: "Search tools",
     annotations: { title: "Search tools", readOnlyHint: true, openWorldHint: false },
     description:
-      "Find tools across every integration this MCP URL reaches (deploys, logs, apps, projects...). Always search before deciding a task can't be done. Returns operationIds to pass to zeqqat_run, with the instances each may run on." +
+      "Find tools across every integration this MCP URL reaches (deploys, logs, apps, projects...). Always search before deciding a task can't be done. Returns operationIds, each with its kind, the run tool to use (zeqqat_read, zeqqat_create, zeqqat_edit or zeqqat_delete) and the instances it may run on." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
@@ -204,30 +244,7 @@ export const TOOLS = [
     },
     outputSchema: outputSchema({ type: "object" }),
   },
-  {
-    name: TOOL_NAMES.run,
-    title: "Run a tool",
-    annotations: { title: "Run a tool", ...RUN_ANNOTATIONS },
-    description:
-      "Run one tool on one instance. name is the operationId from zeqqat_search, instance is an instance name from the context, inputs match the tool's input schema (see zeqqat_describe)." +
-      CONTEXT_HINT,
-    inputSchema: {
-      type: "object",
-      properties: {
-        name: { type: "string", description: "operationId from zeqqat_search, e.g. application.deploy" },
-        instance: { type: "string", description: "Instance name from the context, e.g. prod" },
-        inputs: {
-          type: "object",
-          description:
-            "The tool's inputs, matching its input schema. Secret values go in as handles ({{zq_secret_...}} from a result or zeqqat_secret), never typed out",
-        },
-        reason: REASON,
-      },
-      required: ["name", "instance", "reason"],
-    },
-    // Whatever the upstream endpoint returns.
-    outputSchema: outputSchema({}),
-  },
+  ...RUN_TOOLS,
   {
     name: TOOL_NAMES.whoami,
     title: "Show context",
@@ -262,7 +279,7 @@ export const TOOLS = [
       ...{ readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     description:
-      "Create a random secret (a database password, a signing key) without ever seeing it. Returns a handle like {{zq_secret_...}} to put in zeqqat_run inputs, where Zeqqat fills in the value. Use it whenever a task needs a new password or key." +
+      "Create a random secret (a database password, a signing key) without ever seeing it. Returns a handle like {{zq_secret_...}} to put in run tool inputs, where Zeqqat fills in the value. Use it whenever a task needs a new password or key." +
       CONTEXT_HINT,
     inputSchema: {
       type: "object",
@@ -457,7 +474,7 @@ function instructionsText(context: ZeqqatContext, callerRole: McpContext["caller
   const who = callerRole === "public" ? " Public MCP URL: read only." : "";
   const text =
     `${context.notice ? `${context.notice} ` : ""}Zeqqat MCP gateway. MCP URL "${context.currentAccount.workspace.mcpUrl?.name ?? ""}" in workspace "${context.currentAccount.workspace.name}", owned by the ${context.currentAccount.type} account @${context.currentAccount.username}. Reaches: ${reach}.${who} ` +
-    `Flow: zeqqat_search, then zeqqat_describe, then zeqqat_run with an operationId and an instance name. Search, describe and run need a one-line reason saying what the user asked for, worded the same on every call for one request. Every result starts with this context. Secrets never reach you: results show handles like {{zq_secret_...}}, which you pass back in zeqqat_run inputs, and zeqqat_secret creates new ones. ` +
+    `Flow: zeqqat_search, zeqqat_describe, then zeqqat_read/create/edit/delete (the tool's kind) with an operationId and an instance. Search, describe and run need a one-line reason saying what the user asked for, worded the same on every call for one request. Every result starts with this context. Secrets never reach you: results show handles like {{zq_secret_...}}, which you pass back in run tool inputs, and zeqqat_secret creates new ones. ` +
     `Context: ${JSON.stringify({ context })}`;
   return text;
 }
@@ -514,8 +531,22 @@ async function handleToolsCall(base: McpContext, id: unknown, params: any) {
     case TOOL_NAMES.describe:
       result = await toolDescribe(ctx, args);
       break;
-    case TOOL_NAMES.run:
-      result = await toolRun(ctx, args);
+    case TOOL_NAMES.runRead:
+      result = await toolRun(ctx, "read", args);
+      break;
+    case TOOL_NAMES.runCreate:
+      result = await toolRun(ctx, "create", args);
+      break;
+    case TOOL_NAMES.runEdit:
+      result = await toolRun(ctx, "edit", args);
+      break;
+    case TOOL_NAMES.runDelete:
+      result = await toolRun(ctx, "delete", args);
+      break;
+    case OLD_RUN_NAME:
+      // Split into one tool per kind in v0.8.0; an agent that cached the old
+      // list is told what to use instead.
+      result = toolError("zeqqat_run is now one tool per kind: zeqqat_read, zeqqat_create, zeqqat_edit and zeqqat_delete. zeqqat_search says which to use for each tool. Reconnect Zeqqat if your agent doesn't list them.");
       break;
     case TOOL_NAMES.whoami:
       result = await toolWhoami(ctx);
@@ -644,15 +675,11 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
       });
 
     case "tools/list": {
-      // zeqqat_run is labeled destructive only where this connection can
-      // delete something for this caller.
-      const destructive = await mayDelete(await reachableInstances(ctx));
+      // Only the run tools for kinds this caller may use somewhere here.
+      const kinds = await allowedKinds(await reachableInstances(ctx));
+      const hidden = new Set(RUN_KINDS.filter((k) => !kinds.has(k)).map((k) => RUN_TOOL[k]));
       const icons = mcpIcons();
-      const tools = TOOLS.map((t) => ({
-        ...t,
-        icons,
-        ...(t.name === TOOL_NAMES.run ? { annotations: { ...t.annotations, destructiveHint: destructive } } : {}),
-      }));
+      const tools = TOOLS.filter((t) => !hidden.has(t.name)).map((t) => ({ ...t, icons }));
       return jsonRpcResult(id, {
         tools,
         // Tenant-specific catalog, never cached publicly.

@@ -67,7 +67,7 @@ To reach it locally on `http://localhost:3000`, uncomment the `ports` lines in `
 
 ### Connect an agent
 
-After you connect your Dokploy, Zeqqat gives you an MCP URL like `https://your-zeqqat-address/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
+After you connect your Dokploy, Zeqqat gives you an MCP URL like `https://your-zeqqat-address/you/mcp/deployment/a39f`. Add it to your agent as a remote MCP server and sign in when asked. Your agent reaches Dokploy through a few stable tools: `zeqqat_search`, `zeqqat_describe`, `zeqqat_read`, `zeqqat_create`, `zeqqat_edit`, `zeqqat_delete` (one per kind, so your agent can ask before edits and deletes but not reads), `zeqqat_whoami`, `zeqqat_policy`, `zeqqat_secret`, `zeqqat_import` and `zeqqat_docs`.
 
 ## ⚙️ Configuration
 

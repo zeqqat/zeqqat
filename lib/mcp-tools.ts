@@ -26,11 +26,15 @@ import { publicUrl } from "./env";
 // builtinToolName so they always pass Claude's client-side name check
 // (^[a-zA-Z0-9_-]{1,64}$ on mcp__<connector>__<name>); see
 // lib/tool-names.ts. Catalog tools are never listed: agents find them with
-// zeqqat_search and call them through zeqqat_run.
+// zeqqat_search and call them through the run tool for their kind
+// (zeqqat_read, zeqqat_create, zeqqat_edit, zeqqat_delete).
 export const TOOL_NAMES = {
   search: builtinToolName("search"),
   describe: builtinToolName("describe"),
-  run: builtinToolName("run"),
+  runRead: builtinToolName("read"),
+  runCreate: builtinToolName("create"),
+  runEdit: builtinToolName("edit"),
+  runDelete: builtinToolName("delete"),
   whoami: builtinToolName("whoami"),
   docs: builtinToolName("docs"),
   policy: builtinToolName("policy"),
@@ -42,6 +46,23 @@ export const TOOL_NAMES = {
 } as const;
 
 type Ctx = McpContext;
+
+// One run tool per kind, so an agent's own permission settings ("always
+// allow" reads, "ask" for edits) line up with Zeqqat's kinds. Each refuses
+// a tool of another kind and names the right one.
+export const RUN_KINDS = ["read", "create", "edit", "delete"] as const;
+export type RunKind = (typeof RUN_KINDS)[number];
+export const RUN_TOOL: Record<RunKind, string> = {
+  read: TOOL_NAMES.runRead,
+  create: TOOL_NAMES.runCreate,
+  edit: TOOL_NAMES.runEdit,
+  delete: TOOL_NAMES.runDelete,
+};
+export function runToolFor(kind: string): string {
+  return RUN_TOOL[(RUN_KINDS as readonly string[]).includes(kind) ? (kind as RunKind) : "delete"];
+}
+// The name before the split; clients that cached it get told what to use.
+export const OLD_RUN_NAME = builtinToolName("run");
 
 // inArray with an empty list is invalid SQL; this id never matches.
 const NO_ID = "00000000-0000-0000-0000-000000000000";
@@ -165,13 +186,14 @@ export async function toolSearch(ctx: Ctx, args: { query?: string; limit?: numbe
     canonical: endpointNames({ name: r.operationId, action: r.action }, r.orgSlug, r.integrationSlug).canonical,
     integration: integrationRef(r.orgSlug, r.integrationSlug),
     kind: r.kind,
+    runWith: runToolFor(r.kind),
     summary: r.summary ?? r.path,
     allowedOn: allowedOn(instances, r.integrationId, { name: r.operationId, kind: r.kind }),
   }));
   const text = matches
     .map(
       (m) =>
-        `${m.operationId} (${m.integration}, ${m.kind}; ${m.allowedOn.length ? `runs on: ${m.allowedOn.join(", ")}` : "not allowed on any instance here"}): ${m.summary}`,
+        `${m.operationId} (${m.integration}, ${m.kind}, run with ${m.runWith}; ${m.allowedOn.length ? `runs on: ${m.allowedOn.join(", ")}` : "not allowed on any instance here"}): ${m.summary}`,
     )
     .join("\n");
   return logged(ctx, TOOL_NAMES.search, requestArgs, toolOk({ matches }, text));
@@ -185,6 +207,7 @@ function describeEndpoint(e: FoundEndpoint, instances: ReachableInstance[]) {
     pagePath: names.pagePath,
     integration: integrationRef(e.orgSlug, e.integrationSlug),
     kind: e.kind,
+    runWith: runToolFor(e.kind),
     method: e.method,
     path: e.path,
     summary: e.summary,
@@ -237,6 +260,7 @@ export async function toolDescribe(ctx: Ctx, args: { name?: string; instance?: s
 
 export async function toolRun(
   ctx: Ctx,
+  kind: RunKind,
   args: { name?: string; instance?: string; inputs?: Record<string, unknown> },
 ): Promise<ToolResult> {
   if (!args.name || !args.instance) {
@@ -245,7 +269,7 @@ export async function toolRun(
       `name and instance are both required. name is an operationId from zeqqat_search; instance is one of: ${instanceNames(instances)}.`,
     );
   }
-  const result = await runEndpoint(ctx, { endpointName: args.name, instanceAlias: args.instance, inputs: args.inputs ?? {} });
+  const result = await runEndpoint(ctx, { endpointName: args.name, instanceAlias: args.instance, inputs: args.inputs ?? {}, kind });
   if (result.ok && ctx.requestId) await learnAfterRun(ctx, args.name, args.instance);
   return result;
 }
@@ -354,7 +378,7 @@ export async function toolPolicy(ctx: Ctx, args: { instance?: string }): Promise
 
 // A fresh random secret the agent can use without seeing: a database
 // password, a signing key. Returns only a handle (lib/secret-handles.ts);
-// the value is filled in when the handle goes into a zeqqat_run input, and
+// the value is filled in when the handle goes into a run tool input, and
 // lives on only where it was written.
 const SECRET_KINDS: GenerateKind[] = ["password", "base64", "hex"];
 
@@ -378,7 +402,7 @@ export async function toolSecret(ctx: Ctx, args: { kind?: string; length?: numbe
     requestArgs,
     toolOk(
       { handle, kind, length, expiresAt },
-      `Created ${handle} (${kind}, ${length}${kind === "password" ? " characters" : " bytes"}). Put it in zeqqat_run inputs wherever the value belongs, in an env block or a password, token or key field, alone or inside a string. Use the same handle everywhere the same value is needed. It binds to the first instance it is used on and expires at ${expiresAt}.`,
+      `Created ${handle} (${kind}, ${length}${kind === "password" ? " characters" : " bytes"}). Put it in run tool inputs wherever the value belongs, in an env block or a password, token or key field, alone or inside a string. Use the same handle everywhere the same value is needed. It binds to the first instance it is used on and expires at ${expiresAt}.`,
     ),
   );
 }

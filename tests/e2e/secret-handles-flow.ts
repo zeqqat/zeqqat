@@ -5,6 +5,7 @@
 //   pnpm exec tsx tests/e2e/secret-handles-flow.ts
 // It exits 0 when every check passes and 1 on the first failure.
 
+import { runToolOf } from "./run-tool";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { chmodSync, mkdtempSync, rmSync } from "node:fs";
@@ -142,7 +143,7 @@ async function main() {
       return { ...result, all: JSON.stringify(result) };
     }
     const run = (name: string, inputs: Record<string, unknown>, instance = "production") =>
-      tool("zeqqat_run", { name, instance, inputs });
+      tool(runToolOf(name), { name, instance, inputs });
     const HANDLE = /\{\{zq_secret_[a-z0-9]{16}\}\}/;
 
     // 1. Mint a password.

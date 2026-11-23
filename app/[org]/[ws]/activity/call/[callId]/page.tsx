@@ -81,7 +81,7 @@ export default async function CallPage({
                     content: (
                       <>
                         <div className="zq-act-block-h">
-                          <b>zeqqat_run</b>
+                          <b>{call.kind ? `zeqqat_${call.kind}` : "zeqqat_run"}</b>
                           <span>
                             {call.connectionName
                               ? `through ${call.connectionName}`

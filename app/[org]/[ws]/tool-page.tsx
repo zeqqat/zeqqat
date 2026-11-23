@@ -92,7 +92,7 @@ export default async function ToolPage({ params }: Props) {
             </dd>
           </dl>
           <p className="zq-note">
-            Agents find this tool with zeqqat_search and run it with zeqqat_run, passing this operationId and one of your
+            Agents find this tool with zeqqat_search and run it with zeqqat_{t.kind}, passing this operationId and one of your
             instances. The canonical name works too.
           </p>
         </section>

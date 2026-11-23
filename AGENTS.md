@@ -3,7 +3,8 @@
 One MCP endpoint for every tool you've connected. An agent (Claude, or any
 MCP-speaking client) signs in once via OAuth, then reaches every
 integration (Dokploy today, more over time) through a few stable built-in
-tools (`zeqqat_search`, `zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`,
+tools (`zeqqat_search`, `zeqqat_describe`, `zeqqat_read` / `zeqqat_create` /
+`zeqqat_edit` / `zeqqat_delete`, `zeqqat_whoami`,
 `zeqqat_policy`, `zeqqat_secret`, `zeqqat_docs`) instead of learning a new tool surface per
 integration.
 
@@ -406,7 +407,7 @@ is no longer consulted by the MCP path; the per-agent matrix still shown
 on the agent page is a leftover to remove.
 
 **Activity: requests and calls.**
-`zeqqat_search`, `zeqqat_describe` and `zeqqat_run` require a one-line
+`zeqqat_search`, `zeqqat_describe` and the run tools require a one-line
 `reason` (what the user asked for, worded the same on every call for one
 request); without it the call is refused and nothing is logged. whoami,
 policy and docs take it optionally. `lib/requests.ts` groups calls into an
@@ -482,7 +483,16 @@ views.
 building and parsing names. Two kinds of names exist:
 
 **Built-in tools** are the only tools in `tools/list`: `zeqqat_search`,
-`zeqqat_describe`, `zeqqat_run`, `zeqqat_whoami`, `zeqqat_docs`. Claude's
+`zeqqat_describe`, `zeqqat_read`, `zeqqat_create`, `zeqqat_edit`,
+`zeqqat_delete`, `zeqqat_whoami`, `zeqqat_docs`. **One run tool per kind**
+(`RUN_KINDS` in `lib/mcp-tools.ts`), so an agent's own per-tool settings
+("always allow" reads, "ask" for edits) line up with Zeqqat's kinds and each
+tool's annotations are true (read is read only, delete destructive).
+`tools/list` lists only the kinds the caller may use somewhere on the MCP URL
+(`allowedKinds` in `lib/mcp-context.ts`). Search and describe give each tool's
+`runWith`; the executor refuses a tool sent through another kind's run tool
+and names the right one. The old `zeqqat_run` answers with that explanation.
+Claude's
 web/desktop clients call them as `mcp__<connector>__<name>` and validate
 that against `^[a-zA-Z0-9_-]{1,64}$`; a name outside it is silently
 dropped (the connector shows as connected with zero tools). Build them with
@@ -491,12 +501,12 @@ because the connector name is user-chosen ("deployment" says nothing).
 
 **Catalog tools** (imported endpoints) are never listed. Agents find them
 with `zeqqat_search` and pass the raw **operationId** (`application.deploy`,
-stored in `api_endpoint.name`) plus an **instance** to `zeqqat_run`. The
+stored in `api_endpoint.name`) plus an **instance** to the run tool for its kind. The
 instance fixes the integration, so the operationId is enough. No client
 name rule, length budget or hash applies. Their human-facing name is the
 canonical `@org/target.type.action` (e.g.
 `@zeqqat/dokploy.http.application_deploy`), used in the DB, UI, logs and
-page URLs, and accepted by `zeqqat_describe` / `zeqqat_run` too (workflows
+page URLs, and accepted by `zeqqat_describe` and the run tools too (workflows
 will run by canonical name, since they have no instance).
 
 - Segments are lowercase snake_case; `-` and `.` never appear inside one.
@@ -541,7 +551,7 @@ Other results and `instructions` leave categories, `currentUser` and
 JSON Schema (`CONTEXT_SCHEMA` in `lib/mcp-server.ts`), but clients don't
 reliably show `outputSchema` to the model, so whoami's tool description
 also says what `currentUser` and `currentAccount` are. Every built-in declares an `outputSchema`
-(`{ context, result }`; `zeqqat_run`'s result is any JSON). JSON keys the
+(`{ context, result }`; the run tools' result is any JSON). JSON keys the
 agent sees are camelCase; Postgres columns stay snake_case.
 
 ## Auth for connecting agents: CIMD, not DCR
@@ -574,7 +584,7 @@ password into an app's `DATABASE_URL`). `lib/secret-handles.ts` does it:
   `scrubSecrets` by the executor). Same value, same handle.
 - `zeqqat_secret` mints a handle for a fresh random value (`password`,
   `base64` or `hex`). Read-only callers can't.
-- A handle in a `zeqqat_run` input, alone or inside a string, is filled in
+- A handle in a run tool input, alone or inside a string, is filled in
   by `resolveHandles` right before the request goes out. The call log,
   Activity and the outbound record keep the handle, never the value.
 - Rules: the handle's connection only; one instance (its source, or the

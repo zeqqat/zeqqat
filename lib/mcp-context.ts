@@ -254,29 +254,32 @@ async function dashboardUrl(ctx: McpContext): Promise<string> {
   return ws ? base + wsBase(ctx.organizationSlug, ws.slug) : base + `/${ctx.organizationSlug}`;
 }
 
-// Whether anything this connection reaches lets this caller delete. Used
-// for zeqqat_run's destructiveHint in tools/list, so a connection that can
-// only read, create and edit doesn't present zeqqat_run as destructive.
-// The executor still checks every call; this only sets the label.
-export async function mayDelete(instances: ReachableInstance[]): Promise<boolean> {
+// The kinds this caller may run on anything this MCP URL reaches. tools/list
+// shows only the run tools for these kinds (zeqqat_read, zeqqat_create,
+// zeqqat_edit, zeqqat_delete), so an MCP URL with no deletes never offers a delete
+// tool. The executor still checks every call; this only decides the list.
+export async function allowedKinds(instances: ReachableInstance[]): Promise<Set<"read" | "create" | "edit" | "delete">> {
+  const kinds = new Set<"read" | "create" | "edit" | "delete">();
   for (const i of instances) {
-    if (i.access.mode === "kinds" && i.access.perm.delete) return true;
+    if (i.access.mode !== "kinds") continue;
+    for (const k of ["read", "create", "edit", "delete"] as const) if (i.access.perm[k]) kinds.add(k);
   }
   for (const i of instances) {
-    if (i.access.mode !== "policy" || !i.access.roleCap.delete || i.access.policy.allow.length === 0) continue;
-    const hit = await db
-      .select({ name: apiEndpoint.name })
+    if (i.access.mode !== "policy" || i.access.policy.allow.length === 0) continue;
+    const cap = i.access.roleCap;
+    if (!cap.read && !cap.create && !cap.edit && !cap.delete) continue;
+    const rows = await db
+      .selectDistinct({ kind: apiEndpoint.kind })
       .from(apiEndpoint)
-      .where(
-        and(
-          eq(apiEndpoint.integrationId, i.integrationId),
-          inArray(apiEndpoint.name, i.access.policy.allow),
-          eq(apiEndpoint.kind, "delete"),
-          isNull(apiEndpoint.removedAt),
-        ),
-      )
-      .limit(1);
-    if (hit.length > 0) return true;
+      .where(and(eq(apiEndpoint.integrationId, i.integrationId), inArray(apiEndpoint.name, i.access.policy.allow), isNull(apiEndpoint.removedAt)));
+    for (const r of rows) {
+      const k = r.kind as "read" | "create" | "edit" | "delete";
+      if (cap[k]) kinds.add(k);
+    }
   }
-  return false;
+  return kinds;
+}
+
+export async function mayDelete(instances: ReachableInstance[]): Promise<boolean> {
+  return (await allowedKinds(instances)).has("delete");
 }

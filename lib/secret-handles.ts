@@ -9,7 +9,7 @@ import { isSecretName, type Redact } from "./scrub";
 //
 // A secret in an upstream response reaches the agent as {{zq_secret_...}}
 // instead of its value. zeqqat_secret mints a handle for a fresh random
-// value. Put a handle in a later zeqqat_run input, alone or inside a
+// value. Put a handle in a later zeqqat_<kind> input, alone or inside a
 // string (DATABASE_URL=postgresql://app:{{zq_secret_...}}@db:5432/app), and
 // the executor fills the value in just before the request goes out. The
 // model, the call log and the Activity page only ever see the handle.

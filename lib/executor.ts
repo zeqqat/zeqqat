@@ -276,7 +276,7 @@ function applyCredential(
 
 export async function runEndpoint(
   ctx: Ctx,
-  params: { endpointName: string; instanceAlias: string; inputs: Record<string, unknown> },
+  params: { endpointName: string; instanceAlias: string; inputs: Record<string, unknown>; kind?: string },
 ): Promise<ToolResult> {
   const start = Date.now();
 
@@ -312,6 +312,24 @@ export async function runEndpoint(
   // From here on the call is logged under the tool's canonical name,
   // whatever form the agent used.
   const toolName = endpointNames(endpoint, endpoint.orgSlug, endpoint.integrationSlug).canonical;
+
+  // Each kind has its own run tool (zeqqat_read, zeqqat_create,
+  // zeqqat_edit, zeqqat_delete) so agents can set permissions per kind. A tool of another kind
+  // is never sent through the wrong one.
+  if (params.kind && endpoint.kind !== params.kind) {
+    const right = `zeqqat_${endpoint.kind}`;
+    await logCall(ctx, {
+      toolName,
+      instanceId: inst.id,
+      instanceAlias: inst.alias,
+      apiEndpointId: endpoint.id,
+      outcome: "error",
+      durationMs: Date.now() - start,
+      requestArgs: params.inputs,
+      errorMessage: `Not sent: ${endpoint.name} is a ${endpoint.kind} tool, called through zeqqat_${params.kind}.`,
+    });
+    return toolError(`Not sent: ${endpoint.name} is a ${endpoint.kind} tool. Run it with ${right}.`);
+  }
 
   const { access, allowed } = await checkAccess(ctx, inst.id, { name: endpoint.name, kind: endpoint.kind });
   const setting: CallSetting = { instanceAlias: inst.alias, ...policyOf(access), specRelease: await releaseOf(endpoint.lastSnapshotId) };
@@ -445,7 +463,7 @@ export async function runEndpoint(
 }
 
 const HANDLE_NOTE =
-  "Secrets in this result are replaced by handles like {{zq_secret_...}}. To use one, put the handle in a later zeqqat_run input on this instance, in an env block or a password, token or key field (alone or inside a string), and Zeqqat fills in the value. Handles expire in 30 minutes. Never ask the user for the value.";
+  "Secrets in this result are replaced by handles like {{zq_secret_...}}. To use one, put the handle in a later run tool input on this instance, in an env block or a password, token or key field (alone or inside a string), and Zeqqat fills in the value. Handles expire in 30 minutes. Never ask the user for the value.";
 
 // Says which handles were swapped for their values before the request went
 // out, so the agent knows its secrets reached the app as values and not as

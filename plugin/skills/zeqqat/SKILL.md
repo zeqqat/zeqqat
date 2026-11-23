@@ -22,7 +22,7 @@ Self-hosted installs use their own domain in place of zeqqat.com. Sign-in is OAu
 1. Call `zeqqat_whoami` first. It returns the context: the account that owns the MCP URL, the workspace, the apps this MCP URL reaches, their instances, and what is allowed on each.
 2. `zeqqat_search` for the task (for example "deploy", "logs").
 3. `zeqqat_describe` the tool you picked to see its inputs and outputs.
-4. `zeqqat_run` with the operationId, the instance name from the context, and inputs matching the schema.
+4. The run tool for the tool's kind (`zeqqat_read`, `zeqqat_create`, `zeqqat_edit` or `zeqqat_delete`; search says which) with the operationId, the instance name from the context, and inputs matching the schema. Only the kinds this MCP URL allows are listed.
 
 Search, describe and run each need a `reason`: one line saying what the user asked you to do, worded exactly the same on every call for one request. A call without a reason is refused. People read these in the activity log.
 
@@ -33,7 +33,7 @@ Each instance either has a policy (an explicit allow list of tools) or allows wh
 ## Secrets
 
 - A secret in a result (a password, a token, `DATABASE_URL`) arrives as a handle like `{{zq_secret_ab12cd34ef56gh78}}`.
-- To use it, put the handle in a later `zeqqat_run` input, alone or inside a string: `DATABASE_URL=postgresql://app:{{zq_secret_...}}@db:5432/app`. Zeqqat fills in the value just before the request goes out.
+- To use it, put the handle in a later run tool input, alone or inside a string: `DATABASE_URL=postgresql://app:{{zq_secret_...}}@db:5432/app`. Zeqqat fills in the value just before the request goes out.
 - For a new password or key, call `zeqqat_secret` and use the handle it returns everywhere that value is needed.
 - Handles only work in env blocks and secret-named fields (password, token, key, secret), on the MCP URL and instance they came from, and expire after 30 minutes.
 - Never ask the user to paste a secret into the chat.
