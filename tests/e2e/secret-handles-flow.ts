@@ -154,6 +154,35 @@ async function main() {
       tool(runToolOf(name), { name, instance, inputs });
     const HANDLE = /\{\{zq_secret_[a-z0-9]{16}\}\}/;
 
+    // Tool list changes are announced once, in the next call's answer.
+    {
+      const call = (accept: string) =>
+        serveMcp(
+          new Request("http://localhost/mcp", {
+            method: "POST",
+            headers: { accept },
+            body: JSON.stringify({ jsonrpc: "2.0", id: ++rpc, method: "tools/call", params: { name: "zeqqat_whoami", arguments: {} } }),
+          }),
+          ctx,
+          "flow-seen",
+        );
+      const list = () =>
+        serveMcp(new Request("http://localhost/mcp", { method: "POST", body: JSON.stringify({ jsonrpc: "2.0", id: ++rpc, method: "tools/list" }) }), ctx, "flow-seen");
+      const first = await call("application/json, text/event-stream");
+      const text = await first.text();
+      check("an agent that never fetched this list is told it changed", first.headers.get("content-type") === "text/event-stream" && text.indexOf("notifications/tools/list_changed") >= 0 && text.indexOf('"result"') > text.indexOf("list_changed"));
+      const second = await call("application/json, text/event-stream");
+      check("only once", (second.headers.get("content-type") ?? "").includes("application/json"));
+      await list();
+      const third = await call("application/json, text/event-stream");
+      check("after fetching the list, nothing to announce", (third.headers.get("content-type") ?? "").includes("application/json"));
+      await db.update(schema.toolsSeen).set({ fingerprint: "old" });
+      const plain = await call("application/json");
+      check("a client that can't take a stream just gets the result", (plain.headers.get("content-type") ?? "").includes("application/json"));
+      const fourth = await call("application/json, text/event-stream");
+      check("a changed list is announced again", fourth.headers.get("content-type") === "text/event-stream");
+    }
+
     // 0. One run tool per kind: a read tool through zeqqat_edit is never sent.
     const wrong = await tool("zeqqat_edit", { name: "project.all", instance: "production", inputs: {} });
     check("a read tool sent through zeqqat_edit is refused, naming zeqqat_read", !!wrong.isError && wrong.all.includes("zeqqat_read"));

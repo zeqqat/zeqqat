@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.8.2",
+    "date": "2026-11-23",
+    "at": "2026-11-23T09:54:52Z",
+    "changes": [
+      "Zeqqat tells your agent when its tool list changes (after an update or a policy change), so it fetches the new list without you reconnecting."
+    ]
+  },
+  {
     "version": "0.8.1",
     "date": "2026-11-23",
     "at": "2026-11-23T07:27:30Z",

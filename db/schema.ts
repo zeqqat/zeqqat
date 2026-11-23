@@ -912,3 +912,15 @@ export const cloudHandoff = pgTable("cloud_handoff", {
   choice: text("choice"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// What tool list each agent last fetched, so Zeqqat can tell it when the
+// list changes (lib/tools-changed.ts). One row per MCP URL + person + agent
+// (OAuth client), or per MCP URL + IP on a public one. `fingerprint` is a
+// hash of the list it fetched; `notified` the hash it was last told about,
+// so each change is announced once.
+export const toolsSeen = pgTable("tools_seen", {
+  key: text("key").primaryKey(),
+  fingerprint: text("fingerprint").notNull(),
+  notified: text("notified"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

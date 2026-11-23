@@ -546,6 +546,13 @@ endpoints). It also leads with `zeqqat` (`version`, `latest`,
 on a public MCP URL), `currentAccount.dashboard` (the account's page) and
 `currentAccount.workspace.dashboard` (the workspace's page), full
 addresses so the agent can hand the person a link.
+**Tool list changes are announced.** Zeqqat declares `tools.listChanged`.
+With no standing stream to push on (GET is 405), the answer to an agent's
+next `tools/call` after its list changed (an update, a policy change)
+becomes an event stream: `notifications/tools/list_changed` first, then the
+result (`lib/tools-changed.ts`, `tools_seen` keyed by MCP URL + person +
+agent). Once per change; clients that don't accept `text/event-stream` just
+get the result.
 Other results and `instructions` leave categories, `currentUser` and
 `dashboard` out to stay small. Field descriptions live in the context's
 JSON Schema (`CONTEXT_SCHEMA` in `lib/mcp-server.ts`), but clients don't

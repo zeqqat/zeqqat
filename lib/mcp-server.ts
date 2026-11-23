@@ -22,6 +22,7 @@ import {
   toolWhoami,
 } from "./mcp-tools";
 import { toolError, type ToolResult } from "./executor";
+import { acceptsEventStream, rememberToolsSeen, shouldAnnounce, toolsFingerprint, withListChanged } from "./tools-changed";
 import { publicUrl } from "./env";
 import { APP_VERSION } from "./version";
 
@@ -618,7 +619,7 @@ export async function serveSunset(request: Request, message: string) {
       id,
       result: {
         protocolVersion: SUPPORTED_LEGACY_VERSIONS[0],
-        capabilities: { tools: { listChanged: false } },
+        capabilities: { tools: { listChanged: true } },
         serverInfo: serverInfo(),
         instructions: message.slice(0, 500),
       },
@@ -629,6 +630,21 @@ export async function serveSunset(request: Request, message: string) {
     return jsonRpcResult(id, { content: [{ type: "text", text: message }], isError: true });
   }
   return jsonRpcError(id, -32601, message);
+}
+
+// The tools this caller gets: the built-ins, with only the run tools for
+// kinds they may use somewhere on this MCP URL.
+async function listTools(ctx: McpContext) {
+  const kinds = await allowedKinds(await reachableInstances(ctx));
+  const hidden = new Set(RUN_KINDS.filter((k) => !kinds.has(k)).map((k) => RUN_TOOL[k]));
+  const icons = mcpIcons();
+  return TOOLS.filter((t) => !hidden.has(t.name)).map((t) => ({ ...t, icons }));
+}
+
+// Who "this agent" is for remembering its tool list: the MCP URL, the
+// person and the agent (public URLs: the rate key, which carries the IP).
+function seenKey(ctx: McpContext, rateKey: string): string {
+  return ctx.userId ? `${ctx.connectionId}:${ctx.userId}:${ctx.oauthClientId ?? ""}` : rateKey;
 }
 
 export async function serveMcp(request: Request, ctx: McpContext, rateKey: string) {
@@ -654,7 +670,7 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
         id,
         result: {
           protocolVersion: version,
-          capabilities: { tools: { listChanged: false } },
+          capabilities: { tools: { listChanged: true } },
           serverInfo: serverInfo(),
           instructions: await buildInstructions(ctx),
         },
@@ -669,17 +685,14 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
       // instructions have to be here too.
       return jsonRpcResult(id, {
         supportedVersions: SUPPORTED_MODERN_VERSIONS,
-        capabilities: { tools: { listChanged: false } },
+        capabilities: { tools: { listChanged: true } },
         serverInfo: serverInfo(),
         instructions: await buildInstructions(ctx),
       });
 
     case "tools/list": {
-      // Only the run tools for kinds this caller may use somewhere here.
-      const kinds = await allowedKinds(await reachableInstances(ctx));
-      const hidden = new Set(RUN_KINDS.filter((k) => !kinds.has(k)).map((k) => RUN_TOOL[k]));
-      const icons = mcpIcons();
-      const tools = TOOLS.filter((t) => !hidden.has(t.name)).map((t) => ({ ...t, icons }));
+      const tools = await listTools(ctx);
+      await rememberToolsSeen(seenKey(ctx, rateKey), toolsFingerprint(tools)).catch(() => {});
       return jsonRpcResult(id, {
         tools,
         // Tenant-specific catalog, never cached publicly.
@@ -694,7 +707,16 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
       if (!(await rateLimit(rateKey, 120, 60_000))) {
         return jsonRpcError(id, -32003, "Rate limit exceeded, retry shortly", 429);
       }
-      return handleToolsCall(ctx, id, body?.params);
+      const res = await handleToolsCall(ctx, id, body?.params);
+      // The tool list changed since this agent fetched it (an update, a
+      // policy change): say so before the result (lib/tools-changed.ts).
+      if (acceptsEventStream(request)) {
+        const fp = toolsFingerprint(await listTools(ctx));
+        if (await shouldAnnounce(seenKey(ctx, rateKey), fp).catch(() => false)) {
+          return withListChanged(await res.json(), res.status);
+        }
+      }
+      return res;
     }
 
     default:
