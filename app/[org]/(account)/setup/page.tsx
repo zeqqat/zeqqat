@@ -1,6 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { AgentPicker } from "../../../../components/AgentPicker";
+import { AgentWatch } from "../../../../components/AgentWatch";
 import { ConnectDokployForm } from "../../../../components/ConnectDokployForm";
 import { DokployMark } from "../../../../components/Marks";
 import { Stepper } from "../../../../components/Stepper";
@@ -102,21 +103,8 @@ export default async function SetupPage({
         Connect your agent<span className="dot">.</span>
       </h1>
       <div className="zq-ob-col">
-        {query.check === "1" && (
-          <div className="zq-warn-box" role="alert">
-            <span className="ic" aria-hidden="true">
-              !
-            </span>
-            <span>No agent has connected to {w.slug} yet. Approve Zeqqat in your agent, then refresh.</span>
-          </div>
-        )}
         <AgentPicker mcpUrl={conn.url} />
-        <p className="zq-note zq-ob-refresh">
-          Already approved it?{" "}
-          <a className="zq-textlink" href={`/${own.slug}/setup?check=1`}>
-            Refresh this page
-          </a>
-        </p>
+        <AgentWatch />
       </div>
     </div>
   );

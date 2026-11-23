@@ -1,7 +1,8 @@
 import { completeSetupAction } from "../lib/actions/workspace";
 import { AgentPicker } from "./AgentPicker";
+import { AgentWatch } from "./AgentWatch";
 import { ConnectDokployForm } from "./ConnectDokployForm";
-import { DokployMark } from "./Marks";
+import { agentName, DokployMark } from "./Marks";
 import { Stepper } from "./Stepper";
 
 export function OnboardConnectDokploy() {
@@ -27,7 +28,7 @@ export function OnboardConnectDokploy() {
   );
 }
 
-export function OnboardConnectAgent({ mcpUrl, alias, base }: { mcpUrl: string; alias: string | null; base: string }) {
+export function OnboardConnectAgent({ mcpUrl, alias }: { mcpUrl: string; alias: string | null; base?: string }) {
   return (
     <div className="zq-ob">
       <Stepper
@@ -45,12 +46,7 @@ export function OnboardConnectAgent({ mcpUrl, alias, base }: { mcpUrl: string; a
       </h1>
       <div className="zq-ob-col">
         <AgentPicker mcpUrl={mcpUrl} />
-        <p className="zq-note zq-ob-refresh">
-          Already approved it?{" "}
-          <a className="zq-textlink" href={base}>
-            Refresh this page
-          </a>
-        </p>
+        <AgentWatch />
       </div>
     </div>
   );
@@ -58,7 +54,7 @@ export function OnboardConnectAgent({ mcpUrl, alias, base }: { mcpUrl: string; a
 
 // An invited member's first stop: connect their own agent. Everything else
 // in the workspace opens once it is connected (components/AppShell.tsx).
-export function MemberStart({ mcpUrl, organization, base }: { mcpUrl: string; organization: string; base: string }) {
+export function MemberStart({ mcpUrl, organization }: { mcpUrl: string; organization: string; base?: string }) {
   return (
     <div className="zq-ob">
       <h1 className="zq-h">
@@ -68,12 +64,7 @@ export function MemberStart({ mcpUrl, organization, base }: { mcpUrl: string; or
       <p className="zq-sub">Connect your agent to get started.</p>
       <div className="zq-ob-col">
         <AgentPicker mcpUrl={mcpUrl} />
-        <p className="zq-note zq-ob-refresh">
-          Already approved it?{" "}
-          <a className="zq-textlink" href={base}>
-            Refresh this page
-          </a>
-        </p>
+        <AgentWatch />
       </div>
     </div>
   );
@@ -84,7 +75,7 @@ export function SetupChoice({ siteHost, agentHost }: { siteHost: string; agentHo
     <div>
       <span className="zq-status">
         <span className="zq-dot is-live" aria-hidden="true" />
-        {agentHost ? `${agentHost} is connected` : "Your agent is connected"}
+        {agentHost ? `${agentName(agentHost)} is connected` : "Your agent is connected"}
       </span>
       <h1 className="zq-h" style={{ marginTop: 18 }}>
         You&rsquo;re set up. Where should Zeqqat run

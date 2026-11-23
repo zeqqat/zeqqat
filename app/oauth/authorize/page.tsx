@@ -104,7 +104,18 @@ function Scope({
         <dt>Workspace</dt>
         <dd>{workspaceName}</dd>
         <dt>MCP URL</dt>
-        <dd>{connectionName}</dd>
+        <dd className="zq-consent-url">
+          {connectionName.split("/").map((part, i, all) => (
+            <span key={i}>
+              {part}
+              {i < all.length - 1 && (
+                <>
+                  /{i >= 2 && <wbr />}
+                </>
+              )}
+            </span>
+          ))}
+        </dd>
         {access && (
           <>
             <dt>Access</dt>
@@ -205,7 +216,7 @@ export default async function AuthorizePage({
   }
   if (conn) {
     const ws = await db.query.workspace.findFirst({ where: eq(workspace.id, conn.workspaceId) });
-    const scope = { host, orgSlug: conn.orgSlug, workspaceName: ws?.name ?? "Workspace", connectionName: `${conn.name}/${conn.shortId}` };
+    const scope = { host, orgSlug: conn.orgSlug, workspaceName: ws?.name ?? "Workspace", connectionName: conn.url };
 
     if (!session?.user) {
       return (

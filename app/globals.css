@@ -1051,6 +1051,10 @@ body {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.zq-consent-scope .zq-consent-url {
+  overflow-wrap: normal;
+  word-break: normal;
+}
 .zq-consent-scope .zq-consent-access {
   color: var(--dim);
   font-weight: 400;
@@ -2051,6 +2055,10 @@ a.zq-kpi:hover {
 @media (max-width: 560px) {
   .zq-where b {
     display: none;
+  }
+  /* The "where should Zeqqat run" cards need their label at every width. */
+  .zq-choice .zq-where b {
+    display: inline;
   }
 }
 
@@ -4699,6 +4707,36 @@ button.zq-look:focus-visible {
 .zq-ob-refresh {
   text-align: center;
   margin-top: 14px;
+}
+/* "Waiting for your agent": a quiet breathing dot, no refresh link
+   (components/AgentWatch.tsx checks by itself). */
+.zq-ob-wait {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--faint);
+}
+.zq-wait-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+  animation: zq-wait 1.6s ease-in-out infinite;
+}
+@keyframes zq-wait {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zq-wait-dot {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 .zq-connect-form {
   max-width: 640px;
