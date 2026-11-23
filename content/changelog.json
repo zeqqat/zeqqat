@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.8.3",
+    "date": "2026-11-23",
+    "at": "2026-11-23T10:37:58Z",
+    "changes": [
+      "When your agent is working from an old Zeqqat tool list, every page tells you (click to see which agent on which MCP URL), the MCP URL's Connected tab marks it, and your agent is asked to tell you to reconnect. Calls still run."
+    ]
+  },
+  {
     "version": "0.8.2",
     "date": "2026-11-23",
     "at": "2026-11-23T09:54:52Z",

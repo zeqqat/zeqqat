@@ -1,4 +1,5 @@
 import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
+import { staleAgents } from "./tools-changed";
 import { db } from "../db";
 import { apiEndpoint, callLog, connectionGrant, instance, oauthClient, oauthGrant, organization, policy, user } from "../db/schema";
 import { appCallsOnly } from "./overview";
@@ -122,7 +123,9 @@ export type ConnectedPerson = {
   username: string | null;
   image: string | null;
   since: Date;
-  agents: { brand: AgentBrand; label: string }[];
+  // stale: this agent is working from an old Zeqqat tool list and needs
+  // reconnecting (lib/tools-changed.ts).
+  agents: { brand: AgentBrand; label: string; stale?: boolean }[];
   calls: number;
 };
 
@@ -134,6 +137,7 @@ export async function connectedPeople(connectionId: string): Promise<ConnectedPe
       image: user.image,
       at: oauthGrant.createdAt,
       clientId: oauthClient.clientId,
+      clientUuid: oauthClient.id,
       clientName: oauthClient.clientName,
     })
     .from(oauthGrant)
@@ -153,6 +157,7 @@ export async function connectedPeople(connectionId: string): Promise<ConnectedPe
       .where(and(eq(callLog.connectionId, connectionId), inArray(callLog.userId, ids), appCallsOnly))
       .groupBy(callLog.userId),
   ]);
+  const stale = new Set((await staleAgents({ connectionId })).map((s) => `${s.userId}:${s.clientId}`));
   const people = new Map<string, ConnectedPerson>();
   for (const g of grants) {
     const p = people.get(g.userId) ?? {
@@ -165,8 +170,10 @@ export async function connectedPeople(connectionId: string): Promise<ConnectedPe
       calls: calls.find((c) => c.userId === g.userId)?.n ?? 0,
     };
     if (g.at < p.since) p.since = g.at;
-    const a = agentBrand(g.clientId, g.clientName);
-    if (!p.agents.some((x) => x.brand === a.brand && x.label === a.label)) p.agents.push(a);
+    const a: ConnectedPerson["agents"][number] = { ...agentBrand(g.clientId, g.clientName), stale: stale.has(`${g.userId}:${g.clientUuid}`) };
+    const had = p.agents.find((x) => x.brand === a.brand && x.label === a.label);
+    if (!had) p.agents.push(a);
+    else if (a.stale) had.stale = true;
     people.set(g.userId, p);
   }
   return [...people.values()].sort((a, b) => b.calls - a.calls || a.since.getTime() - b.since.getTime());

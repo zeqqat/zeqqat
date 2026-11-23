@@ -553,6 +553,16 @@ becomes an event stream: `notifications/tools/list_changed` first, then the
 result (`lib/tools-changed.ts`, `tools_seen` keyed by MCP URL + person +
 agent). Once per change; clients that don't accept `text/event-stream` just
 get the result.
+**Agents on an old list are shown and nagged, never blocked.** Every
+`tools/call` notes the list the agent would get now (`tools_seen.current`);
+when it differs from the list it last fetched, the agent is behind. Its
+result then carries a context `notice` telling it to have the person
+reconnect Zeqqat in that agent. The person sees a banner on every dashboard
+page ("Your agent has an old Zeqqat tool list", a click lists which agent on
+which MCP URL: `components/StaleToolsBanner.tsx`), and the MCP URL page's
+Connected tab marks that agent with a faint amber line and a one-line tip.
+Tracked per MCP URL + person + agent; it clears once the agent fetches the
+new list. Calls still run: only the person can reconnect.
 Other results and `instructions` leave categories, `currentUser` and
 `dashboard` out to stay small. Field descriptions live in the context's
 JSON Schema (`CONTEXT_SCHEMA` in `lib/mcp-server.ts`), but clients don't

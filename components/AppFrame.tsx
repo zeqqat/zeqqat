@@ -2,6 +2,8 @@ import { count, eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { AppShell, type MenuState } from "./AppShell";
 import { HttpsBanner, type HttpsBannerMode } from "./HttpsBanner";
+import { StaleToolsBanner } from "./StaleToolsBanner";
+import { staleForUser } from "../lib/tools-changed";
 import { db } from "../db";
 import { instance, integration, organization } from "../db/schema";
 import { devToolsEnabled } from "../lib/dev-tools";
@@ -98,6 +100,10 @@ export async function AppFrame({ level, children }: { level: FrameLevel; childre
     httpsMode = !canGetCertificate(siteHost()) ? "no-cert" : !isAdmin ? "ask" : needsDokploy ? "connect" : "fix";
   }
 
+  // This person's own agents still on an old Zeqqat tool list, wherever
+  // they're connected: only they can fix it, by reconnecting. Every page.
+  const stale = await staleForUser(user.id).catch(() => []);
+
   return (
     <div className="zq">
       <AppShell
@@ -123,6 +129,7 @@ export async function AppFrame({ level, children }: { level: FrameLevel; childre
         accountBase={accountBase(acct.organizationSlug)}
       >
         {httpsMode && <HttpsBanner mode={httpsMode} />}
+        <StaleToolsBanner entries={stale} />
         {children}
       </AppShell>
     </div>

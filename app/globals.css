@@ -6118,6 +6118,65 @@ button.zq-demo-open {
 .zq-mu-agents.is-icons .zq-mu-agent {
   padding: 4px 6px;
 }
+/* An agent working from an old Zeqqat tool list: a faint amber line under
+   its name (colour stays quiet), and a click or focus says what to do in
+   one line. */
+.zq-stale-body {
+  flex: 1;
+  min-width: 0;
+}
+.zq-stale-which {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.zq-stale-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+}
+.zq-stale-list li + li {
+  margin-top: 2px;
+}
+.zq-mu-agent.is-stale {
+  position: relative;
+  cursor: pointer;
+}
+.zq-mu-agent.is-stale .zq-mu-agent-n {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--amber) 70%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.zq-mu-stale-tip {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  width: max-content;
+  max-width: 260px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: normal;
+  color: var(--fg);
+  background: var(--card, var(--bg));
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.zq-mu-agent.is-stale:hover .zq-mu-stale-tip,
+.zq-mu-agent.is-stale:focus .zq-mu-stale-tip {
+  display: block;
+}
 /* Manage: a title, its current value, one control on the right */
 .zq-mu-mrow {
   padding: 14px 16px;

@@ -180,7 +180,12 @@ async function main() {
       const plain = await call("application/json");
       check("a client that can't take a stream just gets the result", (plain.headers.get("content-type") ?? "").includes("application/json"));
       const fourth = await call("application/json, text/event-stream");
+      const fourthText = await fourth.text();
       check("a changed list is announced again", fourth.headers.get("content-type") === "text/event-stream");
+      check("and the result tells the agent to have the person reconnect", fourthText.includes("tool list is out of date") && fourthText.includes("reconnect Zeqqat"));
+      await list();
+      const fifth = await (await call("application/json")).text();
+      check("no such notice once the list is fetched again", !fifth.includes("out of date"));
     }
 
     // 0. One run tool per kind: a read tool through zeqqat_edit is never sent.

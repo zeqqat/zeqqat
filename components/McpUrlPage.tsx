@@ -179,7 +179,7 @@ export function InstanceRows({ rows, admin, isPublic }: { rows: InstanceRowData[
 
 // The agents a person uses. When the chips would wrap onto another line,
 // they shrink to logos (the name stays in the tooltip).
-export function AgentChips({ agents }: { agents: { brand: string; label: string; logo: string | null }[] }) {
+export function AgentChips({ agents }: { agents: { brand: string; label: string; logo: string | null; stale?: boolean }[] }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [icons, setIcons] = useState(false);
   useEffect(() => {
@@ -200,11 +200,23 @@ export function AgentChips({ agents }: { agents: { brand: string; label: string;
   return (
     <span ref={ref} className={`zq-mu-agents${icons ? " is-icons" : ""}`}>
       {agents.map((a) => (
-        <span key={`${a.brand}:${a.label}`} className={`zq-mu-agent is-${a.brand}`} title={a.label}>
+        <span
+          key={`${a.brand}:${a.label}`}
+          className={`zq-mu-agent is-${a.brand}${a.stale ? " is-stale" : ""}`}
+          title={a.stale ? undefined : a.label}
+          tabIndex={a.stale ? 0 : undefined}
+        >
           {a.logo && (
             <span className="zq-mono-logo" aria-hidden="true" style={{ maskImage: `url(${a.logo})`, WebkitMaskImage: `url(${a.logo})` }} />
           )}
           <span className="zq-mu-agent-n">{a.label}</span>
+          {/* An old Zeqqat tool list: a faint amber line, and a click says
+              what to do in one line (lib/tools-changed.ts). */}
+          {a.stale && (
+            <span className="zq-mu-stale-tip" role="tooltip">
+              Old tool list. Reconnect Zeqqat in {a.label} to get the new tools.
+            </span>
+          )}
         </span>
       ))}
     </span>

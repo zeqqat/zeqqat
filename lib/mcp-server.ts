@@ -22,7 +22,7 @@ import {
   toolWhoami,
 } from "./mcp-tools";
 import { toolError, type ToolResult } from "./executor";
-import { acceptsEventStream, rememberToolsSeen, shouldAnnounce, toolsFingerprint, withListChanged } from "./tools-changed";
+import { acceptsEventStream, agentLabel, isBehind, noteCurrentTools, rememberToolsSeen, seenKeyFor, shouldAnnounce, toolsFingerprint, withListChanged } from "./tools-changed";
 import { publicUrl } from "./env";
 import { APP_VERSION } from "./version";
 
@@ -644,7 +644,7 @@ async function listTools(ctx: McpContext) {
 // Who "this agent" is for remembering its tool list: the MCP URL, the
 // person and the agent (public URLs: the rate key, which carries the IP).
 function seenKey(ctx: McpContext, rateKey: string): string {
-  return ctx.userId ? `${ctx.connectionId}:${ctx.userId}:${ctx.oauthClientId ?? ""}` : rateKey;
+  return ctx.userId ? seenKeyFor(ctx.connectionId, ctx.userId, ctx.oauthClientId) : rateKey;
 }
 
 export async function serveMcp(request: Request, ctx: McpContext, rateKey: string) {
@@ -707,11 +707,20 @@ export async function serveMcp(request: Request, ctx: McpContext, rateKey: strin
       if (!(await rateLimit(rateKey, 120, 60_000))) {
         return jsonRpcError(id, -32003, "Rate limit exceeded, retry shortly", 429);
       }
+      // Is this agent working from an old tool list (an update, a policy
+      // change)? Note what it should have, so the dashboard can tell, and
+      // say so in this result: the agent tells the person to reconnect.
+      // Calls are never blocked for it (lib/tools-changed.ts).
+      const fp = toolsFingerprint(await listTools(ctx));
+      const key = seenKey(ctx, rateKey);
+      if (ctx.userId && (await isBehind(key, fp).catch(() => false))) {
+        const agent = await agentLabel(ctx.oauthClientId).catch(() => "your agent");
+        const behind = `Your Zeqqat tool list is out of date (Zeqqat changed since ${agent} fetched it). Tell the user to reconnect Zeqqat in ${agent} to get the new tools; until then some tools may be missing or work differently.`;
+        ctx = { ...ctx, notice: [ctx.notice, behind].filter(Boolean).join(" ") };
+      }
+      await noteCurrentTools(key, fp).catch(() => {});
       const res = await handleToolsCall(ctx, id, body?.params);
-      // The tool list changed since this agent fetched it (an update, a
-      // policy change): say so before the result (lib/tools-changed.ts).
       if (acceptsEventStream(request)) {
-        const fp = toolsFingerprint(await listTools(ctx));
         if (await shouldAnnounce(seenKey(ctx, rateKey), fp).catch(() => false)) {
           return withListChanged(await res.json(), res.status);
         }

@@ -922,5 +922,9 @@ export const toolsSeen = pgTable("tools_seen", {
   key: text("key").primaryKey(),
   fingerprint: text("fingerprint").notNull(),
   notified: text("notified"),
+  // The list Zeqqat would give it now, as of its last call. When it differs
+  // from `fingerprint` the agent is working from an old list, and the
+  // dashboard says so (MCP URL page, Connected; and to the person).
+  current: text("current"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

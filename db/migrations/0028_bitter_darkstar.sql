@@ -1,0 +1,1 @@
+ALTER TABLE "tools_seen" ADD COLUMN "current" text;
