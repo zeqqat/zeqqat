@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "./PasswordInput";
 import { useState } from "react";
 import { authClient } from "../lib/auth-client";
 
@@ -98,10 +99,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <label className="zq-visually-hidden" htmlFor="zq-reset-password">
         New password
       </label>
-      <input
+      <PasswordInput
         id="zq-reset-password"
         className="zq-input"
-        type="password"
         required
         minLength={10}
         autoComplete="new-password"

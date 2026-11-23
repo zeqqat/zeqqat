@@ -1051,6 +1051,43 @@ body {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.zq-pw {
+  position: relative;
+  display: block;
+}
+.zq-pw .zq-input {
+  width: 100%;
+  padding-right: 42px;
+}
+.zq-pw-eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+}
+.zq-pw-eye:hover,
+.zq-pw-eye[aria-pressed="true"] {
+  color: var(--fg);
+}
+.zq-pw-eye svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .zq-field-l {
   display: block;
   margin: 2px 0 -4px;

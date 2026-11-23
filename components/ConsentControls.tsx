@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "./PasswordInput";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { authClient } from "../lib/auth-client";
@@ -412,10 +413,9 @@ function PasswordForm({
       <label className={claiming ? "zq-field-l" : "zq-visually-hidden"} htmlFor="zq-pw-password">
         Password
       </label>
-      <input
+      <PasswordInput
         id="zq-pw-password"
         className="zq-input"
-        type="password"
         required
         minLength={creating ? 10 : undefined}
         autoComplete={creating ? "new-password" : "current-password"}
