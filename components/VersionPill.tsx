@@ -270,6 +270,8 @@ function UpdateLine({ route, phase, error }: { route: UpdateRoute | null; phase:
   else if (route.kind === "pinned")
     text = `ZEQQAT_VERSION is set to ${route.version} in Dokploy. Remove it to follow the latest version, then update here.`;
   else if (route.kind === "not_admin") text = "A new version is ready. Ask an admin of this install to update.";
+  else if (route.kind === "rate_limited")
+    text = "A new version is ready, but your Dokploy is rate limiting the key Zeqqat uses. Replace it on the instance page with a key that has no rate limit, or redeploy Zeqqat in Dokploy.";
   else text = "A new version is ready. Connect the Dokploy this runs on to update from here, or redeploy Zeqqat in Dokploy.";
   return <p className={`zq-modal-note${phase === "failed" ? " is-error" : ""}`}>{text}</p>;
 }

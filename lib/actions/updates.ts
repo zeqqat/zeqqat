@@ -5,7 +5,7 @@ import { checkNow, forgetRemote, releaseStatus, type ReleaseStatus } from "../ch
 import { edition, siteHost } from "../edition";
 import { requireUser } from "../guard";
 import { deploySelf, deployState, findSelfCompose, type DeployState, type SelfCompose } from "../self-update";
-import { InstallError } from "../selfhost-install";
+import { DokployRateLimited, InstallError } from "../selfhost-install";
 import { listUserWorkspaces } from "../workspace";
 
 // The footer's version pill and its What's new modal. Anyone signed in can
@@ -27,6 +27,7 @@ export type UpdateRoute =
   | { kind: "cloud" }
   | { kind: "not_admin" }
   | { kind: "no_dokploy" } // no Dokploy instance here runs this install
+  | { kind: "rate_limited" } // Dokploy turned the key away (its rate limit)
   | { kind: "pinned"; version: string };
 
 
@@ -38,7 +39,13 @@ async function locate(): Promise<{ route: UpdateRoute; self?: SelfCompose }> {
     const isAdmin = (await listUserWorkspaces(user.id)).some((w) => w.wsRole === "admin");
     return { route: { kind: isAdmin ? "no_dokploy" : "not_admin" } };
   }
-  const self = await findSelfCompose(targets, siteHost());
+  let self: SelfCompose | null;
+  try {
+    self = await findSelfCompose(targets, siteHost());
+  } catch (err) {
+    if (err instanceof DokployRateLimited) return { route: { kind: "rate_limited" } };
+    throw err;
+  }
   if (!self) return { route: { kind: "no_dokploy" } };
   if (self.pinned) return { route: { kind: "pinned", version: self.pinned } };
   return { route: { kind: "ready" }, self };

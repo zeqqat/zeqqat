@@ -1,4 +1,4 @@
-import { dokploy, findDeep, InstallError, type Target } from "./selfhost-install";
+import { DokployRateLimited, dokploy, findDeep, InstallError, type Target } from "./selfhost-install";
 import { SELFHOST_COMPOSE } from "./selfhost-compose";
 
 // In-app updates for a self-hosted install. The Dokploy template and the
@@ -97,14 +97,18 @@ async function findOn(t: Target, host: string): Promise<SelfCompose | null> {
 // The first Dokploy that runs this install. Unreachable instances or bad
 // keys are skipped: another instance may still be the right one.
 export async function findSelfCompose(targets: Target[], host: string): Promise<SelfCompose | null> {
+  let limited: DokployRateLimited | null = null;
   for (const t of targets) {
     try {
       const found = await findOn(t, host);
       if (found) return found;
     } catch (err) {
-      if (!(err instanceof InstallError)) throw err;
+      if (err instanceof DokployRateLimited) limited = err;
+      else if (!(err instanceof InstallError)) throw err;
     }
   }
+  // Nothing found because Dokploy turned us away: say that, not "no Dokploy".
+  if (limited) throw limited;
   return null;
 }
 

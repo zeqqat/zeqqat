@@ -167,6 +167,9 @@ async function main() {
     const made = calls.find((c) => c.op === "user.createApiKey")?.body;
     assert.deepEqual(made?.metadata, { organizationId: "org1" });
     assert.equal(made?.prefix, "zqself_");
+    // Said out loud: left out, Dokploy's key library limits it to 10 a day.
+    assert.equal(made?.rateLimitEnabled, false);
+    assert.equal(made?.expiresIn, undefined);
 
     // The caller fixes the encryption key and adds the seed.
     await configureStep(t, "c1", "zeqqat-abc123", undefined, { encryptionKey: "K".repeat(44), env: { ZEQQAT_SEED: "abc" } });

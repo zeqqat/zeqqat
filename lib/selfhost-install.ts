@@ -14,6 +14,11 @@ export { isFreeAddress, projectNameFor };
 export type Target = { baseUrl: string; apiKey: string };
 
 export class InstallError extends Error {}
+// Dokploy turned a request away because the key is over its rate limit
+// (a key made through the API without rateLimitEnabled: false gets Better
+// Auth's default, 10 requests a day). Told apart so it never reads as a
+// missing connection.
+export class DokployRateLimited extends InstallError {}
 
 export async function dokploy(
   t: Target,
@@ -45,6 +50,11 @@ export async function dokploy(
     data = text ? JSON.parse(text) : null;
   } catch {
     data = text;
+  }
+  if (res.status === 429 || /rate.?limit|too many requests/i.test(typeof data === "string" ? data : JSON.stringify(data ?? ""))) {
+    throw new DokployRateLimited(
+      "Your Dokploy is rate limiting this key. Replace it on the instance page with a key that has no rate limit.",
+    );
   }
   if (res.status === 401 || res.status === 403) {
     throw new InstallError(
@@ -189,10 +199,15 @@ export async function createKeyStep(t: Target): Promise<string | null> {
   }
   if (!organizationId) return null;
   try {
+    // rateLimitEnabled must be said: left out, Dokploy's key library (Better
+    // Auth) turns rate limiting on at 10 requests a day, which cut the
+    // install off from its own Dokploy within hours. No expiry: nothing can
+    // renew the key, so an expiring one would silently stop the install.
     const made = await dokploy(t, "user.createApiKey", {
       name: "Zeqqat self-hosted",
       prefix: SELFHOST_KEY_PREFIX,
       metadata: { organizationId },
+      rateLimitEnabled: false,
     });
     return findDeep(made, "key") ?? null;
   } catch (err) {
