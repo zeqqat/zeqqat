@@ -7447,37 +7447,196 @@ button.zq-demo-open {
   border-radius: 10px;
   text-align: left;
 }
+/* Name and @username on one line, the Owner pill under them, both beside
+   the avatar and inside its height. */
 .zq-sh-owner .zq-sh-owner-av {
-  width: 30px;
-  height: 30px;
-  font-size: 13px;
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
   flex: none;
 }
 .zq-sh-owner .who {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  justify-content: space-between;
+  height: 40px;
   min-width: 0;
+}
+.zq-sh-owner .l1 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.2;
+}
+.zq-sh-owner .l1 b,
+.zq-sh-owner .l1 small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zq-sh-owner .l1 small {
+  color: var(--faint);
+  font-size: 12px;
+}
+.zq-sh-owner .role {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+/* Every address the install answers on (its domains in Dokploy). */
+.zq-sh-addr-h {
+  margin: 18px 0 6px;
+  font-size: 12px;
+  color: var(--faint);
+  text-align: left;
+}
+.zq-sh-addrs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+}
+.zq-sh-addrs li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
   font-size: 13px;
 }
-.zq-sh-owner .who b,
-.zq-sh-owner .who small {
-  max-width: 100%;
+.zq-sh-addrs li + li {
+  border-top: 1px solid var(--line);
+}
+.zq-sh-addrs .st {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  border: 1.5px solid var(--faint);
+}
+.zq-sh-addrs .is-up .st {
+  border-color: var(--mint);
+  background: var(--mint);
+}
+.zq-sh-addrs .h {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.zq-sh-addrs .h a {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--fg);
+  text-decoration: none;
 }
-.zq-sh-owner .who small {
+.zq-sh-addrs .h a:hover {
+  text-decoration: underline;
+}
+.zq-sh-addrs .is-down .h a {
+  color: var(--dim);
+}
+.zq-sh-addrs .h small {
   color: var(--faint);
   font-size: 11.5px;
 }
-.zq-sh-owner .role {
-  margin-top: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+.zq-sh-addr-note {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--faint);
+  text-align: left;
+}
+.zq-sh-token {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 8px 10px 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  text-align: left;
+}
+.zq-sh-token > span {
+  color: var(--faint);
+  font-size: 12px;
+}
+.zq-sh-token code {
+  margin-left: auto;
+  font-size: 12.5px;
+}
+.zq-sh-wait-row {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+/* The install card folds into one line once the install is done. */
+.zq-sh-card.zq-sh-fold {
+  padding: 0;
+}
+.zq-sh-fold-b {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 0;
+  background: transparent;
   color: var(--fg);
-  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+}
+.zq-sh-fold-b .ok {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: var(--bg);
+  background: var(--mint);
+  flex: none;
+}
+.zq-sh-fold-b .t {
+  flex: 1;
+}
+.zq-sh-fold-b .chev {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--faint);
+  stroke-width: 2;
+  transition: transform 0.15s;
+}
+.zq-sh-fold.is-open .zq-sh-fold-b .chev {
+  transform: rotate(180deg);
+}
+.zq-sh-fold-in {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s ease;
+}
+.zq-sh-fold.is-open .zq-sh-fold-in {
+  grid-template-rows: 1fr;
+}
+.zq-sh-fold-c {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 22px;
+}
+.zq-sh-fold.is-open .zq-sh-fold-c {
+  padding-top: 4px;
+  padding-bottom: 20px;
 }
 .zq-sh-keycode {
   font-size: 12.5px;

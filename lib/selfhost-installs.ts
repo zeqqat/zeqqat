@@ -24,6 +24,8 @@ export type SavedInstall = {
   claimedAt: Date | null;
   // Only while nobody has claimed it.
   claimUrl: string | null;
+  claimToken: string | null;
+  composeId: string;
 };
 
 export async function installsOf(organizationId: string): Promise<SavedInstall[]> {
@@ -40,6 +42,7 @@ export async function installsOf(organizationId: string): Promise<SavedInstall[]
       createdAt: selfhostInstall.createdAt,
       claimedAt: selfhostInstall.claimedAt,
       claimToken: selfhostInstall.claimToken,
+      composeId: selfhostInstall.composeId,
     })
     .from(selfhostInstall)
     .leftJoin(instance, eq(instance.id, selfhostInstall.instanceId))
@@ -47,14 +50,16 @@ export async function installsOf(organizationId: string): Promise<SavedInstall[]
     .orderBy(desc(selfhostInstall.createdAt));
   return rows.map(({ claimToken, ...r }) => {
     let claimUrl: string | null = null;
+    let token: string | null = null;
     if (!r.claimedAt) {
       try {
-        claimUrl = `${r.address}/claim/${decryptCredential(claimToken)}`;
+        token = decryptCredential(claimToken);
+        claimUrl = `${r.address}/claim/${token}`;
       } catch {
         claimUrl = null;
       }
     }
-    return { ...r, claimUrl };
+    return { ...r, claimUrl, claimToken: token };
   });
 }
 

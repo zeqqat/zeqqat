@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   deleteCloudKey,
   keepCloudKey,
+  installAddresses,
   installConfigure,
   installCreate,
   installDeploy,
@@ -12,6 +13,7 @@ import {
   installStatus,
 } from "../lib/actions/selfhost";
 import type { KeyHint } from "../lib/key-hint";
+import type { CheckedAddress } from "../lib/selfhost-addresses";
 import type { Created } from "../lib/selfhost-install";
 import { projectNameFor } from "../lib/selfhost-names";
 import { CopyButton } from "./CopyButton";
@@ -21,12 +23,15 @@ import { DokployMark } from "./Marks";
 
 type Inst = { id: string; alias: string; host: string; keyHint: KeyHint | null; added: string; workspaces: number };
 
-// One install from zeqqat.com, as the page shows it once it's live: the
-// claim link until it's claimed, and what to do with zeqqat.com's key.
+// One install from zeqqat.com, as the page shows it once it's installed:
+// its addresses, the claim link and setup token until it's claimed. What
+// to do with zeqqat.com's key is asked on the install itself, after its
+// owner signs in (lib/cloud-key.ts), and in Settings.
 export type Handoff = {
   installId: string;
   address: string;
   claimUrl: string | null;
+  claimToken: string | null;
   claimedOn: string | null;
   ownKey: boolean;
   keyChoice: string | null;
@@ -163,6 +168,15 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
   }, [instanceId, previewTry]);
   const previewHost = preview && "host" in preview ? preview.host : undefined;
   const started = Object.values(states).some((s) => s !== "idle");
+  // Once the install is done its card folds into one line (you see it
+  // fold), so the handoff sits right under the heading; a click opens it.
+  const done = formOpen && !!handoff && started;
+  const [folded, setFolded] = useState(false);
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(() => setFolded(true), 1200);
+    return () => clearTimeout(t);
+  }, [done]);
   const set = (key: StepKey, s: StepState) =>
     setStates((prev) => ({ ...prev, [key]: s }));
 
@@ -207,6 +221,7 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
               installId: r.installId,
               address: r.address,
               claimUrl: r.claimUrl,
+              claimToken: new URL(r.claimUrl).pathname.split("/").pop() ?? null,
               claimedOn: null,
               ownKey: r.ownKey,
               keyChoice: null,
@@ -266,8 +281,12 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
         return;
       }
       if (s.reach === "unreachable") {
+        // Not reachable doesn't stop anything: the handoff lists every
+        // address the install has and waits for one that loads (a domain
+        // the person adds in Dokploy shows up by itself).
         set("check", "warn");
         setOutcome({ kind: "unreachable" });
+        setHandoff(pending.current);
         return;
       }
       // certificate_not_ready, error_page (still starting) or not_found
@@ -280,6 +299,7 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
       check: prev.start === "done" ? "warn" : prev.check,
     }));
     setOutcome({ kind: "slow" });
+    setHandoff(pending.current);
   }
 
   const host = shown.address?.replace(/^https?:\/\//, "") ?? "";
@@ -312,7 +332,22 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
         </p>
       )}
       {formOpen && (
-      <section className="zq-panel-box zq-sh-card">
+      <section className={`zq-panel-box zq-sh-card${done ? " zq-sh-fold" : ""}${done && !folded ? " is-open" : ""}`}>
+        {done && (
+          <button type="button" className="zq-sh-fold-b" aria-expanded={!folded} onClick={() => setFolded((f) => !f)}>
+            <span className="ok" aria-hidden="true">
+              ✓
+            </span>
+            <span className="t">
+              Installed on <b>{alias}</b>
+            </span>
+            <svg className="chev" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 10l5 5 5-5" />
+            </svg>
+          </button>
+        )}
+        <div className={done ? "zq-sh-fold-in" : undefined}>
+        <div className={done ? "zq-sh-fold-c" : undefined}>
         <dl className="zq-sh-facts">
           <dt>Dokploy instance</dt>
           <dd>
@@ -414,6 +449,8 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
             ))}
           </ol>
         )}
+        </div>
+        </div>
       </section>
       )}
 
@@ -456,28 +493,6 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
         </section>
       )}
 
-      {outcome?.kind === "unreachable" && (
-        <section className="zq-panel-box" style={{ marginTop: 24 }}>
-          <h2 className="zq-block-t">
-            Installed and running, not reachable yet
-          </h2>
-          <p className="zq-note" style={{ marginTop: 8 }}>
-            <b>{host}</b> doesn&rsquo;t load from the internet because your
-            server doesn&rsquo;t take web traffic on ports 80 and 443 directly.
-            That&rsquo;s a fine way to run a server. To reach your Zeqqat, give
-            it your own domain the way you route your other apps: service{" "}
-            <b>zeqqat</b>, port <b>3000</b>, and set <b>ZEQQAT_PUBLIC_URL</b> to
-            that address in its environment.
-          </p>
-          {claimUrl && (
-            <p className="zq-note" style={{ marginTop: 8 }}>
-              Then open it with <code>{new URL(claimUrl).pathname}</code> at the end of its address to set your password. <CopyButton text={new URL(claimUrl).pathname} />
-            </p>
-          )}
-          <div className="zq-row-actions">{dokployLink}</div>
-        </section>
-      )}
-
       {outcome?.kind === "slow" && (
         <section className="zq-panel-box" style={{ marginTop: 24 }}>
           <h2 className="zq-block-t">Still not answering</h2>
@@ -516,23 +531,164 @@ export function SelfHostFlow({ instances, siteHost, owner, saved = null }: Props
         </section>
       )}
 
-      {formOpen && outcome?.kind === "live" && handoff && <HandoffPanels h={handoff} owner={owner} siteHost={siteHost} />}
+      {formOpen && done && handoff && <HandoffPanels h={handoff} owner={owner} siteHost={siteHost} dashboardUrl={shown.dashboardUrl} />}
     </div>
   );
 }
 
-function HandoffPanels({ h, owner, siteHost }: { h: Handoff; owner: Props["owner"]; siteHost: string }) {
-  const [choice, setChoice] = useState<string | null>(h.keyChoice);
+// The owner of the new install: name and @username on one line, the Owner
+// pill under them, both beside the avatar and inside its height.
+function OwnerRow({ owner }: { owner: Props["owner"] }) {
+  return (
+    <div className="zq-sh-owner">
+      <Avatar p={{ id: owner.id, name: owner.name || owner.username, image: owner.image }} className="zq-mu-av zq-sh-owner-av" />
+      <span className="who">
+        <span className="l1">
+          <b>{owner.name || owner.username}</b>
+          <small>@{owner.username}</small>
+        </span>
+        <span className="role">Owner</span>
+      </span>
+    </div>
+  );
+}
+
+// Every address the install answers on (its domains in Dokploy), checked
+// from the internet. Asked again every few seconds while the page is on
+// screen and straight away when the person comes back to the tab, so a
+// domain they add in Dokploy shows up by itself.
+function useAddresses(installId: string) {
+  const [addrs, setAddrs] = useState<CheckedAddress[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const started = Date.now();
+    const ask = async () => {
+      if (document.visibilityState !== "visible") return;
+      const r = await installAddresses(installId).catch(() => null);
+      if (live && r && r.ok) setAddrs(r.addresses);
+    };
+    const loop = () => {
+      timer = setTimeout(
+        async () => {
+          await ask();
+          if (live) loop();
+        },
+        Date.now() - started > 10 * 60_000 ? 30_000 : 6_000,
+      );
+    };
+    const back = () => void ask();
+    void ask();
+    loop();
+    document.addEventListener("visibilitychange", back);
+    return () => {
+      live = false;
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", back);
+    };
+  }, [installId]);
+  return addrs;
+}
+
+function HandoffPanels({ h, owner, dashboardUrl }: { h: Handoff; owner: Props["owner"]; siteHost: string; dashboardUrl?: string | null }) {
+  const addrs = useAddresses(h.installId);
+  const claimed = !h.claimUrl;
+  const token = h.claimToken;
+  const live = addrs?.find((a) => a.live) ?? null;
+  const open = (address: string) => (claimed || !token ? address : `${address}/claim/${token}`);
+  const title = claimed ? "Your Zeqqat is set up" : live ? "Your Zeqqat is live" : "Your Zeqqat is installed";
+  return (
+    <section className="zq-panel-box" style={{ marginTop: 24 }}>
+      <h2 className="zq-block-t">{title}</h2>
+      {claimed ? (
+        <p className="zq-note" style={{ marginTop: 8 }}>
+          Claimed{h.claimedOn ? ` on ${h.claimedOn}` : ""}.
+        </p>
+      ) : (
+        <>
+          <p className="zq-note" style={{ marginTop: 8 }}>
+            Set a password there. Your account:
+          </p>
+          <OwnerRow owner={owner} />
+          <p className="zq-note" style={{ marginTop: 12 }}>
+            Your account{h.workspaces > 0 ? `, ${h.workspaces === 1 ? "workspace" : "workspaces"}` : ""} and {h.alias} instance are already on it.
+          </p>
+        </>
+      )}
+      <p className="zq-sh-addr-h">Its addresses</p>
+      {addrs ? (
+        <ul className="zq-sh-addrs">
+          {addrs.map((a) => (
+            <li key={a.address} className={a.live ? "is-up" : "is-down"}>
+              <span className="st" aria-hidden="true" />
+              <span className="h">
+                <a href={open(a.address)} target="_blank" rel="noreferrer noopener">
+                  {a.address.replace(/^https?:\/\//, "")}
+                </a>
+                <small>{a.live ? "Loads from the internet" : "Doesn’t load from the internet"}</small>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="zq-note zq-sh-wait">Asking Dokploy...</p>
+      )}
+      {addrs && !live && (
+        <p className="zq-sh-addr-note">
+          Your server doesn&rsquo;t take web traffic on ports 80 and 443, which is fine. Add a domain to it in Dokploy the way you do for your
+          other apps (service <b>zeqqat</b>, port <b>3000</b>) and it shows up here.{" "}
+          {dashboardUrl && (
+            <a className="zq-textlink" href={dashboardUrl} target="_blank" rel="noreferrer noopener">
+              Open it in Dokploy
+            </a>
+          )}
+        </p>
+      )}
+      {!claimed && token && (
+        <div className="zq-sh-token">
+          <span>Setup token</span>
+          <code>••••••••{token.slice(-4)}</code>
+          <CopyButton text={token} />
+        </div>
+      )}
+      <div className="zq-row-actions">
+        {live ? (
+          <a className="zq-action zq-action-solid" href={open(live.address)} target="_blank" rel="noreferrer noopener">
+            Open your Zeqqat
+          </a>
+        ) : (
+          <button type="button" className="zq-action zq-action-solid" disabled>
+            Open your Zeqqat
+          </button>
+        )}
+      </div>
+      {addrs && !live && (
+        <p className="zq-sh-wait-row">
+          <span className="zq-ob-wait">
+            <span className="zq-wait-dot" aria-hidden="true" />
+            Opens once one of its addresses loads
+          </span>
+        </p>
+      )}
+    </section>
+  );
+}
+
+// The key zeqqat.com holds for the instance, once the install is claimed
+// (lib/cloud-key.ts): keep it or delete it from Dokploy. The install asks
+// its owner first thing after they sign in there; this is the same choice
+// in zeqqat.com's Settings.
+export function CloudKeyPanel({ installId, alias, hint, siteHost, instanceHref }: { installId: string; alias: string; hint: KeyHint | null; siteHost: string; instanceHref: string }) {
+  const [choice, setChoice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [pick, setPick] = useState<DokployKey[] | null>(null);
   const [picked, setPicked] = useState<string>("");
-  const hint = h.keyHint;
 
   async function del(id?: string) {
     setBusy(true);
     setErr(null);
-    const r = await deleteCloudKey(h.installId, id);
+    const r = await deleteCloudKey(installId, id);
     setBusy(false);
     if (r.ok) {
       setChoice("deleted");
@@ -543,137 +699,95 @@ function HandoffPanels({ h, owner, siteHost }: { h: Handoff; owner: Props["owner
     } else setErr(r.error);
   }
 
+  if (choice === "kept")
+    return (
+      <div className="zq-ok-box zq-sh-done" role="status">
+        <span className="ic" aria-hidden="true">
+          ✓
+        </span>
+        <span>You can still reach your {alias} instance through {siteHost}.</span>
+      </div>
+    );
+  if (choice === "deleted")
+    return (
+      <div className="zq-ok-box zq-sh-done" role="status">
+        <span className="ic" aria-hidden="true">
+          ✓
+        </span>
+        <span>
+          <b>
+            {hint?.start}••••{hint?.end} is deleted from your Dokploy.
+          </b>{" "}
+          {siteHost} no longer reaches {alias}.{" "}
+          <a className="zq-textlink" href={instanceHref}>
+            See it on {alias}
+          </a>
+        </span>
+      </div>
+    );
   return (
-    <>
-      <section className="zq-panel-box" style={{ marginTop: 24 }}>
-        {h.claimUrl ? (
-          <>
-            <h2 className="zq-block-t">Your Zeqqat is live</h2>
-            <p className="zq-note" style={{ marginTop: 8 }}>
-              Set a password there. Your account:
-            </p>
-            <div className="zq-sh-owner">
-              <Avatar p={{ id: owner.id, name: owner.name || owner.username, image: owner.image }} className="zq-mu-av zq-sh-owner-av" />
-              <span className="who">
-                <b>{owner.name || owner.username}</b>
-                <small>@{owner.username}</small>
-                <span className="role">Owner</span>
-              </span>
-            </div>
-            <p className="zq-note" style={{ marginTop: 12 }}>
-              Your account{h.workspaces > 0 ? `, ${h.workspaces === 1 ? "workspace" : "workspaces"}` : ""} and {h.alias} instance are already on it.
-            </p>
-            <div className="zq-row-actions">
-              <a className="zq-action zq-action-solid" href={h.claimUrl} target="_blank" rel="noreferrer noopener">
-                Open your Zeqqat
-              </a>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="zq-block-t">Your Zeqqat is set up</h2>
-            <p className="zq-note" style={{ marginTop: 8 }}>
-              Claimed {h.claimedOn ? `on ${h.claimedOn}` : ""} at {h.address.replace(/^https?:\/\//, "")}.
-            </p>
-            <div className="zq-row-actions">
-              <a className="zq-action zq-action-solid" href={h.address} target="_blank" rel="noreferrer noopener">
-                Open your Zeqqat
-              </a>
-            </div>
-          </>
-        )}
-      </section>
-
-      {h.ownKey && h.instanceId && choice === null && (
-        <section className="zq-panel-box" style={{ marginTop: 24 }}>
-          <h2 className="zq-block-t">The key {siteHost} uses</h2>
-          <p className="zq-note" style={{ marginTop: 8 }}>
-            Your self-hosted Zeqqat now has its own key, separate from{" "}
-            <code className="zq-sh-keycode">
-              <span className="pre">{hint?.start}</span>••••••••<span className="end">{hint?.end}</span>
-            </code>
-            , the one {siteHost} uses for {h.alias}. You can delete it from your Dokploy if you don&rsquo;t plan on using {siteHost}.
-          </p>
-          {err && (
-            <div className="zq-warn-box" role="alert" style={{ marginTop: 12, marginBottom: 0 }}>
-              <span className="ic" aria-hidden="true">
-                !
-              </span>
-              <span>{err}</span>
-            </div>
-          )}
-          {pick ? (
-            <div className="zq-sh-pick" role="radiogroup" aria-label="Which key is it?">
-              <p className="zq-note">Which of your Dokploy keys is it? Several could be.</p>
-              {pick.map((k) => (
-                <label key={k.id} className="zq-sh-pick-row">
-                  <input type="radio" name="dokploy-key" value={k.id} checked={picked === k.id} onChange={() => setPicked(k.id)} />
-                  <span>
-                    <b>{k.name || "No name"}</b>
-                    <small>
-                      {k.prefix ? `${k.prefix} · ` : ""}
-                      {k.createdAt ? `created ${new Date(k.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
-                    </small>
-                  </span>
-                </label>
-              ))}
-              <div className="zq-row-actions">
-                <button type="button" className="zq-action" disabled={busy || !picked} onClick={() => del(picked)}>
-                  Delete this key
-                </button>
-                <button type="button" className="zq-action zq-action-solid" disabled={busy} onClick={() => setPick(null)}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="zq-row-actions">
-              <button
-                type="button"
-                className="zq-action zq-action-solid"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  const r = await keepCloudKey(h.installId);
-                  setBusy(false);
-                  if (r.ok) setChoice("kept");
-                  else setErr(r.error);
-                }}
-              >
-                Keep it
-              </button>
-              <button type="button" className="zq-action" disabled={busy} onClick={() => del()}>
-                Delete the key
-              </button>
-            </div>
-          )}
-        </section>
-      )}
-
-      {choice === "kept" && h.keyChoice === null && (
-        <div className="zq-ok-box zq-sh-done" role="status">
+    <section className="zq-panel-box" style={{ marginTop: 16 }}>
+      <h2 className="zq-block-t">The key {siteHost} uses</h2>
+      <p className="zq-note" style={{ marginTop: 8 }}>
+        Your self-hosted Zeqqat has its own key, separate from{" "}
+        <code className="zq-sh-keycode">
+          <span className="pre">{hint?.start}</span>••••••••<span className="end">{hint?.end}</span>
+        </code>
+        , the one {siteHost} uses for {alias}. You can delete it from your Dokploy if you don&rsquo;t plan on using {siteHost}.
+      </p>
+      {err && (
+        <div className="zq-warn-box" role="alert" style={{ marginTop: 12, marginBottom: 0 }}>
           <span className="ic" aria-hidden="true">
-            ✓
+            !
           </span>
-          <span>You can still reach your {h.alias} instance through {siteHost}.</span>
+          <span>{err}</span>
         </div>
       )}
-      {choice === "deleted" && h.keyChoice === null && (
-        <div className="zq-ok-box zq-sh-done" role="status">
-          <span className="ic" aria-hidden="true">
-            ✓
-          </span>
-          <span>
-            <b>
-              {hint?.start}••••{hint?.end} is deleted from your Dokploy.
-            </b>{" "}
-            {siteHost} no longer reaches {h.alias}.{" "}
-            <a className="zq-textlink" href={`dokploy-instances/${h.instanceId}?tab=manage`}>
-              See it on {h.alias}
-            </a>
-          </span>
+      {pick ? (
+        <div className="zq-sh-pick" role="radiogroup" aria-label="Which key is it?">
+          <p className="zq-note">Which of your Dokploy keys is it? Several could be.</p>
+          {pick.map((k) => (
+            <label key={k.id} className="zq-sh-pick-row">
+              <input type="radio" name="dokploy-key" value={k.id} checked={picked === k.id} onChange={() => setPicked(k.id)} />
+              <span>
+                <b>{k.name || "No name"}</b>
+                <small>
+                  {k.prefix ? `${k.prefix} · ` : ""}
+                  {k.createdAt ? `created ${new Date(k.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                </small>
+              </span>
+            </label>
+          ))}
+          <div className="zq-row-actions">
+            <button type="button" className="zq-action" disabled={busy || !picked} onClick={() => del(picked)}>
+              Delete this key
+            </button>
+            <button type="button" className="zq-action zq-action-solid" disabled={busy} onClick={() => setPick(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="zq-row-actions">
+          <button
+            type="button"
+            className="zq-action zq-action-solid"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              const r = await keepCloudKey(installId);
+              setBusy(false);
+              if (r.ok) setChoice("kept");
+              else setErr(r.error);
+            }}
+          >
+            Keep it
+          </button>
+          <button type="button" className="zq-action" disabled={busy} onClick={() => del()}>
+            Delete the key
+          </button>
         </div>
       )}
-    </>
+    </section>
   );
 }

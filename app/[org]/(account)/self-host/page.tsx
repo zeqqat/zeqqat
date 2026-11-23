@@ -53,6 +53,7 @@ export default async function SelfHostPage() {
         installId: last.id,
         address: last.address,
         claimUrl: last.claimUrl,
+        claimToken: last.claimToken,
         claimedOn: last.claimedAt ? day(last.claimedAt) : null,
         ownKey: last.ownKey,
         keyChoice: last.keyChoice ?? (last.keyDeletedAt ? "deleted" : null),

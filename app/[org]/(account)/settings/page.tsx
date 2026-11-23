@@ -5,8 +5,10 @@ import { SettingsCounts, SettingsTabs } from "../../../../components/SettingsHea
 import { workspaceCards } from "../../../../lib/accounts";
 import { changeOrgUsernameAction, deleteOrgAction, renameOrgAction } from "../../../../lib/actions/org-settings";
 import { publicUrl } from "../../../../lib/env";
-import { edition } from "../../../../lib/edition";
+import { edition, siteHost } from "../../../../lib/edition";
 import { installsOf } from "../../../../lib/selfhost-installs";
+import { keyChoiceOpen } from "../../../../lib/cloud-key";
+import { CloudKeyPanel } from "../../../../components/SelfHostFlow";
 import { requireAccount } from "../../../../lib/guard";
 import { accountScope } from "../../../../lib/integration-scope";
 import { accountPeople } from "../../../../lib/members";
@@ -202,6 +204,15 @@ export default async function AccountSettingsPage({ searchParams }: { searchPara
                       </a>
                     )}
                   </div>
+                  {keyChoiceOpen(i) && !i.keyDeletedAt && (
+                    <CloudKeyPanel
+                      installId={i.id}
+                      alias={i.instanceAlias ?? "your instance"}
+                      hint={i.keyHint}
+                      siteHost={siteHost()}
+                      instanceHref={`/${ws.organizationSlug}/dokploy-instances/${i.instanceId}?tab=manage`}
+                    />
+                  )}
                 </div>
               ))}
               <div className="zq-mu-mrow">
