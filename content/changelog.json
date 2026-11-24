@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.8.8",
+    "date": "2026-11-24",
+    "at": "2026-11-24T07:26:07Z",
+    "changes": [
+      "Blog: Dokku vs CapRover vs Dokploy: Which Self-Hosted PaaS Should You Use?"
+    ]
+  },
+  {
     "version": "0.8.7",
     "date": "2026-11-23",
     "at": "2026-11-23T16:48:08Z",
