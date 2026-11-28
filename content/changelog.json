@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.8.10",
+    "date": "2026-11-28",
+    "at": "2026-11-28T07:23:18Z",
+    "changes": [
+      "Blog: Self-Hosted Claude: Run Your Own Claude Chat and Agents on a VPS"
+    ]
+  },
+  {
     "version": "0.8.9",
     "date": "2026-11-25",
     "at": "2026-11-25T07:26:06Z",
